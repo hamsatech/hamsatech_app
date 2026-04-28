@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -41,9 +38,7 @@ class _LoginViewState extends State<_LoginView> {
 
   void _submit(BuildContext context) {
     if (!_formKey.currentState!.validate()) return;
-    context
-        .read<AuthBloc>()
-        .add(AuthSendOtpRequested(_controller.text.trim()));
+    context.read<AuthBloc>().add(AuthSendOtpRequested(_controller.text.trim()));
   }
 
   @override
@@ -54,7 +49,7 @@ class _LoginViewState extends State<_LoginView> {
           context.push('/otp', extra: state.phoneOrEmail);
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+            SnackBar(content: Text(state.message), backgroundColor: DSColors.error),
           );
         }
       },
@@ -72,29 +67,30 @@ class _LoginViewState extends State<_LoginView> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: DSColors.brand,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.gps_fixed_rounded,
-                        color: Colors.white, size: 30),
+                    child: const Icon(Icons.gps_fixed_rounded, color: Colors.white, size: 30),
                   ),
                   const SizedBox(height: 32),
-                  Text('Welcome back,', style: AppTextStyles.displayMedium),
+                  Text('Welcome back,', style: DSTypography.displayMedium),
                   const SizedBox(height: 8),
                   Text(
                     'Sign in to your training account',
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.textSecondary),
+                    style: DSTypography.bodyMedium.copyWith(color: DSColors.textSecondary),
                   ),
                   const SizedBox(height: 40),
-                  AppTextField(
+                  DSTextInput(
                     controller: _controller,
                     label: 'Phone number or Email',
-                    hint: 'Enter your phone or email',
-                    prefixIcon: Icons.person_outline_rounded,
+                    placeholder: 'Enter your phone or email',
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(Icons.person_outline_rounded, size: 20, color: DSColors.textMuted),
+                    ),
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _submit(context),
+                    onSubmitted: (_) => _submit(context),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
                         return 'Please enter your phone or email';
@@ -105,19 +101,17 @@ class _LoginViewState extends State<_LoginView> {
                   const SizedBox(height: 8),
                   Text(
                     'Demo: any phone/email works. OTP is 1234.',
-                    style: AppTextStyles.caption
-                        .copyWith(color: AppColors.textMuted),
+                    style: DSTypography.caption,
                   ),
                   const SizedBox(height: 32),
                   BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      return AppButton(
-                        label: 'Send OTP',
-                        onPressed: () => _submit(context),
-                        isLoading: state is AuthOtpSending,
-                        icon: Icons.send_rounded,
-                      );
-                    },
+                    builder: (context, state) => DSButton(
+                      label: 'Send OTP',
+                      onPressed: () => _submit(context),
+                      isLoading: state is AuthOtpSending,
+                      isFullWidth: true,
+                      leadingIcon: const Icon(Icons.send_rounded),
+                    ),
                   ),
                   const Spacer(flex: 3),
                 ],

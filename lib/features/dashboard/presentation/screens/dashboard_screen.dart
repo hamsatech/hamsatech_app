@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
@@ -35,8 +36,8 @@ class _DashboardView extends StatelessWidget {
       body: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           return RefreshIndicator(
-            color: AppColors.primary,
-            backgroundColor: AppColors.card,
+            color: DSColors.brand,
+            backgroundColor: DSColors.appCard,
             onRefresh: () async {
               context
                   .read<DashboardBloc>()
@@ -50,7 +51,7 @@ class _DashboardView extends StatelessWidget {
                   const SliverFillRemaining(
                     child: Center(
                       child: CircularProgressIndicator(
-                          color: AppColors.primary),
+                          color: DSColors.brand),
                     ),
                   )
                 else if (state is DashboardError)
@@ -60,10 +61,10 @@ class _DashboardView extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.error_outline_rounded,
-                              color: AppColors.error, size: 48),
+                              color: DSColors.error, size: 48),
                           const SizedBox(height: 12),
                           Text(state.message,
-                              style: AppTextStyles.bodyMedium),
+                              style: DSTypography.bodyMedium),
                           const SizedBox(height: 16),
                           TextButton(
                             onPressed: () => context.read<DashboardBloc>()
@@ -107,7 +108,7 @@ class _DashboardView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/session/pre'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: DSColors.brand,
         icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
         label: const Text('Start Session',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
@@ -119,7 +120,7 @@ class _DashboardView extends StatelessWidget {
     return SliverAppBar(
       floating: true,
       snap: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: DSColors.appBackground,
       elevation: 0,
       title: Row(
         children: [
@@ -127,14 +128,14 @@ class _DashboardView extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: DSColors.brand,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.gps_fixed_rounded,
                 color: Colors.white, size: 18),
           ),
           const SizedBox(width: 10),
-          Text('HAMSA', style: AppTextStyles.headingSmall.copyWith(
+          Text('HAMSA', style: DSTypography.headingSmall.copyWith(
             letterSpacing: 2,
           )),
         ],
@@ -142,7 +143,7 @@ class _DashboardView extends StatelessWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.edit_note_rounded,
-              color: AppColors.textSecondary),
+              color: DSColors.textSecondary),
           tooltip: 'Ask Me Journal',
           onPressed: () => context.go('/journal'),
         ),

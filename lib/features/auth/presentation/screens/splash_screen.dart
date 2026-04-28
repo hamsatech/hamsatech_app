@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/services/storage_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -58,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: DSColors.appBackground,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -71,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: DSColors.brand,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: const Icon(
@@ -83,16 +84,16 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 24),
                 Text(
                   'HAMSA',
-                  style: AppTextStyles.displayLarge.copyWith(
-                    color: AppColors.textPrimary,
+                  style: DSTypography.displayLarge.copyWith(
+                    color: DSColors.textPrimary,
                     letterSpacing: 6,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'MENTAL PERFORMANCE',
-                  style: AppTextStyles.labelMedium.copyWith(
-                    color: AppColors.primary,
+                  style: DSTypography.labelMedium.copyWith(
+                    color: DSColors.brand,
                     letterSpacing: 4,
                   ),
                 ),
@@ -102,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen>
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.primary,
+                    color: DSColors.brand,
                   ),
                 ),
               ],

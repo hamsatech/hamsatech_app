@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
 import '../../domain/entities/session_entity.dart';
 import '../bloc/session_bloc.dart';
@@ -34,7 +35,7 @@ class _SessionsListView extends StatelessWidget {
         builder: (context, state) {
           if (state is SessionLoading) {
             return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary));
+                child: CircularProgressIndicator(color: DSColors.brand));
           }
           if (state is SessionError) {
             return Center(child: Text(state.message));
@@ -54,14 +55,14 @@ class _SessionsListView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.fitness_center_rounded,
-                      size: 64, color: AppColors.textMuted),
+                      size: 64, color: DSColors.textMuted),
                   const SizedBox(height: 16),
                   Text('No sessions yet',
-                      style: AppTextStyles.headingMedium),
+                      style: DSTypography.headingMedium),
                   const SizedBox(height: 8),
                   Text(
                     'Start a session from the dashboard to\nbuild your training history.',
-                    style: AppTextStyles.bodySmall,
+                    style: DSTypography.bodySmall,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
@@ -85,7 +86,7 @@ class _SessionsListView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/session/pre'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: DSColors.brand,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text('New Session',
             style: TextStyle(color: Colors.white)),
@@ -107,9 +108,9 @@ class _SessionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: DSColors.appCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: DSColors.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,14 +120,14 @@ class _SessionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   DateFormat('EEE, d MMM yyyy').format(session.date),
-                  style: AppTextStyles.headingSmall,
+                  style: DSTypography.headingSmall,
                 ),
               ),
               Row(
                 children: List.generate(5, (i) {
                   return Icon(
                     i < rating ? Icons.star_rounded : Icons.star_border_rounded,
-                    color: AppColors.warning,
+                    color: DSColors.warning,
                     size: 16,
                   );
                 }),
@@ -144,24 +145,24 @@ class _SessionCard extends StatelessWidget {
               _Chip(
                 icon: Icons.bolt_rounded,
                 label: 'Energy ${session.preSession.energy}/10',
-                color: AppColors.secondary,
+                color: DSColors.success,
               ),
               const SizedBox(width: 8),
               _Chip(
                 icon: Icons.center_focus_strong_rounded,
                 label: 'Focus ${session.preSession.focus}/10',
-                color: AppColors.accent,
+                color: DSColors.info,
               ),
             ],
           ),
           if (post?.wentWell.isNotEmpty ?? false) ...[
             const SizedBox(height: 10),
-            const Divider(color: AppColors.divider),
+            const Divider(color: DSColors.appDivider),
             const SizedBox(height: 8),
             Text(
               post!.wentWell,
               style:
-                  AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                  DSTypography.bodySmall.copyWith(color: DSColors.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -181,7 +182,7 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.textSecondary;
+    final c = color ?? DSColors.textSecondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -194,7 +195,7 @@ class _Chip extends StatelessWidget {
           Icon(icon, size: 12, color: c),
           const SizedBox(width: 4),
           Text(label,
-              style: AppTextStyles.caption.copyWith(color: c)),
+              style: DSTypography.caption.copyWith(color: c)),
         ],
       ),
     );

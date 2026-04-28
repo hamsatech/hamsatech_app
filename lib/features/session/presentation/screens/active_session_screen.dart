@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 
 class ActiveSessionScreen extends StatefulWidget {
   const ActiveSessionScreen({super.key, required this.sessionId});
@@ -64,7 +65,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: DSColors.appBackground,
       appBar: AppBar(
         title: const Text('Active Session'),
         automaticallyImplyLeading: false,
@@ -72,9 +73,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
           TextButton.icon(
             onPressed: _endSession,
             icon: const Icon(Icons.stop_circle_outlined,
-                color: AppColors.error),
+                color: DSColors.error),
             label: const Text('End Session',
-                style: TextStyle(color: AppColors.error)),
+                style: TextStyle(color: DSColors.error)),
           ),
         ],
       ),
@@ -84,13 +85,13 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 32),
-              color: AppColors.surface,
+              color: DSColors.appSurface,
               child: Column(
                 children: [
                   Text(
                     _elapsed,
-                    style: AppTextStyles.scoreDisplay.copyWith(
-                      color: AppColors.primary,
+                    style: DSTypography.scoreDisplay.copyWith(
+                      color: DSColors.brand,
                       fontSize: 56,
                     ),
                   ),
@@ -102,14 +103,14 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         width: 8,
                         height: 8,
                         decoration: const BoxDecoration(
-                          color: AppColors.error,
+                          color: DSColors.error,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text('Session in progress',
-                          style: AppTextStyles.labelMedium
-                              .copyWith(color: AppColors.textSecondary)),
+                          style: DSTypography.labelMedium
+                              .copyWith(color: DSColors.textSecondary)),
                     ],
                   ),
                 ],
@@ -121,11 +122,11 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Session Notes', style: AppTextStyles.headingSmall),
+                    Text('Session Notes', style: DSTypography.headingSmall),
                     const SizedBox(height: 4),
                     Text(
                       'Jot down observations, technical issues, or mental state changes',
-                      style: AppTextStyles.bodySmall,
+                      style: DSTypography.bodySmall,
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -133,11 +134,11 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         Expanded(
                           child: TextField(
                             controller: _noteController,
-                            style: AppTextStyles.bodyMedium,
+                            style: DSTypography.bodyMedium,
                             decoration: const InputDecoration(
                               hintText: 'Add a note...',
                               filled: true,
-                              fillColor: AppColors.card,
+                              fillColor: DSColors.appCard,
                             ),
                             onSubmitted: (_) => _addNote(),
                           ),
@@ -147,7 +148,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                           onPressed: _addNote,
                           icon: const Icon(Icons.add_rounded),
                           style: IconButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: DSColors.brand,
                             foregroundColor: Colors.white,
                           ),
                         ),
@@ -159,7 +160,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                           ? Center(
                               child: Text(
                                 'No notes yet. Use this space to capture\nwhat\'s happening during your session.',
-                                style: AppTextStyles.bodySmall,
+                                style: DSTypography.bodySmall,
                                 textAlign: TextAlign.center,
                               ),
                             )
@@ -175,13 +176,13 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                                       child: Icon(
                                         Icons.circle,
                                         size: 6,
-                                        color: AppColors.primary,
+                                        color: DSColors.brand,
                                       ),
                                     ),
                                     Expanded(
                                       child: Text(
                                         _notes[i],
-                                        style: AppTextStyles.bodyMedium,
+                                        style: DSTypography.bodyMedium,
                                       ),
                                     ),
                                   ],
