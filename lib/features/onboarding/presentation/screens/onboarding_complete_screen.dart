@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/score_ring.dart';
+
+
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_state.dart';
 
@@ -54,30 +55,30 @@ class _OnboardingCompleteView extends StatelessWidget {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.15),
+                      color: DSColors.success.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.check_rounded,
-                      color: AppColors.secondary,
+                      color: DSColors.success,
                       size: 40,
                     ),
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'Baseline Complete!',
-                    style: AppTextStyles.displayMedium,
+                    style: DSTypography.displayMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Here\'s your mental performance profile, ${state.name}',
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.textSecondary),
+                    style: DSTypography.bodyMedium
+                        .copyWith(color: DSColors.textSecondary),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
-                  ScoreRing(
+                  DSScoreRing(
                     score: overall,
                     size: 140,
                     label: 'Overall\nReadiness',
@@ -90,22 +91,22 @@ class _OnboardingCompleteView extends StatelessWidget {
                       _ScoreItem(
                         label: 'Focus',
                         score: focus,
-                        color: AppColors.accent,
+                        color: DSColors.info,
                       ),
                       _ScoreItem(
                         label: 'Emotional',
                         score: emotional,
-                        color: AppColors.secondary,
+                        color: DSColors.success,
                       ),
                       _ScoreItem(
                         label: 'Decision',
                         score: decision,
-                        color: AppColors.warning,
+                        color: DSColors.warning,
                       ),
                       _ScoreItem(
                         label: 'Motivation',
                         score: motivation,
-                        color: AppColors.primary,
+                        color: DSColors.brand,
                       ),
                     ],
                   ),
@@ -113,15 +114,15 @@ class _OnboardingCompleteView extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.card,
+                      color: DSColors.appCard,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: DSColors.appBorder),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('What this means',
-                            style: AppTextStyles.headingSmall),
+                            style: DSTypography.headingSmall),
                         const SizedBox(height: 12),
                         _interpretScore('Focus', focus, _scoreLabel(focus)),
                         _interpretScore('Emotional Stability', emotional,
@@ -134,10 +135,11 @@ class _OnboardingCompleteView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 36),
-                  AppButton(
+                  DSButton(
                     label: 'Enter My Dashboard',
                     onPressed: () => context.go('/home'),
-                    icon: Icons.dashboard_rounded,
+                    leadingIcon: const Icon(Icons.dashboard_rounded),
+                    isFullWidth: true,
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -156,7 +158,7 @@ class _OnboardingCompleteView extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label, style: AppTextStyles.bodySmall),
+            child: Text(label, style: DSTypography.bodySmall),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -165,7 +167,7 @@ class _OnboardingCompleteView extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: score / 100,
                 minHeight: 6,
-                backgroundColor: AppColors.border,
+                backgroundColor: DSColors.appBorder,
                 valueColor:
                     AlwaysStoppedAnimation<Color>(_levelColor(level)),
               ),
@@ -174,7 +176,7 @@ class _OnboardingCompleteView extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             level,
-            style: AppTextStyles.caption
+            style: DSTypography.caption
                 .copyWith(color: _levelColor(level)),
           ),
         ],
@@ -184,9 +186,9 @@ class _OnboardingCompleteView extends StatelessWidget {
 
   Color _levelColor(String level) {
     return switch (level) {
-      'Strong' => AppColors.secondary,
-      'Developing' => AppColors.warning,
-      _ => AppColors.error,
+      'Strong' => DSColors.success,
+      'Developing' => DSColors.warning,
+      _ => DSColors.error,
     };
   }
 }
@@ -206,9 +208,9 @@ class _ScoreItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ScoreRing(score: score, size: 64, strokeWidth: 5, color: color),
+        DSScoreRing(score: score, size: 64, strokeWidth: 5, color: color),
         const SizedBox(height: 6),
-        Text(label, style: AppTextStyles.caption),
+        Text(label, style: DSTypography.caption),
       ],
     );
   }

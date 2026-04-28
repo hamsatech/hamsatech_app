@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/score_ring.dart';
+
+
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -58,7 +59,7 @@ class _ProfileView extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.logout_rounded,
-                  color: AppColors.textSecondary),
+                  color: DSColors.textSecondary),
               onPressed: () => _confirmLogout(context),
             ),
           ],
@@ -74,26 +75,26 @@ class _ProfileView extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withValues(alpha: 0.15),
-                      AppColors.card,
+                      DSColors.brand.withValues(alpha: 0.15),
+                      DSColors.appCard,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.3)),
+                      color: DSColors.brand.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 32,
                       backgroundColor:
-                          AppColors.primary.withValues(alpha: 0.2),
+                          DSColors.brand.withValues(alpha: 0.2),
                       child: Text(
                         name.isNotEmpty ? name[0].toUpperCase() : 'A',
-                        style: AppTextStyles.displayMedium
-                            .copyWith(color: AppColors.primary),
+                        style: DSTypography.displayMedium
+                            .copyWith(color: DSColors.brand),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -101,13 +102,13 @@ class _ProfileView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(name, style: AppTextStyles.headingMedium),
+                          Text(name, style: DSTypography.headingMedium),
                           const SizedBox(height: 4),
                           Text(sportDomain,
-                              style: AppTextStyles.bodySmall
-                                  .copyWith(color: AppColors.primary)),
+                              style: DSTypography.bodySmall
+                                  .copyWith(color: DSColors.brand)),
                           Text(experienceLevel,
-                              style: AppTextStyles.caption),
+                              style: DSTypography.caption),
                         ],
                       ),
                     ),
@@ -120,17 +121,17 @@ class _ProfileView extends StatelessWidget {
               _SectionCard(
                 title: 'Baseline Scores',
                 icon: Icons.analytics_rounded,
-                iconColor: AppColors.accent,
+                iconColor: DSColors.info,
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _ScoreCol('Overall', overall, AppColors.primary),
-                        _ScoreCol('Focus', focus, AppColors.accent),
-                        _ScoreCol('Emotional', emotional, AppColors.secondary),
-                        _ScoreCol('Decision', decision, AppColors.warning),
-                        _ScoreCol('Motivation', motivation, AppColors.primary),
+                        _ScoreCol('Overall', overall, DSColors.brand),
+                        _ScoreCol('Focus', focus, DSColors.info),
+                        _ScoreCol('Emotional', emotional, DSColors.success),
+                        _ScoreCol('Decision', decision, DSColors.warning),
+                        _ScoreCol('Motivation', motivation, DSColors.brand),
                       ],
                     ),
                   ],
@@ -142,7 +143,7 @@ class _ProfileView extends StatelessWidget {
               _SectionCard(
                 title: 'Training Background',
                 icon: Icons.info_outline_rounded,
-                iconColor: AppColors.secondary,
+                iconColor: DSColors.success,
                 child: Column(
                   children: [
                     _InfoRow('Family Support', familySupport),
@@ -154,11 +155,12 @@ class _ProfileView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              AppButton(
+              DSButton(
                 label: 'Sign Out',
-                variant: AppButtonVariant.danger,
+                variant: DSButtonVariant.danger,
                 onPressed: () => _confirmLogout(context),
-                icon: Icons.logout_rounded,
+                leadingIcon: const Icon(Icons.logout_rounded),
+                isFullWidth: true,
               ),
               const SizedBox(height: 16),
             ],
@@ -172,11 +174,11 @@ class _ProfileView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.card,
+        backgroundColor: DSColors.appCard,
         title: const Text('Sign Out?'),
         content: const Text(
           'Your local data will be cleared. Are you sure?',
-          style: AppTextStyles.bodyMedium,
+          style: DSTypography.bodyMedium,
         ),
         actions: [
           TextButton(
@@ -185,7 +187,7 @@ class _ProfileView extends StatelessWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error),
+                backgroundColor: DSColors.error),
             onPressed: () {
               Navigator.pop(ctx);
               context
@@ -218,9 +220,9 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: DSColors.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +231,7 @@ class _SectionCard extends StatelessWidget {
             children: [
               Icon(icon, color: iconColor, size: 18),
               const SizedBox(width: 8),
-              Text(title, style: AppTextStyles.headingSmall),
+              Text(title, style: DSTypography.headingSmall),
             ],
           ),
           const SizedBox(height: 16),
@@ -251,10 +253,10 @@ class _ScoreCol extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ScoreRing(score: score, size: 52, strokeWidth: 4, color: color),
+        DSScoreRing(score: score, size: 52, strokeWidth: 4, color: color),
         const SizedBox(height: 4),
         Text(label,
-            style: AppTextStyles.caption,
+            style: DSTypography.caption,
             textAlign: TextAlign.center),
       ],
     );
@@ -276,13 +278,13 @@ class _InfoRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 120,
-            child: Text(label, style: AppTextStyles.bodySmall),
+            child: Text(label, style: DSTypography.bodySmall),
           ),
           Expanded(
             child: Text(
               value,
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textPrimary),
+              style: DSTypography.bodySmall
+                  .copyWith(color: DSColors.textPrimary),
             ),
           ),
         ],

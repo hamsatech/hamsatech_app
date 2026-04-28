@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+
+
 
 class AiInsightsCard extends StatelessWidget {
   const AiInsightsCard({super.key, required this.insights});
@@ -12,9 +13,9 @@ class AiInsightsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: DSColors.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,14 +25,14 @@ class AiInsightsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
+                  color: DSColors.info.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.auto_awesome_rounded,
-                    color: AppColors.accent, size: 18),
+                    color: DSColors.info, size: 18),
               ),
               const SizedBox(width: 10),
-              Text('AI Insights', style: AppTextStyles.headingSmall),
+              Text('AI Insights', style: DSTypography.headingSmall),
             ],
           ),
           const SizedBox(height: 16),
@@ -52,9 +53,9 @@ class _InsightItem extends StatelessWidget {
   final String text;
 
   static const _colors = [
-    AppColors.accent,
-    AppColors.secondary,
-    AppColors.warning,
+    DSColors.info,
+    DSColors.success,
+    DSColors.warning,
   ];
 
   @override
@@ -75,8 +76,8 @@ class _InsightItem extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              style: DSTypography.bodySmall.copyWith(
+                color: DSColors.textSecondary,
                 height: 1.5,
               ),
             ),

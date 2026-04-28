@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+
 
 class MainShellScreen extends StatelessWidget {
   const MainShellScreen({super.key, required this.shell});
@@ -20,8 +21,8 @@ class MainShellScreen extends StatelessWidget {
       body: shell,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.divider)),
+          color: DSColors.appSurface,
+          border: Border(top: BorderSide(color: DSColors.appDivider)),
         ),
         child: SafeArea(
           child: SizedBox(
@@ -48,7 +49,7 @@ class MainShellScreen extends StatelessWidget {
                             width: isActive ? 36 : 0,
                             height: 3,
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: DSColors.brand,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -57,8 +58,8 @@ class MainShellScreen extends StatelessWidget {
                             tab.icon,
                             size: 22,
                             color: isActive
-                                ? AppColors.primary
-                                : AppColors.textMuted,
+                                ? DSColors.brand
+                                : DSColors.textMuted,
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -69,8 +70,8 @@ class MainShellScreen extends StatelessWidget {
                                   ? FontWeight.w600
                                   : FontWeight.w400,
                               color: isActive
-                                  ? AppColors.primary
-                                  : AppColors.textMuted,
+                                  ? DSColors.brand
+                                  : DSColors.textMuted,
                             ),
                           ),
                         ],

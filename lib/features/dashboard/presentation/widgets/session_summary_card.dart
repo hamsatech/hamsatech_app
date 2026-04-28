@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class SessionSummaryCard extends StatelessWidget {
@@ -14,9 +15,9 @@ class SessionSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: DSColors.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,14 +27,14 @@ class SessionSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.15),
+                  color: DSColors.success.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.history_rounded,
-                    color: AppColors.secondary, size: 18),
+                    color: DSColors.success, size: 18),
               ),
               const SizedBox(width: 10),
-              Text('Last Session', style: AppTextStyles.headingSmall),
+              Text('Last Session', style: DSTypography.headingSmall),
             ],
           ),
           const SizedBox(height: 16),
@@ -43,7 +44,7 @@ class SessionSummaryCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'No sessions yet.\nStart your first training session!',
-                  style: AppTextStyles.bodySmall,
+                  style: DSTypography.bodySmall,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -65,15 +66,15 @@ class SessionSummaryCard extends StatelessWidget {
                   label: 'Rating',
                   value: '${'★' * session!.postSessionRating}${'☆' * (5 - session!.postSessionRating)}',
                   icon: Icons.star_border_rounded,
-                  valueColor: AppColors.warning,
+                  valueColor: DSColors.warning,
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            const Divider(color: AppColors.divider),
+            const Divider(color: DSColors.appDivider),
             const SizedBox(height: 12),
             Text('Pre-session state',
-                style: AppTextStyles.labelMedium),
+                style: DSTypography.labelMedium),
             const SizedBox(height: 8),
             _PreSessionBar(
                 label: 'Energy',
@@ -108,15 +109,15 @@ class _SummaryItem extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, color: AppColors.textMuted, size: 16),
+          Icon(icon, color: DSColors.textMuted, size: 16),
           const SizedBox(height: 4),
           Text(
             value,
-            style: AppTextStyles.labelLarge.copyWith(
-              color: valueColor ?? AppColors.textPrimary,
+            style: DSTypography.labelLarge.copyWith(
+              color: valueColor ?? DSColors.textPrimary,
             ),
           ),
-          Text(label, style: AppTextStyles.caption),
+          Text(label, style: DSTypography.caption),
         ],
       ),
     );
@@ -136,9 +137,9 @@ class _PreSessionBar extends StatelessWidget {
 
   Color get _color {
     final normalised = isInverse ? (11 - value) : value;
-    if (normalised >= 7) return AppColors.secondary;
-    if (normalised >= 4) return AppColors.warning;
-    return AppColors.error;
+    if (normalised >= 7) return DSColors.success;
+    if (normalised >= 4) return DSColors.warning;
+    return DSColors.error;
   }
 
   @override
@@ -149,7 +150,7 @@ class _PreSessionBar extends StatelessWidget {
         children: [
           SizedBox(
             width: 56,
-            child: Text(label, style: AppTextStyles.caption),
+            child: Text(label, style: DSTypography.caption),
           ),
           Expanded(
             child: ClipRRect(
@@ -157,14 +158,14 @@ class _PreSessionBar extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: value / 10,
                 minHeight: 6,
-                backgroundColor: AppColors.border,
+                backgroundColor: DSColors.appBorder,
                 valueColor: AlwaysStoppedAnimation<Color>(_color),
               ),
             ),
           ),
           const SizedBox(width: 8),
           Text('$value/10',
-              style: AppTextStyles.caption.copyWith(color: _color)),
+              style: DSTypography.caption.copyWith(color: _color)),
         ],
       ),
     );
