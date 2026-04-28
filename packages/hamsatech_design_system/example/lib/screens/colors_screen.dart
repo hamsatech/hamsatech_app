@@ -8,8 +8,7 @@ class ColorsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcaseScaffold(
-      title: 'Colors',
+    return ShowcaseBody(
       sections: [
         ShowcaseSection(
           title: 'BRAND & SEMANTIC',

@@ -56,9 +56,8 @@ class _ListSelectScreenState extends State<ListSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcaseScaffold(
-      title: 'List / Select Item',
-      sections: [
+    return ShowcaseBody(
+            sections: [
         // ── Check trailing ──────────────────────────────────────────────────
         ShowcaseSection(
           title: 'SINGLE-SELECT · CHECKMARK',

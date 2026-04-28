@@ -34,8 +34,7 @@ class TypographyScreen extends StatelessWidget {
 
     Widget divider() => Divider(height: 1, color: isDark ? DSColors.appBorder : DSColors.gray100);
 
-    return ShowcaseScaffold(
-      title: 'Typography',
+    return ShowcaseBody(
       sections: [
         ShowcaseSection(
           title: 'DISPLAY',

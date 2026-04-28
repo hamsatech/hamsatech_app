@@ -132,6 +132,23 @@ class ShowcaseDivider extends StatelessWidget {
   }
 }
 
+/// Embeds showcase sections in a scrollable ListView — no Scaffold.
+/// Use inside the shell sidebar layout.
+class ShowcaseBody extends StatelessWidget {
+  const ShowcaseBody({super.key, required this.sections});
+  final List<Widget> sections;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = sections.expand((s) => [s, const ShowcaseDivider()]).toList()..removeLast();
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
+      children: items,
+    );
+  }
+}
+
+/// Standalone scaffold wrapper — keeps screens usable outside the shell.
 class ShowcaseScaffold extends StatelessWidget {
   const ShowcaseScaffold({super.key, required this.title, required this.sections});
   final String title;
@@ -147,10 +164,7 @@ class ShowcaseScaffold extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
-        children: sections.expand((s) => [s, const ShowcaseDivider()]).toList()..removeLast(),
-      ),
+      body: ShowcaseBody(sections: sections),
     );
   }
 }

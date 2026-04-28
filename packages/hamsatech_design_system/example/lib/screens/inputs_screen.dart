@@ -44,9 +44,8 @@ class _InputsScreenState extends State<InputsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcaseScaffold(
-      title: 'Inputs',
-      sections: [
+    return ShowcaseBody(
+            sections: [
         // ── DSTextInput States ──────────────────────────────────────────────
         ShowcaseSection(
           title: 'DSTEXTINPUT · STATES',

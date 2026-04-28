@@ -7,8 +7,7 @@ class MiscScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcaseScaffold(
-      title: 'Misc Components',
+    return ShowcaseBody(
       sections: [
         ShowcaseSection(
           title: 'DSSCORERING',

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'shell_screen.dart';
 
 void main() => runApp(const DSExampleApp());
 
@@ -44,7 +44,7 @@ class _DSExampleAppState extends State<DSExampleApp> {
         ),
         scaffoldBackgroundColor: const Color(0xFF0A0E1A),
       ),
-      home: HomeScreen(onToggleTheme: _toggleTheme, themeMode: _themeMode),
+      home: ShellScreen(onToggleTheme: _toggleTheme, themeMode: _themeMode),
     );
   }
 }

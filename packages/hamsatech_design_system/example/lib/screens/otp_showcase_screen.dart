@@ -7,8 +7,7 @@ class OtpShowcaseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcaseScaffold(
-      title: 'OTP Input',
+    return ShowcaseBody(
       sections: [
         ShowcaseSection(
           title: '4-DIGIT',

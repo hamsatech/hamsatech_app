@@ -77,9 +77,8 @@ class _CheckboxScreenState extends State<CheckboxScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcaseScaffold(
-      title: 'Checkbox',
-      sections: [
+    return ShowcaseBody(
+            sections: [
         // ── DSCheckbox States ───────────────────────────────────────────────
         ShowcaseSection(
           title: 'DSCHECKBOX · STATES',

@@ -16,9 +16,8 @@ class _ButtonShowcaseScreenState extends State<ButtonShowcaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ShowcaseScaffold(
-      title: 'Buttons',
-      sections: [
+    return ShowcaseBody(
+            sections: [
         ShowcaseSection(
           title: 'DSBUTTON · VARIANTS',
           description: 'All 9 variants in medium size',
