@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/app_button.dart';
+
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -85,16 +86,16 @@ class _BackgroundContextViewState extends State<_BackgroundContextView> {
               children: [
                 _StepIndicator(current: 2, total: 3),
                 const SizedBox(height: 32),
-                Text('Your environment', style: AppTextStyles.displayMedium),
+                Text('Your environment', style: DSTypography.displayMedium),
                 const SizedBox(height: 8),
                 Text(
                   'Understanding your background helps us provide more accurate insights',
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textSecondary),
+                  style: DSTypography.bodyMedium
+                      .copyWith(color: DSColors.textSecondary),
                 ),
                 const SizedBox(height: 36),
                 Text('Family support level',
-                    style: AppTextStyles.headingSmall),
+                    style: DSTypography.headingSmall),
                 const SizedBox(height: 12),
                 _SupportSelector(
                   selected: _familySupport,
@@ -103,12 +104,12 @@ class _BackgroundContextViewState extends State<_BackgroundContextView> {
                 const SizedBox(height: 28),
                 Text(
                   'What pressures do you typically face?',
-                  style: AppTextStyles.headingSmall,
+                  style: DSTypography.headingSmall,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Select all that apply',
-                  style: AppTextStyles.bodySmall,
+                  style: DSTypography.bodySmall,
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -117,7 +118,7 @@ class _BackgroundContextViewState extends State<_BackgroundContextView> {
                   children: _pressureSourceOptions.map((option) {
                     final selected = _selectedPressureSources.contains(option);
                     return FilterChip(
-                      label: Text(option, style: AppTextStyles.labelMedium),
+                      label: Text(option, style: DSTypography.labelMedium),
                       selected: selected,
                       onSelected: (v) {
                         setState(() {
@@ -128,11 +129,11 @@ class _BackgroundContextViewState extends State<_BackgroundContextView> {
                           }
                         });
                       },
-                      selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                      checkmarkColor: AppColors.primary,
-                      backgroundColor: AppColors.card,
+                      selectedColor: DSColors.brand.withValues(alpha: 0.2),
+                      checkmarkColor: DSColors.brand,
+                      backgroundColor: DSColors.appCard,
                       side: BorderSide(
-                        color: selected ? AppColors.primary : AppColors.border,
+                        color: selected ? DSColors.brand : DSColors.appBorder,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -141,10 +142,11 @@ class _BackgroundContextViewState extends State<_BackgroundContextView> {
                   }).toList(),
                 ),
                 const SizedBox(height: 40),
-                AppButton(
+                DSButton(
                   label: 'Continue to Assessment',
                   onPressed: () => _submit(context),
-                  icon: Icons.arrow_forward_rounded,
+                  leadingIcon: const Icon(Icons.arrow_forward_rounded),
+                  isFullWidth: true,
                 ),
                 const SizedBox(height: 24),
               ],
@@ -166,9 +168,9 @@ class _SupportSelector extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   static const _options = [
-    ('Low', Icons.sentiment_dissatisfied_rounded, AppColors.error),
-    ('Moderate', Icons.sentiment_neutral_rounded, AppColors.warning),
-    ('High', Icons.sentiment_satisfied_rounded, AppColors.secondary),
+    ('Low', Icons.sentiment_dissatisfied_rounded, DSColors.error),
+    ('Moderate', Icons.sentiment_neutral_rounded, DSColors.warning),
+    ('High', Icons.sentiment_satisfied_rounded, DSColors.success),
   ];
 
   @override
@@ -187,22 +189,22 @@ class _SupportSelector extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected
                     ? color.withValues(alpha: 0.15)
-                    : AppColors.card,
+                    : DSColors.appCard,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? color : AppColors.border,
+                  color: isSelected ? color : DSColors.appBorder,
                   width: isSelected ? 2 : 1,
                 ),
               ),
               child: Column(
                 children: [
-                  Icon(icon, color: isSelected ? color : AppColors.textMuted,
+                  Icon(icon, color: isSelected ? color : DSColors.textMuted,
                       size: 28),
                   const SizedBox(height: 6),
                   Text(
                     label,
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: isSelected ? color : AppColors.textSecondary,
+                    style: DSTypography.labelMedium.copyWith(
+                      color: isSelected ? color : DSColors.textSecondary,
                     ),
                   ),
                 ],
@@ -232,7 +234,7 @@ class _StepIndicator extends StatelessWidget {
             height: 4,
             margin: EdgeInsets.only(right: i < total - 1 ? 6 : 0),
             decoration: BoxDecoration(
-              color: done || active ? AppColors.primary : AppColors.border,
+              color: done || active ? DSColors.brand : DSColors.appBorder,
               borderRadius: BorderRadius.circular(2),
             ),
           ),

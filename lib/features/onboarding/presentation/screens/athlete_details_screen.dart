@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
+
+
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -94,28 +95,40 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                   const SizedBox(height: 16),
                   _StepIndicator(current: 1, total: 3),
                   const SizedBox(height: 32),
-                  Text('Tell us about yourself', style: AppTextStyles.displayMedium),
+                  Text('Tell us about yourself', style: DSTypography.displayMedium),
                   const SizedBox(height: 8),
                   Text(
                     'We\'ll use this to personalise your training insights',
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.textSecondary),
+                    style: DSTypography.bodyMedium
+                        .copyWith(color: DSColors.textSecondary),
                   ),
                   const SizedBox(height: 36),
-                  AppTextField(
+                  DSTextInput(
                     controller: _nameController,
                     label: 'Full Name',
-                    hint: 'Enter your full name',
-                    prefixIcon: Icons.person_outline_rounded,
+                    placeholder: 'Enter your full name',
+                    prefixIcon: Padding(
+
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+
+                      child: Icon(Icons.person_outline_rounded, size: 20, color: DSColors.textMuted),
+
+                    ),
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
-                  AppTextField(
+                  DSTextInput(
                     controller: _ageController,
                     label: 'Age',
-                    hint: 'Enter your age',
-                    prefixIcon: Icons.cake_outlined,
+                    placeholder: 'Enter your age',
+                    prefixIcon: Padding(
+
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+
+                      child: Icon(Icons.cake_outlined, size: 20, color: DSColors.textMuted),
+
+                    ),
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
@@ -142,10 +155,11 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                         setState(() => _experienceLevel = v!),
                   ),
                   const SizedBox(height: 40),
-                  AppButton(
+                  DSButton(
                     label: 'Continue',
                     onPressed: () => _submit(context),
-                    icon: Icons.arrow_forward_rounded,
+                    leadingIcon: const Icon(Icons.arrow_forward_rounded),
+                    isFullWidth: true,
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -177,8 +191,8 @@ class _DropdownField extends StatelessWidget {
       key: ValueKey(value),
       initialValue: value,
       decoration: InputDecoration(labelText: label),
-      dropdownColor: AppColors.card,
-      style: AppTextStyles.bodyMedium,
+      dropdownColor: DSColors.appCard,
+      style: DSTypography.bodyMedium,
       items: items
           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
           .toList(),
@@ -204,7 +218,7 @@ class _StepIndicator extends StatelessWidget {
             height: 4,
             margin: EdgeInsets.only(right: i < total - 1 ? 6 : 0),
             decoration: BoxDecoration(
-              color: done || active ? AppColors.primary : AppColors.border,
+              color: done || active ? DSColors.brand : DSColors.appBorder,
               borderRadius: BorderRadius.circular(2),
             ),
           ),

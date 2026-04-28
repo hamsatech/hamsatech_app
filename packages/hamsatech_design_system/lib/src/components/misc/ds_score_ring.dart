@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
-import '../constants/app_text_styles.dart';
+import '../../tokens/ds_colors.dart';
+import '../../tokens/ds_typography.dart';
 
-class ScoreRing extends StatelessWidget {
-  const ScoreRing({
+class DSScoreRing extends StatelessWidget {
+  const DSScoreRing({
     super.key,
     required this.score,
     required this.size,
@@ -13,7 +13,8 @@ class ScoreRing extends StatelessWidget {
     this.color,
   });
 
-  final double score; // 0–100
+  /// 0–100
+  final double score;
   final double size;
   final String? label;
   final double strokeWidth;
@@ -21,9 +22,9 @@ class ScoreRing extends StatelessWidget {
 
   Color get _ringColor {
     if (color != null) return color!;
-    if (score >= 70) return AppColors.secondary;
-    if (score >= 40) return AppColors.warning;
-    return AppColors.error;
+    if (score >= 70) return DSColors.success;
+    if (score >= 40) return DSColors.warning;
+    return DSColors.error;
   }
 
   @override
@@ -47,15 +48,12 @@ class ScoreRing extends StatelessWidget {
             children: [
               Text(
                 score.toInt().toString(),
-                style: AppTextStyles.metricValue.copyWith(
-                  fontSize: size * 0.28,
-                  color: AppColors.textPrimary,
-                ),
+                style: DSTypography.metricValue.copyWith(fontSize: size * 0.28),
               ),
               if (label != null)
                 Text(
                   label!,
-                  style: AppTextStyles.caption.copyWith(fontSize: size * 0.10),
+                  style: DSTypography.caption.copyWith(fontSize: size * 0.10),
                   textAlign: TextAlign.center,
                 ),
             ],
@@ -67,7 +65,7 @@ class ScoreRing extends StatelessWidget {
 }
 
 class _RingPainter extends CustomPainter {
-  _RingPainter({
+  const _RingPainter({
     required this.progress,
     required this.color,
     required this.strokeWidth,
@@ -82,26 +80,26 @@ class _RingPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    final backgroundPaint = Paint()
-      ..color = AppColors.border
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, backgroundPaint);
-
-    final progressPaint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = DSColors.appBorder
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
 
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -math.pi / 2,
       2 * math.pi * progress,
       false,
-      progressPaint,
+      Paint()
+        ..color = color
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+
+
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class ActionPlanCard extends StatelessWidget {
@@ -13,9 +14,9 @@ class ActionPlanCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: DSColors.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,15 +26,15 @@ class ActionPlanCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: DSColors.brand.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.checklist_rounded,
-                    color: AppColors.primary, size: 18),
+                    color: DSColors.brand, size: 18),
               ),
               const SizedBox(width: 10),
               Text('Today\'s Action Plan',
-                  style: AppTextStyles.headingSmall),
+                  style: DSTypography.headingSmall),
             ],
           ),
           const SizedBox(height: 16),
@@ -69,10 +70,10 @@ class _ActionTileState extends State<_ActionTile> {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: DSColors.appBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _done ? AppColors.border : color.withValues(alpha: 0.3),
+                color: _done ? DSColors.appBorder : color.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -83,13 +84,13 @@ class _ActionTileState extends State<_ActionTile> {
                   height: 36,
                   decoration: BoxDecoration(
                     color: _done
-                        ? AppColors.border
+                        ? DSColors.appBorder
                         : color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     _done ? Icons.check_rounded : widget.action.icon,
-                    color: _done ? AppColors.textMuted : color,
+                    color: _done ? DSColors.textMuted : color,
                     size: 18,
                   ),
                 ),
@@ -103,7 +104,7 @@ class _ActionTileState extends State<_ActionTile> {
                           Expanded(
                             child: Text(
                               widget.action.title,
-                              style: AppTextStyles.labelLarge.copyWith(
+                              style: DSTypography.labelLarge.copyWith(
                                 decoration: _done
                                     ? TextDecoration.lineThrough
                                     : null,
@@ -119,7 +120,7 @@ class _ActionTileState extends State<_ActionTile> {
                             ),
                             child: Text(
                               widget.action.priority.label,
-                              style: AppTextStyles.caption.copyWith(
+                              style: DSTypography.caption.copyWith(
                                 color: color,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -130,7 +131,7 @@ class _ActionTileState extends State<_ActionTile> {
                       const SizedBox(height: 4),
                       Text(
                         widget.action.description,
-                        style: AppTextStyles.bodySmall,
+                        style: DSTypography.bodySmall,
                       ),
                     ],
                   ),
