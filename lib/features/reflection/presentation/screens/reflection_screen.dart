@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
 import '../../domain/entities/journal_entry_entity.dart';
 import '../bloc/reflection_bloc.dart';
@@ -37,14 +38,14 @@ class _ReflectionView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.auto_stories_rounded,
-                      size: 64, color: AppColors.textMuted),
+                      size: 64, color: DSColors.textMuted),
                   const SizedBox(height: 16),
                   Text('Your journal is empty',
-                      style: AppTextStyles.headingMedium),
+                      style: DSTypography.headingMedium),
                   const SizedBox(height: 8),
                   Text(
                     'Tap the button below to write your first entry.\nExpress anything — thoughts, emotions, goals.',
-                    style: AppTextStyles.bodySmall,
+                    style: DSTypography.bodySmall,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -64,7 +65,7 @@ class _ReflectionView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEntrySheet(context),
-        backgroundColor: AppColors.primary,
+        backgroundColor: DSColors.brand,
         icon: const Icon(Icons.edit_rounded, color: Colors.white),
         label: const Text('Write Entry',
             style: TextStyle(color: Colors.white)),
@@ -76,7 +77,7 @@ class _ReflectionView extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: DSColors.appSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -135,13 +136,13 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: DSColors.appBorder,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 20),
-          Text('How are you feeling?', style: AppTextStyles.headingMedium),
+          Text('How are you feeling?', style: DSTypography.headingMedium),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -159,21 +160,21 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
                       horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.primary.withValues(alpha: 0.2)
-                        : AppColors.card,
+                        ? DSColors.brand.withValues(alpha: 0.2)
+                        : DSColors.appCard,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.primary
-                          : AppColors.border,
+                          ? DSColors.brand
+                          : DSColors.appBorder,
                     ),
                   ),
                   child: Text(
                     '$emoji $label',
-                    style: AppTextStyles.labelMedium.copyWith(
+                    style: DSTypography.labelMedium.copyWith(
                       color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
+                          ? DSColors.brand
+                          : DSColors.textSecondary,
                     ),
                   ),
                 ),
@@ -185,12 +186,12 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
             controller: _controller,
             autofocus: true,
             maxLines: 5,
-            style: AppTextStyles.bodyMedium,
+            style: DSTypography.bodyMedium,
             decoration: const InputDecoration(
               hintText:
                   'Write your thoughts, feelings, goals, or anything on your mind...',
               filled: true,
-              fillColor: AppColors.card,
+              fillColor: DSColors.appCard,
             ),
           ),
           const SizedBox(height: 16),
@@ -222,10 +223,10 @@ class _EntryCard extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: AppColors.error.withValues(alpha: 0.15),
+          color: DSColors.error.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+        child: const Icon(Icons.delete_outline_rounded, color: DSColors.error),
       ),
       onDismissed: (_) => context.read<ReflectionBloc>().add(
             ReflectionDeleteEntryRequested(entry.id),
@@ -233,9 +234,9 @@ class _EntryCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: DSColors.appCard,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: DSColors.appBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +245,7 @@ class _EntryCard extends StatelessWidget {
               children: [
                 Text(
                   DateFormat('EEE, d MMM · HH:mm').format(entry.timestamp),
-                  style: AppTextStyles.caption,
+                  style: DSTypography.caption,
                 ),
                 const Spacer(),
                 if (entry.emotion != null)
@@ -252,13 +253,13 @@ class _EntryCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: DSColors.brand.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       entry.emotion!,
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.primary),
+                      style: DSTypography.caption
+                          .copyWith(color: DSColors.brand),
                     ),
                   ),
               ],
@@ -266,8 +267,8 @@ class _EntryCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               entry.content,
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.textSecondary),
+              style: DSTypography.bodyMedium
+                  .copyWith(color: DSColors.textSecondary),
             ),
           ],
         ),

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/app_button.dart';
+
 import '../../domain/entities/session_entity.dart';
 import '../bloc/session_bloc.dart';
 import '../bloc/session_event.dart';
@@ -56,7 +57,7 @@ class _PreSessionViewState extends State<_PreSessionView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error),
+                backgroundColor: DSColors.error),
           );
         }
       },
@@ -76,13 +77,13 @@ class _PreSessionViewState extends State<_PreSessionView> {
               children: [
                 Text(
                   'How are you feeling right now?',
-                  style: AppTextStyles.headingLarge,
+                  style: DSTypography.headingLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Be honest — this data helps the AI understand your performance patterns.',
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textSecondary),
+                  style: DSTypography.bodyMedium
+                      .copyWith(color: DSColors.textSecondary),
                 ),
                 const SizedBox(height: 36),
                 _SliderCard(
@@ -90,7 +91,7 @@ class _PreSessionViewState extends State<_PreSessionView> {
                   subtitle: 'How physically energised do you feel?',
                   value: _energy,
                   icon: Icons.bolt_rounded,
-                  color: AppColors.secondary,
+                  color: DSColors.success,
                   onChanged: (v) => setState(() => _energy = v),
                 ),
                 _SliderCard(
@@ -98,7 +99,7 @@ class _PreSessionViewState extends State<_PreSessionView> {
                   subtitle: 'How sharp and focused is your mind?',
                   value: _focus,
                   icon: Icons.center_focus_strong_rounded,
-                  color: AppColors.accent,
+                  color: DSColors.info,
                   onChanged: (v) => setState(() => _focus = v),
                 ),
                 _SliderCard(
@@ -106,7 +107,7 @@ class _PreSessionViewState extends State<_PreSessionView> {
                   subtitle: 'How much stress or anxiety are you experiencing?',
                   value: _stress,
                   icon: Icons.monitor_heart_outlined,
-                  color: AppColors.error,
+                  color: DSColors.error,
                   onChanged: (v) => setState(() => _stress = v),
                 ),
                 _SliderCard(
@@ -114,16 +115,17 @@ class _PreSessionViewState extends State<_PreSessionView> {
                   subtitle: 'How confident do you feel about today\'s session?',
                   value: _confidence,
                   icon: Icons.emoji_events_outlined,
-                  color: AppColors.warning,
+                  color: DSColors.warning,
                   onChanged: (v) => setState(() => _confidence = v),
                 ),
                 const SizedBox(height: 32),
                 BlocBuilder<SessionBloc, SessionState>(
-                  builder: (context, state) => AppButton(
+                  builder: (context, state) => DSButton(
                     label: 'Start Training Session',
                     onPressed: () => _start(context),
                     isLoading: state is SessionLoading,
-                    icon: Icons.play_arrow_rounded,
+                    leadingIcon: const Icon(Icons.play_arrow_rounded),
+                    isFullWidth: true,
                   ),
                 ),
               ],
@@ -158,9 +160,9 @@ class _SliderCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: DSColors.appCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: DSColors.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +171,7 @@ class _SliderCard extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(label, style: AppTextStyles.labelLarge),
+              Text(label, style: DSTypography.labelLarge),
               const Spacer(),
               Container(
                 width: 36,
@@ -181,13 +183,13 @@ class _SliderCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   '$value',
-                  style: AppTextStyles.headingSmall.copyWith(color: color),
+                  style: DSTypography.headingSmall.copyWith(color: color),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(subtitle, style: AppTextStyles.bodySmall),
+          Text(subtitle, style: DSTypography.bodySmall),
           Slider(
             value: value.toDouble(),
             min: 1,
@@ -200,8 +202,8 @@ class _SliderCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Low', style: AppTextStyles.caption),
-              Text('High', style: AppTextStyles.caption),
+              Text('Low', style: DSTypography.caption),
+              Text('High', style: DSTypography.caption),
             ],
           ),
         ],

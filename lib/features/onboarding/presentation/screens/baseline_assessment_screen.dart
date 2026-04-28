@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/app_button.dart';
+
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -34,7 +35,7 @@ class _AssessmentView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage ?? 'An error occurred'),
-              backgroundColor: AppColors.error,
+              backgroundColor: DSColors.error,
             ),
           );
         }
@@ -65,8 +66,8 @@ class _AssessmentView extends StatelessWidget {
             ),
             title: Text(
               'Question ${state.currentQuestionIndex + 1} of ${state.questions.length}',
-              style: AppTextStyles.labelLarge
-                  .copyWith(color: AppColors.textSecondary),
+              style: DSTypography.labelLarge
+                  .copyWith(color: DSColors.textSecondary),
             ),
           ),
           body: SafeArea(
@@ -75,9 +76,9 @@ class _AssessmentView extends StatelessWidget {
                 // Progress bar
                 LinearProgressIndicator(
                   value: state.assessmentProgress,
-                  backgroundColor: AppColors.border,
+                  backgroundColor: DSColors.appBorder,
                   valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      const AlwaysStoppedAnimation<Color>(DSColors.brand),
                   minHeight: 3,
                 ),
                 Expanded(
@@ -91,7 +92,7 @@ class _AssessmentView extends StatelessWidget {
                         const SizedBox(height: 20),
                         Text(
                           question.question,
-                          style: AppTextStyles.headingMedium,
+                          style: DSTypography.headingMedium,
                         ),
                         const SizedBox(height: 28),
                         ...question.options.asMap().entries.map((entry) {
@@ -120,7 +121,7 @@ class _AssessmentView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   child: state.isLastQuestion
-                      ? AppButton(
+                      ? DSButton(
                           label: 'Complete Assessment',
                           onPressed: selectedIndex != null
                               ? () => context.read<OnboardingBloc>().add(
@@ -128,16 +129,18 @@ class _AssessmentView extends StatelessWidget {
                                   )
                               : null,
                           isLoading: state.status == OnboardingStatus.loading,
-                          icon: Icons.check_rounded,
+                          leadingIcon: const Icon(Icons.check_rounded),
+                          isFullWidth: true,
                         )
-                      : AppButton(
+                      : DSButton(
                           label: 'Next Question',
                           onPressed: selectedIndex != null
                               ? () => context
                                   .read<OnboardingBloc>()
                                   .add(const OnboardingNextQuestion())
                               : null,
-                          icon: Icons.arrow_forward_rounded,
+                          leadingIcon: const Icon(Icons.arrow_forward_rounded),
+                          isFullWidth: true,
                         ),
                 ),
               ],
@@ -155,16 +158,16 @@ class _CategoryBadge extends StatelessWidget {
   final String category;
 
   static const _labels = {
-    'focus': ('FOCUS', AppColors.accent),
-    'emotional_stability': ('EMOTIONAL STABILITY', AppColors.secondary),
-    'decision_style': ('DECISION STYLE', AppColors.warning),
-    'motivation': ('MOTIVATION', AppColors.primary),
+    'focus': ('FOCUS', DSColors.info),
+    'emotional_stability': ('EMOTIONAL STABILITY', DSColors.success),
+    'decision_style': ('DECISION STYLE', DSColors.warning),
+    'motivation': ('MOTIVATION', DSColors.brand),
   };
 
   @override
   Widget build(BuildContext context) {
     final (label, color) = _labels[category] ??
-        ('ASSESSMENT', AppColors.textSecondary);
+        ('ASSESSMENT', DSColors.textSecondary);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -174,7 +177,7 @@ class _CategoryBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppTextStyles.caption.copyWith(
+        style: DSTypography.caption.copyWith(
           color: color,
           fontWeight: FontWeight.w700,
           letterSpacing: 1,
@@ -205,11 +208,11 @@ class _OptionCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.12)
-              : AppColors.card,
+              ? DSColors.brand.withValues(alpha: 0.12)
+              : DSColors.appCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? DSColors.brand : DSColors.appBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -222,11 +225,11 @@ class _OptionCard extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color:
-                    isSelected ? AppColors.primary : Colors.transparent,
+                    isSelected ? DSColors.brand : Colors.transparent,
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textMuted,
+                      ? DSColors.brand
+                      : DSColors.textMuted,
                   width: 2,
                 ),
               ),
@@ -239,10 +242,10 @@ class _OptionCard extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: AppTextStyles.bodyMedium.copyWith(
+                style: DSTypography.bodyMedium.copyWith(
                   color: isSelected
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? DSColors.textPrimary
+                      : DSColors.textSecondary,
                 ),
               ),
             ),

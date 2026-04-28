@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+
 
 class DashboardDataEntity extends Equatable {
   const DashboardDataEntity({
@@ -63,9 +64,9 @@ class ReadinessMetrics extends Equatable {
 }
 
 enum ReadinessLevel {
-  ready('Ready', AppColors.readyGreen),
-  moderate('Moderate', AppColors.moderateAmber),
-  needsRecovery('Needs Recovery', AppColors.needsRecoveryRed);
+  ready('Ready', DSColors.success),
+  moderate('Moderate', DSColors.warning),
+  needsRecovery('Needs Recovery', DSColors.error);
 
   const ReadinessLevel(this.label, this.color);
   final String label;
@@ -73,9 +74,9 @@ enum ReadinessLevel {
 }
 
 enum FocusLevel {
-  high('High', AppColors.focusHigh),
-  medium('Medium', AppColors.focusMedium),
-  low('Low', AppColors.focusLow);
+  high('High', DSColors.info),
+  medium('Medium', DSColors.warning),
+  low('Low', DSColors.error);
 
   const FocusLevel(this.label, this.color);
   final String label;
@@ -148,9 +149,9 @@ class ActionItem extends Equatable {
 }
 
 enum ActionPriority {
-  high('High Priority', AppColors.error),
-  medium('Recommended', AppColors.warning),
-  low('Optional', AppColors.textSecondary);
+  high('High Priority', DSColors.error),
+  medium('Recommended', DSColors.warning),
+  low('Optional', DSColors.textSecondary);
 
   const ActionPriority(this.label, this.color);
   final String label;

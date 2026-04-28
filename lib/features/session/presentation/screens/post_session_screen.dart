@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+
+
 import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
+
+
 import '../../domain/entities/session_entity.dart';
 import '../bloc/session_bloc.dart';
 import '../bloc/session_event.dart';
@@ -88,7 +89,7 @@ class _PostSessionViewState extends State<_PostSessionView> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Session saved! Great work.'),
-              backgroundColor: AppColors.secondary,
+              backgroundColor: DSColors.success,
             ),
           );
           context.go('/home');
@@ -96,7 +97,7 @@ class _PostSessionViewState extends State<_PostSessionView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error),
+                backgroundColor: DSColors.error),
           );
         }
       },
@@ -111,16 +112,16 @@ class _PostSessionViewState extends State<_PostSessionView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Session complete!', style: AppTextStyles.displayMedium),
+                Text('Session complete!', style: DSTypography.displayMedium),
                 const SizedBox(height: 8),
                 Text(
                   'Take 2 minutes to reflect. This is where growth happens.',
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textSecondary),
+                  style: DSTypography.bodyMedium
+                      .copyWith(color: DSColors.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 Text('Overall session quality',
-                    style: AppTextStyles.headingSmall),
+                    style: DSTypography.headingSmall),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -132,7 +133,7 @@ class _PostSessionViewState extends State<_PostSessionView> {
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Icon(
                           star <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: AppColors.warning,
+                          color: DSColors.warning,
                           size: 40,
                         ),
                       ),
@@ -140,36 +141,55 @@ class _PostSessionViewState extends State<_PostSessionView> {
                   }),
                 ),
                 const SizedBox(height: 28),
-                AppTextField(
+                DSTextInput(
                   controller: _wentWellController,
                   label: 'What went well?',
-                  hint: 'e.g. My hold was steady, breathing was controlled...',
+                  placeholder: 'e.g. My hold was steady, breathing was controlled...',
                   maxLines: 3,
-                  prefixIcon: Icons.thumb_up_outlined,
+                  prefixIcon: Padding(
+
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+
+                    child: Icon(Icons.thumb_up_outlined, size: 20, color: DSColors.textMuted),
+
+                  ),
                 ),
                 const SizedBox(height: 16),
-                AppTextField(
+                DSTextInput(
                   controller: _wentWrongController,
                   label: 'What needs improvement?',
-                  hint: 'e.g. I lost focus after shot 8, trigger pull was inconsistent...',
+                  placeholder: 'e.g. I lost focus after shot 8, trigger pull was inconsistent...',
                   maxLines: 3,
-                  prefixIcon: Icons.thumb_down_outlined,
+                  prefixIcon: Padding(
+
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+
+                    child: Icon(Icons.thumb_down_outlined, size: 20, color: DSColors.textMuted),
+
+                  ),
                 ),
                 const SizedBox(height: 16),
-                AppTextField(
+                DSTextInput(
                   controller: _mentalNotesController,
                   label: 'Mental state notes',
-                  hint: 'e.g. Felt anxious about selection, distracted by external noise...',
+                  placeholder: 'e.g. Felt anxious about selection, distracted by external noise...',
                   maxLines: 3,
-                  prefixIcon: Icons.psychology_outlined,
+                  prefixIcon: Padding(
+
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+
+                    child: Icon(Icons.psychology_outlined, size: 20, color: DSColors.textMuted),
+
+                  ),
                 ),
                 const SizedBox(height: 36),
                 BlocBuilder<SessionBloc, SessionState>(
-                  builder: (context, state) => AppButton(
+                  builder: (context, state) => DSButton(
                     label: 'Save Reflection',
                     onPressed: () => _save(context),
                     isLoading: state is SessionLoading,
-                    icon: Icons.save_rounded,
+                    leadingIcon: const Icon(Icons.save_rounded),
+                    isFullWidth: true,
                   ),
                 ),
                 const SizedBox(height: 24),

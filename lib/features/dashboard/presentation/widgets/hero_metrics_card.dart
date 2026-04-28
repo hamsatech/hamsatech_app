@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
-import '../../../../core/widgets/score_ring.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+
+
+
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class HeroMetricsCard extends StatelessWidget {
@@ -25,7 +26,7 @@ class HeroMetricsCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             level.color.withValues(alpha: 0.15),
-            AppColors.card,
+            DSColors.appCard,
           ],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -44,7 +45,7 @@ class HeroMetricsCard extends StatelessWidget {
                   children: [
                     Text(
                       'Good ${_greeting()}, $athleteName',
-                      style: AppTextStyles.headingSmall,
+                      style: DSTypography.headingSmall,
                     ),
                     const SizedBox(height: 4),
                     Container(
@@ -68,7 +69,7 @@ class HeroMetricsCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             level.label,
-                            style: AppTextStyles.labelMedium.copyWith(
+                            style: DSTypography.labelMedium.copyWith(
                               color: level.color,
                             ),
                           ),
@@ -78,7 +79,7 @@ class HeroMetricsCard extends StatelessWidget {
                   ],
                 ),
               ),
-              ScoreRing(
+              DSScoreRing(
                 score: metrics.readinessScore,
                 size: 88,
                 label: 'Readiness',
@@ -87,7 +88,7 @@ class HeroMetricsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          const Divider(color: AppColors.divider),
+          const Divider(color: DSColors.appDivider),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -132,9 +133,9 @@ class HeroMetricsCard extends StatelessWidget {
   }
 
   Color _stressColor(double v) {
-    if (v < 35) return AppColors.secondary;
-    if (v < 65) return AppColors.warning;
-    return AppColors.error;
+    if (v < 35) return DSColors.success;
+    if (v < 65) return DSColors.warning;
+    return DSColors.error;
   }
 
   String _energyLabel(double v) {
@@ -144,9 +145,9 @@ class HeroMetricsCard extends StatelessWidget {
   }
 
   Color _energyColor(double v) {
-    if (v >= 70) return AppColors.secondary;
-    if (v >= 40) return AppColors.warning;
-    return AppColors.error;
+    if (v >= 70) return DSColors.success;
+    if (v >= 40) return DSColors.warning;
+    return DSColors.error;
   }
 }
 
@@ -169,9 +170,9 @@ class _MetricPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: DSColors.appBackground,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: DSColors.appBorder),
         ),
         child: Column(
           children: [
@@ -179,8 +180,8 @@ class _MetricPill extends StatelessWidget {
             const SizedBox(height: 4),
             Text(value,
                 style:
-                    AppTextStyles.labelMedium.copyWith(color: color)),
-            Text(label, style: AppTextStyles.caption),
+                    DSTypography.labelMedium.copyWith(color: color)),
+            Text(label, style: DSTypography.caption),
           ],
         ),
       ),

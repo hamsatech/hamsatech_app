@@ -1,7 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+
+
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class PerformanceChartCard extends StatelessWidget {
@@ -14,9 +15,9 @@ class PerformanceChartCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: DSColors.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,17 +27,17 @@ class PerformanceChartCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: DSColors.brand.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.show_chart_rounded,
-                    color: AppColors.primary, size: 18),
+                    color: DSColors.brand, size: 18),
               ),
               const SizedBox(width: 10),
-              Text('Performance Trend', style: AppTextStyles.headingSmall),
+              Text('Performance Trend', style: DSTypography.headingSmall),
               const Spacer(),
               Text('Last 5 sessions',
-                  style: AppTextStyles.caption),
+                  style: DSTypography.caption),
             ],
           ),
           const SizedBox(height: 20),
@@ -46,7 +47,7 @@ class PerformanceChartCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
                   'Complete sessions to see your trend',
-                  style: AppTextStyles.bodySmall,
+                  style: DSTypography.bodySmall,
                 ),
               ),
             )
@@ -60,9 +61,9 @@ class PerformanceChartCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _Legend(color: AppColors.primary, label: 'Session Quality'),
+                _Legend(color: DSColors.brand, label: 'Session Quality'),
                 const SizedBox(width: 20),
-                _Legend(color: AppColors.accent, label: 'Focus'),
+                _Legend(color: DSColors.info, label: 'Focus'),
               ],
             ),
           ],
@@ -85,7 +86,7 @@ class PerformanceChartCard extends StatelessWidget {
         drawVerticalLine: false,
         horizontalInterval: 25,
         getDrawingHorizontalLine: (_) => const FlLine(
-          color: AppColors.divider,
+          color: DSColors.appDivider,
           strokeWidth: 1,
         ),
       ),
@@ -98,7 +99,7 @@ class PerformanceChartCard extends StatelessWidget {
             interval: 25,
             getTitlesWidget: (v, _) => Text(
               v.toInt().toString(),
-              style: AppTextStyles.caption,
+              style: DSTypography.caption,
             ),
           ),
         ),
@@ -107,7 +108,7 @@ class PerformanceChartCard extends StatelessWidget {
             showTitles: true,
             getTitlesWidget: (v, _) => Text(
               'S${v.toInt() + 1}',
-              style: AppTextStyles.caption,
+              style: DSTypography.caption,
             ),
           ),
         ),
@@ -117,8 +118,8 @@ class PerformanceChartCard extends StatelessWidget {
             const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
       lineBarsData: [
-        _lineBar(qualitySpots, AppColors.primary),
-        _lineBar(focusSpots, AppColors.accent),
+        _lineBar(qualitySpots, DSColors.brand),
+        _lineBar(focusSpots, DSColors.info),
       ],
     );
   }
@@ -163,7 +164,7 @@ class _Legend extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(label, style: AppTextStyles.caption),
+        Text(label, style: DSTypography.caption),
       ],
     );
   }
