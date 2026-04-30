@@ -13,7 +13,8 @@ class DSTheme {
       scaffoldBackgroundColor: DSColors.appBackground,
       colorScheme: const ColorScheme.dark(
         primary: DSColors.brand,
-        secondary: DSColors.success,
+        secondary: DSColors.coral,
+        tertiary: DSColors.navy,
         surface: DSColors.appSurface,
         error: DSColors.error,
         onPrimary: DSColors.white,

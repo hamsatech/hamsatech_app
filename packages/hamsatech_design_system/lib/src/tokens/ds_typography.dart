@@ -118,4 +118,26 @@ class DSTypography {
     color: DSColors.textPrimary,
     letterSpacing: -0.5,
   );
+
+  // ── Onboarding / Welcome screen (light-mode surface) ─────────────────────
+  static const TextStyle onboardingHeader = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+    color: DSColors.brand,
+    letterSpacing: -0.3,
+  );
+
+  static const TextStyle onboardingSubheader = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: Color(0xFF6B7C8D),
+  );
+
+  static const TextStyle onboardingCaption = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    color: Color(0xFF0D1F2D),
+    height: 1.3,
+    letterSpacing: -0.2,
+  );
 }

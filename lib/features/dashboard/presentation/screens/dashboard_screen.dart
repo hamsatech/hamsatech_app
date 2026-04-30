@@ -107,6 +107,7 @@ class _DashboardView extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_dashboard',
         onPressed: () => context.push('/session/pre'),
         backgroundColor: DSColors.brand,
         icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
