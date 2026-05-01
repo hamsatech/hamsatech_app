@@ -50,8 +50,7 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
       'name': _nameController.text.trim(),
       'discipline': _selectedDiscipline,
     });
-    await StorageService.setOnboardingComplete(true);
-    if (mounted) context.go('/home');
+    if (mounted) context.go('/onboarding/assessment');
   }
 
   @override

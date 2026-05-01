@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/onboarding_slide_entity.dart';
 
-enum WelcomeStatus { idle, navigateToSignUp, navigateToLogin }
+enum WelcomeStatus { idle, navigateToSignUp, navigateToLogin, comingSoon }
 
 class WelcomeState extends Equatable {
   const WelcomeState({

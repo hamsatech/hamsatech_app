@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../data/repositories/login_repository_impl.dart';
 import '../../domain/entities/onboarding_slide_entity.dart';
@@ -14,8 +14,7 @@ import '../viewmodels/welcome_view_model.dart';
 import '../widgets/page_indicator.dart';
 
 // ── Palette (matches Figma "login -v2" frame) ─────────────────────────────────
-const _kBrand     = DSColors.terracotta;  // #C94B2A
-const _kBodyMuted = Color(0xFF6B7280);   // subtitle text
+const _kBrand = DSColors.terracotta;  // #C94B2A
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -61,8 +60,27 @@ class _WelcomeViewState extends State<_WelcomeView> {
       listenWhen: (prev, curr) =>
           curr.status != WelcomeStatus.idle && curr.status != prev.status,
       listener: (context, state) {
+        if (state.status == WelcomeStatus.comingSoon) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Coming soon!',
+                style: DSTypography.bodyMd.copyWith(color: Colors.white),
+              ),
+              backgroundColor: DSColors.gray700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DSRadius.md)),
+            ),
+          );
+          return;
+        }
         HapticFeedback.lightImpact();
-        context.push('/login');
+        if (state.status == WelcomeStatus.navigateToSignUp) {
+          context.push('/signup');
+        } else {
+          context.push('/login');
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -96,6 +114,8 @@ class _WelcomeViewState extends State<_WelcomeView> {
                           context.read<WelcomeBloc>().add(const WelcomeSignUpTapped()),
                       onLogIn: () =>
                           context.read<WelcomeBloc>().add(const WelcomeLogInTapped()),
+                      onGoogle: () =>
+                          context.read<WelcomeBloc>().add(const WelcomeGoogleTapped()),
                     ),
                     const SizedBox(height: 32),
                   ],
@@ -124,24 +144,13 @@ class _Header extends StatelessWidget {
           Text(
             WelcomeViewModel.headerSubtitle,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: _kBodyMuted,
-              letterSpacing: 0.1,
-            ),
+            style: DSTypography.onboardingSubheader,
           ),
           const SizedBox(height: 6),
           Text(
             WelcomeViewModel.headerTitle,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: _kBrand,
-              letterSpacing: -0.5,
-              height: 1.15,
-            ),
+            style: DSTypography.onboardingHeader,
           ),
         ],
       ),
@@ -310,13 +319,7 @@ class _Caption extends StatelessWidget {
               child: Text(
                 slide!.caption,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.ptSerif(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF212529),
-                  height: 32 / 28, // 32px line-height from Figma
-                  letterSpacing: 0,
-                ),
+                style: DSTypography.onboardingCaption,
               ),
             ),
     );
@@ -329,10 +332,12 @@ class _ActionButtons extends StatelessWidget {
   const _ActionButtons({
     required this.onSignUp,
     required this.onLogIn,
+    required this.onGoogle,
   });
 
   final VoidCallback onSignUp;
   final VoidCallback onLogIn;
+  final VoidCallback onGoogle;
 
   @override
   Widget build(BuildContext context) {
@@ -344,9 +349,7 @@ class _ActionButtons extends StatelessWidget {
             label: WelcomeViewModel.signUpLabel,
             onPressed: onSignUp,
             color: _kBrand,
-            textStyle: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+            textStyle: DSTypography.headingMd.copyWith(
               color: Colors.white,
               letterSpacing: 0.2,
             ),
@@ -356,12 +359,10 @@ class _ActionButtons extends StatelessWidget {
             label: WelcomeViewModel.loginLabel,
             onPressed: onLogIn,
             color: _kBrand,
-            textStyle: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: _kBrand,
-            ),
+            textStyle: DSTypography.headingSm.copyWith(color: _kBrand),
           ),
+          const SizedBox(height: 20),
+       
         ],
       ),
     );

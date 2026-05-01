@@ -9,6 +9,7 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
     on<WelcomePageChanged>(_onPageChanged);
     on<WelcomeSignUpTapped>(_onSignUpTapped);
     on<WelcomeLogInTapped>(_onLogInTapped);
+    on<WelcomeGoogleTapped>(_onGoogleTapped);
   }
 
   final WelcomeViewModel _viewModel;
@@ -34,5 +35,9 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
   ) async {
     await _viewModel.initiateLogin();
     emit(state.copyWith(status: WelcomeStatus.navigateToLogin));
+  }
+
+  void _onGoogleTapped(WelcomeGoogleTapped event, Emitter<WelcomeState> emit) {
+    emit(state.copyWith(status: WelcomeStatus.comingSoon));
   }
 }

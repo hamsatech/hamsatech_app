@@ -6,7 +6,7 @@ import '../../../../core/services/storage_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   // In production this would call an API. We simulate OTP with a fixed code.
-  static const _validOtp = '1234';
+  static const _validOtp = '123456';
 
   @override
   Future<void> sendOtp(String phoneOrEmail) async {

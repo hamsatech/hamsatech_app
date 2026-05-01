@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
+import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/basic_profile_screen.dart';
+import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
@@ -29,8 +31,9 @@ class AppRouter {
       final isLoggedIn = StorageService.getAuthToken() != null;
       final isProfileDone = StorageService.isOnboardingComplete();
 
-      const publicPaths = ['/splash', '/welcome', '/login', '/otp'];
+      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
       const profileSetupPath = '/profile/setup';
+      const onboardingPaths = {profileSetupPath, '/onboarding/assessment'};
 
       if (path == '/splash') return null;
 
@@ -38,7 +41,7 @@ class AppRouter {
         return '/welcome';
       }
 
-      if (isLoggedIn && !isProfileDone && path != profileSetupPath) {
+      if (isLoggedIn && !isProfileDone && !onboardingPaths.contains(path)) {
         return profileSetupPath;
       }
 
@@ -60,6 +63,10 @@ class AppRouter {
         builder: (_, __) => const WelcomeScreen(),
       ),
       GoRoute(
+        path: '/signup',
+        builder: (_, __) => const SignUpScreen(),
+      ),
+      GoRoute(
         path: '/login',
         builder: (_, __) => const LoginScreen(),
       ),
@@ -70,6 +77,10 @@ class AppRouter {
       GoRoute(
         path: '/profile/setup',
         builder: (_, __) => const BasicProfileScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/assessment',
+        builder: (_, __) => const BaselineAssessmentScreen(),
       ),
       GoRoute(
         path: '/session/pre',

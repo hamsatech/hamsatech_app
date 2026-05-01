@@ -23,3 +23,8 @@ class WelcomeSignUpTapped extends WelcomeEvent {
 class WelcomeLogInTapped extends WelcomeEvent {
   const WelcomeLogInTapped();
 }
+
+/// User tapped "Continue with Google".
+class WelcomeGoogleTapped extends WelcomeEvent {
+  const WelcomeGoogleTapped();
+}

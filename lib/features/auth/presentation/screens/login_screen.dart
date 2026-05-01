@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+
 import '../../../../core/di/injection.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/auth_numpad.dart';
+import '../viewmodels/phone_verification_view_model.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -15,44 +18,57 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => getIt<AuthBloc>(),
-      child: const _LoginView(),
+      child: const _PhoneVerificationView(),
     );
   }
 }
 
-class _LoginView extends StatefulWidget {
-  const _LoginView();
+// ── View ──────────────────────────────────────────────────────────────────────
+
+class _PhoneVerificationView extends StatefulWidget {
+  const _PhoneVerificationView();
 
   @override
-  State<_LoginView> createState() => _LoginViewState();
+  State<_PhoneVerificationView> createState() => _PhoneVerificationViewState();
 }
 
-class _LoginViewState extends State<_LoginView> {
-  String _phone = '';
+class _PhoneVerificationViewState extends State<_PhoneVerificationView> {
+  final _controller = TextEditingController();
 
-  static const int _maxLength = 10;
+  DSCountryCode _selectedCountry = PhoneVerificationViewModel.defaultCountry;
 
-  void _onDigit(String d) {
-    if (_phone.length >= _maxLength) return;
-    setState(() => _phone += d);
-  }
-
-  void _onDelete() {
-    if (_phone.isEmpty) return;
-    setState(() => _phone = _phone.substring(0, _phone.length - 1));
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void _submit(BuildContext context) {
-    if (_phone.isEmpty) return;
+    final digits = _controller.text.trim();
+    if (!PhoneVerificationViewModel.isPhoneValid(digits)) return;
     HapticFeedback.lightImpact();
-    context.read<AuthBloc>().add(AuthSendOtpRequested(_phone));
+    final fullPhone = PhoneVerificationViewModel.buildFullPhone(
+      _selectedCountry,
+      digits,
+    );
+    context.read<AuthBloc>().add(AuthSendOtpRequested(fullPhone));
   }
 
-  String get _displayPhone {
-    if (_phone.isEmpty) return '123-456-7890';
-    // format as XXX-XXX-XXXX
-    final digits = _phone.padRight(_maxLength, '·');
-    return '${digits.substring(0, 3)}-${digits.substring(3, 6)}-${digits.substring(6)}';
+  void _showCountryPicker(BuildContext context) {
+    showModalBottomSheet<DSCountryCode>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _CountryPickerSheet(
+        countries: PhoneVerificationViewModel.countryCodes,
+        selected: _selectedCountry,
+        onSelect: (country) {
+          setState(() => _selectedCountry = country);
+          Navigator.of(context).pop();
+        },
+      ),
+    );
   }
 
   @override
@@ -64,301 +80,196 @@ class _LoginViewState extends State<_LoginView> {
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
-              backgroundColor: const Color(0xFFEF4444),
+              content: Text(
+                state.message,
+                style: DSTypography.bodyMd.copyWith(color: Colors.white),
+              ),
+              backgroundColor: DSColors.error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(DSRadius.md)),
             ),
           );
         }
       },
-      child: Scaffold(
+      child: Theme(
+        data: ThemeData(useMaterial3: true, brightness: Brightness.light),
+        child: Scaffold(
         backgroundColor: Colors.white,
-        body: Column(
-          children: [
-            Expanded(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      // Back button
-                      GestureDetector(
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go('/welcome'),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F8FA),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: const Color(0xFFE0E7EF)),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 16,
-                            color: Color(0xFF0D1F2D),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      // Illustration
-                      Center(child: _PhoneIllustration()),
-                      const SizedBox(height: 28),
-                      // Heading
-                      const Center(
-                        child: Text(
-                          'Enter your phone number',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0D1F2D),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Country code + phone display
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFFE0E7EF)),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 16),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  right: BorderSide(
-                                      color: const Color(0xFFE0E7EF)),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '🇮🇳',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    '+91',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF0D1F2D),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    size: 18,
-                                    color: Color(0xFF6B7C8D),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 16),
-                                child: Text(
-                                  _phone.isEmpty ? '123-456-7890' : _displayPhone,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500,
-                                    color: _phone.isEmpty
-                                        ? const Color(0xFFB0BEC5)
-                                        : const Color(0xFF0D1F2D),
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'HamsaTech will send you a text with a verification code.\nMessage and data rates may apply.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: const Color(0xFF6B7C8D),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: () {},
-                        child: const Text(
-                          'What if my number changes?',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF14B8A6),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Continue button
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) => _ContinueButton(
-                          enabled: _phone.isNotEmpty,
-                          isLoading: state is AuthOtpSending,
-                          onTap: () => _submit(context),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Custom numpad pinned at bottom
-            AuthNumpad(onDigit: _onDigit, onDelete: _onDelete),
-          ],
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go('/welcome'),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                size: 18, color: Color(0xFF0D1F2D)),
+          ),
+          title: Text(
+            PhoneVerificationViewModel.screenTitle,
+            style: DSTypography.headingMd
+                .copyWith(color: const Color(0xFF0D1F2D)),
+          ),
+          centerTitle: true,
         ),
-      ),
-    );
-  }
-}
-
-// ── Phone Illustration ────────────────────────────────────────────────────────
-
-class _PhoneIllustration extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 120,
-      height: 100,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Phone body
-          Container(
-            width: 56,
-            height: 90,
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF0D1F2D), width: 2.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 6,
-                  margin: const EdgeInsets.fromLTRB(14, 6, 14, 0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D1F2D),
-                    borderRadius: BorderRadius.circular(4),
+                const SizedBox(height: 32),
+                SvgPicture.asset(
+                  'assets/icons/hand_holding_phone.svg',
+                  width: 129,
+                  height: 157,
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  PhoneVerificationViewModel.heading,
+                  style: DSTypography.onboardingCaption
+                      .copyWith(color: const Color(0xFF0D1F2D)),
+                ),
+                const SizedBox(height: 20),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _controller,
+                  builder: (context, value, _) {
+                    return DSPhoneInput(
+                      controller: _controller,
+                      label: 'Mobile number',
+                      selectedCountry: _selectedCountry,
+                      onCountryTap: () => _showCountryPicker(context),
+                      placeholder: '123-456-7890',
+                      helperText: PhoneVerificationViewModel.helperText,
+                      onChanged: (_) => setState(() {}),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () {},
+                  child: Center(
+                    child: Text(
+                      PhoneVerificationViewModel.changeNumberText,
+                      style: DSTypography.labelMd.copyWith(
+                        color: DSColors.terracotta,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-                const Spacer(),
-                Container(
-                  width: 20,
-                  height: 20,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFF0D1F2D), width: 2),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: const Icon(Icons.chat_bubble_outline_rounded,
-                      size: 10, color: Color(0xFF0D1F2D)),
+                const SizedBox(height: 32),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    final isLoading = state is AuthOtpSending;
+                    final isEnabled = PhoneVerificationViewModel.isPhoneValid(
+                        _controller.text.trim());
+                    return AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: isEnabled ? 1.0 : 0.45,
+                      child: DSPrimaryButton(
+                        label: PhoneVerificationViewModel.continueLabel,
+                        color: DSColors.terracotta,
+                        isLoading: isLoading,
+                        onPressed: (isEnabled && !isLoading)
+                            ? () => _submit(context)
+                            : () {},
+                        textStyle: DSTypography.headingMd.copyWith(
+                          color: Colors.white,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    );
+                  },
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
-          // Floating bubble top-right
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF14B8A6),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF14B8A6).withValues(alpha: 0.3),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.message_rounded,
-                  size: 14, color: Colors.white),
-            ),
-          ),
-          // Floating bubble top-left
-          Positioned(
-            top: 8,
-            left: 4,
-            child: Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F4F7),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE0E7EF)),
-              ),
-              child: const Icon(Icons.lock_outline_rounded,
-                  size: 12, color: Color(0xFF6B7C8D)),
-            ),
-          ),
-        ],
+        ),
+      ),
       ),
     );
   }
 }
 
-// ── Continue Button ───────────────────────────────────────────────────────────
+// ── Country Picker Bottom Sheet ───────────────────────────────────────────────
 
-class _ContinueButton extends StatelessWidget {
-  const _ContinueButton({
-    required this.enabled,
-    required this.isLoading,
-    required this.onTap,
+class _CountryPickerSheet extends StatelessWidget {
+  const _CountryPickerSheet({
+    required this.countries,
+    required this.selected,
+    required this.onSelect,
   });
 
-  final bool enabled;
-  final bool isLoading;
-  final VoidCallback onTap;
+  final List<DSCountryCode> countries;
+  final DSCountryCode selected;
+  final ValueChanged<DSCountryCode> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 200),
-        opacity: enabled ? 1.0 : 0.5,
-        child: ElevatedButton(
-          onPressed: (enabled && !isLoading) ? onTap : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF14B8A6),
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFF14B8A6),
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 12),
+        Container(
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: DSColors.gray300,
+            borderRadius: BorderRadius.circular(DSRadius.full),
           ),
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2))
-              : const Text(
-                  'Continue',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
-                ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'Select country',
+            style: DSTypography.headingMd
+                .copyWith(color: const Color(0xFF0D1F2D)),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Divider(height: 1),
+        Flexible(
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: countries.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, indent: 56, endIndent: 16),
+            itemBuilder: (_, i) {
+              final country = countries[i];
+              final isSelected = country.code == selected.code;
+              return ListTile(
+                leading: Text(
+                  country.flag,
+                  style: const TextStyle(fontSize: 22),
+                ),
+                title: Text(
+                  country.name,
+                  style: DSTypography.bodyMd.copyWith(
+                    color: const Color(0xFF0D1F2D),
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+                trailing: Text(
+                  country.dialCode,
+                  style: DSTypography.labelMd
+                      .copyWith(color: const Color(0xFF6B7280)),
+                ),
+                selected: isSelected,
+                selectedTileColor: DSColors.terracotta.withValues(alpha: 0.06),
+                onTap: () => onSelect(country),
+              );
+            },
+          ),
+        ),
+        SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
+      ],
     );
   }
 }

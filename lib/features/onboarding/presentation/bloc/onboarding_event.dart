@@ -51,6 +51,10 @@ class OnboardingPreviousQuestion extends OnboardingEvent {
   const OnboardingPreviousQuestion();
 }
 
+class OnboardingAssessmentStarted extends OnboardingEvent {
+  const OnboardingAssessmentStarted();
+}
+
 class OnboardingAssessmentCompleted extends OnboardingEvent {
   const OnboardingAssessmentCompleted();
 }
