@@ -18,6 +18,8 @@ class StorageService {
   static Future<void> clearAuth() async {
     await _prefs.remove('auth_token');
     await _prefs.remove('user_profile');
+    await _prefs.remove('profile_setup_complete');
+    await _prefs.remove('onboarding_complete');
   }
 
   // ── User profile ──────────────────────────────────────────────────────────
@@ -32,6 +34,12 @@ class StorageService {
   }
 
   // ── Onboarding ────────────────────────────────────────────────────────────
+
+  static Future<void> setProfileSetupComplete(bool value) =>
+      _prefs.setBool('profile_setup_complete', value);
+
+  static bool isProfileSetupComplete() =>
+      _prefs.getBool('profile_setup_complete') ?? false;
 
   static Future<void> setOnboardingComplete(bool value) =>
       _prefs.setBool('onboarding_complete', value);

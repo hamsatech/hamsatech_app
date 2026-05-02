@@ -9,18 +9,24 @@ class InputsScreen extends StatefulWidget {
 }
 
 class _InputsScreenState extends State<InputsScreen> {
-  final _basic = TextEditingController();
-  final _error = TextEditingController(text: 'bad@input');
-  final _filled = TextEditingController(text: 'Hamsatech.com');
-  final _search = TextEditingController();
-  final _url = TextEditingController();
-  final _phone = TextEditingController();
-  final _amount = TextEditingController();
-  final _pwd = TextEditingController();
-  final _area = TextEditingController();
-  final _group = TextEditingController();
+  final _basic    = TextEditingController();
+  final _error    = TextEditingController(text: 'bad@input');
+  final _filled   = TextEditingController(text: 'Hamsatech.com');
+  final _search   = TextEditingController();
+  final _url      = TextEditingController();
+  final _phone    = TextEditingController();
+  final _amount   = TextEditingController();
+  final _pwd      = TextEditingController();
+  final _area     = TextEditingController();
+  final _group    = TextEditingController();
   final _referral = TextEditingController(text: 'WELCOME25');
   final _comboCtrl = TextEditingController();
+  // Inline controllers promoted to fields so they are properly disposed
+  final _disabled   = TextEditingController(text: 'Disabled value');
+  final _loading    = TextEditingController();
+  final _filledArea = TextEditingController(text: 'I am reaching out to inquire about your services.');
+  final _errorArea  = TextEditingController();
+  final _dateCtrl   = TextEditingController();
 
   String? _comboValue;
   final Set<String> _multiValues = {};
@@ -36,7 +42,11 @@ class _InputsScreenState extends State<InputsScreen> {
 
   @override
   void dispose() {
-    for (final c in [_basic, _error, _filled, _search, _url, _phone, _amount, _pwd, _area, _group, _referral, _comboCtrl]) {
+    for (final c in [
+      _basic, _error, _filled, _search, _url, _phone, _amount,
+      _pwd, _area, _group, _referral, _comboCtrl,
+      _disabled, _loading, _filledArea, _errorArea, _dateCtrl,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -60,9 +70,9 @@ class _InputsScreenState extends State<InputsScreen> {
                 const SizedBox(height: 14),
                 DSTextInput(controller: _error, label: 'Error', isRequired: true, state: DSInputState.error, errorText: 'This field contains invalid input'),
                 const SizedBox(height: 14),
-                DSTextInput(controller: TextEditingController(text: 'Disabled value'), label: 'Disabled', state: DSInputState.disabled, placeholder: 'Disabled'),
+                DSTextInput(controller: _disabled, label: 'Disabled', state: DSInputState.disabled, placeholder: 'Disabled'),
                 const SizedBox(height: 14),
-                DSTextInput(controller: TextEditingController(), label: 'Loading', state: DSInputState.loading, placeholder: 'Fetching…'),
+                DSTextInput(controller: _loading, label: 'Loading', state: DSInputState.loading, placeholder: 'Fetching…'),
               ]),
             ),
           ],
@@ -136,7 +146,7 @@ class _InputsScreenState extends State<InputsScreen> {
           children: [
             ShowcaseCard(
               code: "DSDateInput(controller: ctrl, label: 'Select date', isRequired: true)",
-              child: DSDateInput(controller: TextEditingController(), label: 'Select date', isRequired: true, showInfoIcon: true, helperText: 'Pick a date from the calendar'),
+              child: DSDateInput(controller: _dateCtrl, label: 'Select date', isRequired: true, showInfoIcon: true, helperText: 'Pick a date from the calendar'),
             ),
           ],
         ),
@@ -150,9 +160,9 @@ class _InputsScreenState extends State<InputsScreen> {
               child: Column(children: [
                 DSTextArea(controller: _area, label: 'Send message', isRequired: true, showInfoIcon: true, placeholder: 'Write your message here…', maxLength: 500),
                 const SizedBox(height: 14),
-                DSTextArea(controller: TextEditingController(text: 'I am reaching out to inquire about your services.'), label: 'Filled', isRequired: true, maxLength: 500),
+                DSTextArea(controller: _filledArea, label: 'Filled', isRequired: true, maxLength: 500),
                 const SizedBox(height: 14),
-                DSTextArea(controller: TextEditingController(), label: 'Error state', isRequired: true, state: DSInputState.error, errorText: 'Max length: 500 characters. Please shorten your message.', maxLength: 500),
+                DSTextArea(controller: _errorArea, label: 'Error state', isRequired: true, state: DSInputState.error, errorText: 'Max length: 500 characters. Please shorten your message.', maxLength: 500),
               ]),
             ),
           ],
