@@ -155,6 +155,8 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                         setState(() => _experienceLevel = v!),
                   ),
                   const SizedBox(height: 40),
+                  // Example navigation to the newly added route:
+                  // context.push('/onboarding/step1');
                   DSButton(
                     label: 'Continue',
                     onPressed: () => _submit(context),
