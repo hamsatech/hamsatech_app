@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>This app requires Bluetooth to connect to your Polar heart rate sensor.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Required for connecting to Bluetooth devices on iOS 12 and earlier.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

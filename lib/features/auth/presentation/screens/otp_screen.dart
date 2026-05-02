@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+
 import '../../../../core/di/injection.dart';
+import '../../../../core/services/storage_service.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../viewmodels/otp_verification_view_model.dart';
 
 class OtpScreen extends StatelessWidget {
   const OtpScreen({super.key, required this.phoneOrEmail});
@@ -21,6 +27,8 @@ class OtpScreen extends StatelessWidget {
   }
 }
 
+// ── View ──────────────────────────────────────────────────────────────────────
+
 class _OtpView extends StatefulWidget {
   const _OtpView({required this.phoneOrEmail});
 
@@ -31,81 +39,225 @@ class _OtpView extends StatefulWidget {
 }
 
 class _OtpViewState extends State<_OtpView> {
-  String _currentOtp = '';
+  String _otp = '';
+  String? _errorText;
+  bool _clearText = false;
+  List<TextEditingController?> _otpControllers = [];
 
-  void _submit(BuildContext context) {
-    if (_currentOtp.length != 4) return;
+  void _onCodeChanged(String _) {
+    final full = _otpControllers.map((c) => c?.text ?? '').join();
+    setState(() {
+      _otp = full;
+      if (full.isNotEmpty) _errorText = null;
+    });
+  }
+
+  void _onOtpCompleted(String value) {
+    setState(() => _otp = value);
+    Future.delayed(const Duration(milliseconds: 80), _submit);
+  }
+
+  void _submit() {
+    if (_otp.length != OtpVerificationViewModel.otpLength) return;
+    HapticFeedback.lightImpact();
     context.read<AuthBloc>().add(AuthVerifyOtpRequested(
           phoneOrEmail: widget.phoneOrEmail,
-          otp: _currentOtp,
+          otp: _otp,
         ));
+  }
+
+  void _resend() {
+    context.read<AuthBloc>().add(AuthSendOtpRequested(widget.phoneOrEmail));
   }
 
   @override
   Widget build(BuildContext context) {
+    final displayPhone =
+        OtpVerificationViewModel.formatDisplayPhone(widget.phoneOrEmail);
+    final isError = _errorText != null;
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          context.go('/onboarding/details');
+          final isProfileDone = StorageService.isOnboardingComplete();
+          context.go(isProfileDone ? '/home' : '/profile/setup');
         } else if (state is AuthFailure) {
-          setState(() => _currentOtp = '');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: DSColors.error),
-          );
+          setState(() {
+            _otp = '';
+            _errorText = state.message;
+            _clearText = true;
+          });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _clearText = false);
+          });
         }
       },
       child: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
             onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                size: 18, color: Color(0xFF0D1F2D)),
           ),
+          title: Text(
+            OtpVerificationViewModel.screenTitle,
+            style: DSTypography.headingMd
+                .copyWith(color: const Color(0xFF0D1F2D)),
+          ),
+          centerTitle: true,
         ),
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
-                Text('Verify your identity', style: DSTypography.displayMedium),
-                const SizedBox(height: 12),
+                const SizedBox(height: 32),
+                const _EnvelopeIllustration(),
+                const SizedBox(height: 32),
                 Text(
-                  'Enter the 4-digit code sent to\n${widget.phoneOrEmail}',
-                  style: DSTypography.bodyMedium.copyWith(color: DSColors.textSecondary),
+                  OtpVerificationViewModel.heading,
+                  textAlign: TextAlign.left,
+                  style: DSTypography.onboardingCaption
+                      .copyWith(color: const Color(0xFF0D1F2D), height: 1.3),
                 ),
-                const SizedBox(height: 48),
-                DSOtpInput(
-                  length: 4,
-                  onChanged: (otp) => setState(() => _currentOtp = otp),
-                  onCompleted: (_) => _submit(context),
+                const SizedBox(height: 24),
+                OtpTextField(
+                  numberOfFields: OtpVerificationViewModel.otpLength,
+                  showFieldAsBox: true,
+                  fieldWidth: 44,
+                  borderRadius: BorderRadius.circular(6),
+                  borderWidth: 1.0,
+                  borderColor:
+                      isError ? DSColors.error : DSColors.gray200,
+                  enabledBorderColor:
+                      isError ? DSColors.error : DSColors.gray200,
+                  focusedBorderColor:
+                      isError ? DSColors.error : DSColors.gray700,
+                  disabledBorderColor: DSColors.gray200,
+                  filled: true,
+                  fillColor: Colors.white,
+                  textStyle: DSTypography.headingMd
+                      .copyWith(color: DSColors.gray900),
+                  cursorColor: DSColors.brand,
+                  // phone keyboard commits each char immediately — avoids
+                  // Android IME composing-text artefacts that appear as symbols
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  contentPadding: EdgeInsets.zero,
+                  autoFocus: false,
+                  clearText: _clearText,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  handleControllers: (controllers) {
+                    _otpControllers = controllers;
+                  },
+                  onCodeChanged: _onCodeChanged,
+                  onSubmit: _onOtpCompleted,
                 ),
-                const SizedBox(height: 48),
-                BlocBuilder<AuthBloc, AuthState>(
-                  builder: (context, state) => DSButton(
-                    label: 'Verify & Continue',
-                    onPressed: _currentOtp.length == 4 ? () => _submit(context) : null,
-                    isLoading: state is AuthVerifying,
-                    isFullWidth: true,
+                if (isError) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded,
+                          size: 12, color: DSColors.error),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          _errorText!,
+                          style: DSTypography.bodySm
+                              .copyWith(color: DSColors.error),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+                RichText(
+                  text: TextSpan(
+                    style: DSTypography.bodySm
+                        .copyWith(color: const Color(0xFF6B7280)),
+                    children: [
+                      TextSpan(
+                        text: '${OtpVerificationViewModel.sentToPrefix}'
+                            '$displayPhone. ',
+                      ),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: GestureDetector(
+                          onTap: () => context.pop(),
+                          child: Text(
+                            OtpVerificationViewModel.editLabel,
+                            style: DSTypography.bodySm.copyWith(
+                              color: DSColors.terracotta,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Center(
-                  child: TextButton(
-                    onPressed: () => context.read<AuthBloc>().add(
-                          AuthSendOtpRequested(widget.phoneOrEmail),
-                        ),
+                  child: GestureDetector(
+                    onTap: _resend,
                     child: Text(
-                      'Resend OTP',
-                      style: DSTypography.labelMedium.copyWith(color: DSColors.brand),
+                      OtpVerificationViewModel.resendText,
+                      style: DSTypography.labelMd.copyWith(
+                        color: DSColors.terracotta,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
+                const Spacer(),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    final isLoading = state is AuthVerifying;
+                    final isEnabled =
+                        _otp.length == OtpVerificationViewModel.otpLength;
+                    return AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: isEnabled ? 1.0 : 0.45,
+                      child: DSPrimaryButton(
+                        label: OtpVerificationViewModel.continueLabel,
+                        color: DSColors.terracotta,
+                        isLoading: isLoading,
+                        onPressed: (isEnabled && !isLoading) ? _submit : () {},
+                        textStyle: DSTypography.headingMd.copyWith(
+                          color: Colors.white,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Envelope Illustration ─────────────────────────────────────────────────────
+
+class _EnvelopeIllustration extends StatelessWidget {
+  const _EnvelopeIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.asset(
+      'assets/icons/message_bird.svg',
+      width: 80,
+      height: 103,
     );
   }
 }

@@ -13,7 +13,8 @@ class DSTheme {
       scaffoldBackgroundColor: DSColors.appBackground,
       colorScheme: const ColorScheme.dark(
         primary: DSColors.brand,
-        secondary: DSColors.success,
+        secondary: DSColors.coral,
+        tertiary: DSColors.navy,
         surface: DSColors.appSurface,
         error: DSColors.error,
         onPrimary: DSColors.white,
@@ -21,7 +22,7 @@ class DSTheme {
         onSurface: DSColors.textPrimary,
         onError: DSColors.white,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme:  AppBarTheme(
         backgroundColor: DSColors.appBackground,
         foregroundColor: DSColors.textPrimary,
         elevation: 0,
@@ -116,7 +117,7 @@ class DSTheme {
         valueIndicatorTextStyle:
             const TextStyle(color: DSColors.white, fontSize: 12),
       ),
-      textTheme: const TextTheme(
+      textTheme:  TextTheme(
         displayLarge: DSTypography.displayLarge,
         displayMedium: DSTypography.displayMedium,
         headlineLarge: DSTypography.headingLarge,

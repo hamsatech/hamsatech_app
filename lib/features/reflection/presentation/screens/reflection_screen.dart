@@ -64,6 +64,7 @@ class _ReflectionView extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_journal',
         onPressed: () => _showAddEntrySheet(context),
         backgroundColor: DSColors.brand,
         icon: const Icon(Icons.edit_rounded, color: Colors.white),

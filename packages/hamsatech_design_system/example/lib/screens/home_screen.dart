@@ -37,12 +37,12 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 28),
           _GroupLabel(label: 'FOUNDATION', isDark: isDark),
           const SizedBox(height: 10),
-          _NavCard(icon: Icons.palette_outlined, color: const Color(0xFFF97316), title: 'Colors', subtitle: 'Full palette · brand · semantic · surfaces · text', isDark: isDark, screen: const ColorsScreen()),
+          _NavCard(icon: Icons.palette_outlined, color: const Color(0xFF14B8A6), title: 'Colors', subtitle: 'Full palette · brand · semantic · surfaces · text', isDark: isDark, screen: const ColorsScreen()),
           _NavCard(icon: Icons.text_fields_rounded, color: const Color(0xFF8B5CF6), title: 'Typography', subtitle: 'Display · heading · body · label · app-specific · mono', isDark: isDark, screen: const TypographyScreen()),
           const SizedBox(height: 24),
           _GroupLabel(label: 'COMPONENTS', isDark: isDark),
           const SizedBox(height: 10),
-          _NavCard(icon: Icons.smart_button_outlined, color: const Color(0xFFF97316), title: 'Buttons', subtitle: 'DSButton · DSIconButton · DSSegmentedControl · DSButtonGroup', isDark: isDark, screen: const ButtonShowcaseScreen()),
+          _NavCard(icon: Icons.smart_button_outlined, color: const Color(0xFF14B8A6), title: 'Buttons', subtitle: 'DSButton · DSIconButton · DSSegmentedControl · DSButtonGroup', isDark: isDark, screen: const ButtonShowcaseScreen()),
           _NavCard(icon: Icons.input_rounded, color: const Color(0xFF3B82F6), title: 'Inputs', subtitle: 'Text · Search · URL · Phone · Amount · Tags · Password · Date · Area · Group · Combobox', isDark: isDark, screen: const InputsScreen()),
           _NavCard(icon: Icons.dialpad_rounded, color: const Color(0xFF10B981), title: 'OTP Input', subtitle: '4-digit · 6-digit · separator · error · disabled · cell sizes', isDark: isDark, screen: const OtpShowcaseScreen()),
           _NavCard(icon: Icons.check_box_outlined, color: const Color(0xFF06B6D4), title: 'Checkbox', subtitle: 'DSCheckbox · Group · Card Group · Tree (indeterminate parent)', isDark: isDark, screen: const CheckboxScreen()),
@@ -67,7 +67,7 @@ class _Banner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFD35F0A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: const LinearGradient(colors: [Color(0xFF14B8A6), Color(0xFF0F766E)], begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
