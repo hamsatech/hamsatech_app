@@ -8,6 +8,10 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step1_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart'; // TEMP TEST ROUTE
 import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
@@ -20,8 +24,12 @@ import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
+<<<<<<< HEAD
 import '../../features/polar/presentation/screens/polar_device_screen.dart';
 import '../services/storage_service.dart';
+=======
+// import '../services/storage_service.dart'; // TEMP: restore with redirect
+>>>>>>> b795bee (feat: onboarding steps 1–4 screens implemented)
 
 class AppRouter {
   AppRouter._();
@@ -31,14 +39,31 @@ class AppRouter {
 
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/splash',
+    initialLocation: '/onboarding/step4', // TEMP TEST ROUTE (revert to '/onboarding/step1')
+    // TEMP: Force Step2 for UI testing — restore original redirect block to re-enable auth guards
+    redirect: (context, state) => null,
+    /* ORIGINAL REDIRECT — uncomment to restore:
     redirect: (context, state) {
       final path = state.fullPath ?? '';
       final isLoggedIn = StorageService.getAuthToken() != null;
       final isProfileSetupDone = StorageService.isProfileSetupComplete();
       final isOnboardingDone = StorageService.isOnboardingComplete();
 
-      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
+final publicPaths = [
+  '/splash',
+  '/welcome',
+  '/signup',
+  '/login',
+  '/otp',
+];
+
+final onboardingPaths = [
+  '/onboarding/step1',
+  '/onboarding/details',
+  '/onboarding/background',
+  '/onboarding/assessment',
+  '/onboarding/complete',
+];
 
       if (path == '/splash') return null;
 
@@ -66,18 +91,40 @@ class AppRouter {
 
       return null;
     },
+    */
     routes: [
       GoRoute(
         path: '/splash',
         builder: (_, __) => const SplashScreen(),
       ),
       GoRoute(
+<<<<<<< HEAD
         path: '/welcome',
         builder: (_, __) => const WelcomeScreen(),
       ),
       GoRoute(
         path: '/signup',
         builder: (_, __) => const SignUpScreen(),
+=======
+        path: '/onboarding/step1',
+        builder: (_, __) => const OnboardingStep1Screen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step2',
+        builder: (_, __) => const OnboardingStep2Screen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step3',
+        builder: (_, __) => const OnboardingStep3Screen(),
+      ),
+      GoRoute( // TEMP TEST ROUTE
+        path: '/onboarding/step4',
+        builder: (_, __) => const OnboardingStep4Screen(),
+      ),
+      GoRoute( // stub — replace with real Step5Screen when implemented
+        path: '/onboarding/step5',
+        builder: (_, __) => const OnboardingStep4Screen(),
+>>>>>>> b795bee (feat: onboarding steps 1–4 screens implemented)
       ),
       GoRoute(
         path: '/login',
