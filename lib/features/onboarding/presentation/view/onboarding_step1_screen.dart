@@ -6,7 +6,7 @@ import '../bloc/onboarding_step1_event.dart';
 import '../bloc/onboarding_step1_state.dart';
 
 class OnboardingStep1Screen extends StatelessWidget {
-  const OnboardingStep1Screen({Key? key}) : super(key: key);
+  const OnboardingStep1Screen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class OnboardingStep1Screen extends StatelessWidget {
 }
 
 class _OnboardingStep1View extends StatefulWidget {
-  const _OnboardingStep1View({Key? key}) : super(key: key);
+  const _OnboardingStep1View({super.key});
 
   @override
   State<_OnboardingStep1View> createState() => _OnboardingStep1ViewState();

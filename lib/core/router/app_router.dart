@@ -1,35 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/presentation/screens/splash_screen.dart';
-import '../../features/auth/presentation/screens/welcome_screen.dart';
-import '../../features/auth/presentation/screens/sign_up_screen.dart';
+// Permissions
+import '../../features/permissions/presentation/view/permissions_screen.dart';
+
+// Auth
+import '../../features/auth/presentation/screens/basic_profile_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
+import '../../features/auth/presentation/screens/sign_up_screen.dart';
+import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/presentation/screens/welcome_screen.dart';
+
+// Dashboard
+import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+
+// Onboarding (SCREENS)
 import '../../features/onboarding/presentation/screens/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step1_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart'; // TEMP TEST ROUTE
 import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_complete_screen.dart';
+
+// Onboarding (VIEWS)
 import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
-import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+
+// Session
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
 import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
-import '../../features/profile/presentation/screens/profile_screen.dart';
+
+// Shell
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
-<<<<<<< HEAD
+
+// Polar
 import '../../features/polar/presentation/screens/polar_device_screen.dart';
+
+// Profile
+import '../../features/profile/presentation/screens/profile_screen.dart';
+
+// Services
 import '../services/storage_service.dart';
-=======
-// import '../services/storage_service.dart'; // TEMP: restore with redirect
->>>>>>> b795bee (feat: onboarding steps 1–4 screens implemented)
 
 class AppRouter {
   AppRouter._();
@@ -39,92 +53,38 @@ class AppRouter {
 
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/onboarding/step4', // TEMP TEST ROUTE (revert to '/onboarding/step1')
-    // TEMP: Force Step2 for UI testing — restore original redirect block to re-enable auth guards
+    initialLocation: '/permissions',
+
+    // Keep simple for now (testing)
     redirect: (context, state) => null,
-    /* ORIGINAL REDIRECT — uncomment to restore:
-    redirect: (context, state) {
-      final path = state.fullPath ?? '';
-      final isLoggedIn = StorageService.getAuthToken() != null;
-      final isProfileSetupDone = StorageService.isProfileSetupComplete();
-      final isOnboardingDone = StorageService.isOnboardingComplete();
 
-final publicPaths = [
-  '/splash',
-  '/welcome',
-  '/signup',
-  '/login',
-  '/otp',
-];
-
-final onboardingPaths = [
-  '/onboarding/step1',
-  '/onboarding/details',
-  '/onboarding/background',
-  '/onboarding/assessment',
-  '/onboarding/complete',
-];
-
-      if (path == '/splash') return null;
-
-      if (!isLoggedIn && !publicPaths.contains(path)) {
-        return '/welcome';
-      }
-
-      if (isLoggedIn) {
-        if (!isProfileSetupDone) {
-          if (path.startsWith('/onboarding/')) return null;
-          return '/onboarding/step1';
-        }
-
-        if (!isOnboardingDone) {
-          if (path == '/onboarding/assessment') return null;
-          return '/onboarding/assessment';
-        }
-
-        if (publicPaths.contains(path) ||
-            path == '/onboarding/step1' ||
-            path == '/onboarding/assessment') {
-          return '/home';
-        }
-      }
-
-      return null;
-    },
-    */
     routes: [
+      // Permissions
+      GoRoute(
+        path: '/permissions',
+        builder: (_, __) => const PermissionsScreen(),
+      ),
+
+      // TEMP next screen
+      GoRoute(
+        path: '/next-screen',
+        builder: (_, __) => const Scaffold(
+          body: Center(child: Text('Next Screen — Placeholder')),
+        ),
+      ),
+
+      // Auth
       GoRoute(
         path: '/splash',
         builder: (_, __) => const SplashScreen(),
       ),
       GoRoute(
-<<<<<<< HEAD
         path: '/welcome',
         builder: (_, __) => const WelcomeScreen(),
       ),
       GoRoute(
         path: '/signup',
         builder: (_, __) => const SignUpScreen(),
-=======
-        path: '/onboarding/step1',
-        builder: (_, __) => const OnboardingStep1Screen(),
-      ),
-      GoRoute(
-        path: '/onboarding/step2',
-        builder: (_, __) => const OnboardingStep2Screen(),
-      ),
-      GoRoute(
-        path: '/onboarding/step3',
-        builder: (_, __) => const OnboardingStep3Screen(),
-      ),
-      GoRoute( // TEMP TEST ROUTE
-        path: '/onboarding/step4',
-        builder: (_, __) => const OnboardingStep4Screen(),
-      ),
-      GoRoute( // stub — replace with real Step5Screen when implemented
-        path: '/onboarding/step5',
-        builder: (_, __) => const OnboardingStep4Screen(),
->>>>>>> b795bee (feat: onboarding steps 1–4 screens implemented)
       ),
       GoRoute(
         path: '/login',
@@ -132,8 +92,12 @@ final onboardingPaths = [
       ),
       GoRoute(
         path: '/otp',
-        builder: (_, state) => OtpScreen(phoneOrEmail: state.extra as String),
+        builder: (_, state) => OtpScreen(
+          phoneOrEmail: state.extra as String,
+        ),
       ),
+
+      // Onboarding Flow
       GoRoute(
         path: '/onboarding/step1',
         builder: (_, __) => const OnboardingStep1Screen(),
@@ -149,6 +113,10 @@ final onboardingPaths = [
       GoRoute(
         path: '/onboarding/step4',
         builder: (_, __) => const OnboardingStep4Screen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step5',
+        builder: (_, __) => const OnboardingStep4Screen(), // placeholder
       ),
       GoRoute(
         path: '/onboarding/details',
@@ -163,10 +131,18 @@ final onboardingPaths = [
         builder: (_, __) => const BaselineAssessmentScreen(),
       ),
       GoRoute(
+        path: '/onboarding/complete',
+        builder: (_, __) => const OnboardingCompleteScreen(),
+      ),
+
+      // Polar
+      GoRoute(
         path: '/polar',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const PolarDeviceScreen(),
       ),
+
+      // Session Flow
       GoRoute(
         path: '/session/pre',
         parentNavigatorKey: _rootNavigatorKey,
@@ -175,8 +151,9 @@ final onboardingPaths = [
       GoRoute(
         path: '/session/active',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, state) =>
-            ActiveSessionScreen(sessionId: state.extra as String),
+        builder: (_, state) => ActiveSessionScreen(
+          sessionId: state.extra as String,
+        ),
       ),
       GoRoute(
         path: '/session/post',
@@ -185,10 +162,13 @@ final onboardingPaths = [
           final extra = state.extra as Map;
           return PostSessionScreen(
             sessionId: extra['sessionId'] as String,
-            durationMinutes: (extra['durationMinutes'] as num?)?.toInt() ?? 0,
+            durationMinutes:
+                (extra['durationMinutes'] as num?)?.toInt() ?? 0,
           );
         },
       ),
+
+      // Main App Shell
       StatefulShellRoute.indexedStack(
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __, shell) => MainShellScreen(shell: shell),
