@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -15,6 +16,7 @@ import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
 import '../../features/reflection/presentation/screens/reflection_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/permissions/presentation/view/permissions_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
 import '../services/storage_service.dart';
 
@@ -26,13 +28,19 @@ class AppRouter {
 
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/splash',
+    initialLocation: '/permissions',
     redirect: (context, state) {
       final path = state.fullPath ?? '';
       final isLoggedIn = StorageService.getAuthToken() != null;
       final isOnboardingDone = StorageService.isOnboardingComplete();
 
-      final publicPaths = ['/splash', '/login', '/otp'];
+      final publicPaths = [
+        '/splash',
+        '/login',
+        '/otp',
+        '/permissions',
+        '/permissions/next',
+      ];
       final onboardingPaths = [
         '/onboarding/details',
         '/onboarding/background',
@@ -69,8 +77,17 @@ class AppRouter {
       ),
       GoRoute(
         path: '/otp',
-        builder: (_, state) =>
-            OtpScreen(phoneOrEmail: state.extra as String),
+        builder: (_, state) => OtpScreen(phoneOrEmail: state.extra as String),
+      ),
+      GoRoute(
+        path: '/permissions',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const PermissionsScreen(),
+      ),
+      GoRoute(
+        path: '/permissions/next',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const _PermissionsNextScreen(),
       ),
       GoRoute(
         path: '/onboarding/details',
@@ -151,4 +168,29 @@ class AppRouter {
       ),
     ],
   );
+}
+
+class _PermissionsNextScreen extends StatelessWidget {
+  const _PermissionsNextScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: DSColors.white,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DSSpacing.xxl),
+            child: Text(
+              'Next screen placeholder',
+              style: DSTypography.headingLarge.copyWith(
+                color: DSColors.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
