@@ -20,6 +20,9 @@ import '../../features/reflection/data/repositories/reflection_repository_impl.d
 import '../../features/reflection/domain/repositories/reflection_repository.dart';
 import '../../features/reflection/presentation/bloc/reflection_bloc.dart';
 
+import '../../features/polar/data/services/polar_ble_service.dart';
+import '../../features/polar/presentation/bloc/polar_bloc.dart';
+
 final getIt = GetIt.instance;
 
 void setupDI() {
@@ -40,4 +43,7 @@ void setupDI() {
   getIt.registerFactory<DashboardBloc>(() => DashboardBloc(getIt()));
   getIt.registerFactory<SessionBloc>(() => SessionBloc(getIt()));
   getIt.registerFactory<ReflectionBloc>(() => ReflectionBloc(getIt()));
+
+  getIt.registerLazySingleton<PolarBleService>(() => PolarBleService());
+  getIt.registerLazySingleton<PolarBloc>(() => PolarBloc(getIt()));
 }

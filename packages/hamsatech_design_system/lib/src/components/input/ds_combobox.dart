@@ -151,7 +151,8 @@ class _DSComboboxState<T> extends State<DSCombobox<T>> {
 
   @override
   void dispose() {
-    _hideOverlay();
+    _overlay?.remove();
+    _overlay = null;
     _focusNode.removeListener(_onFocusChange);
     _controller.removeListener(_onSearch);
     _controller.dispose();
@@ -299,7 +300,8 @@ class _DSMultiComboboxState<T> extends State<DSMultiCombobox<T>> {
 
   @override
   void dispose() {
-    _hideOverlay();
+    _overlay?.remove();
+    _overlay = null;
     _focusNode.removeListener(_onFocusChange);
     _searchCtrl.removeListener(_onSearch);
     _searchCtrl.dispose();

@@ -1,23 +1,63 @@
 PODS:
+  - Alamofire (5.8.1)
   - Flutter (1.0.0)
+  - permission_handler_apple (9.3.0):
+    - Flutter
+  - PolarBleSdk (5.8.0):
+    - Alamofire (~> 5.8.1)
+    - RxSwift (~> 6.5.0)
+    - SwiftProtobuf (~> 1.0)
+    - Zip (~> 2.1.2)
+  - RxCocoa (6.5.0):
+    - RxRelay (= 6.5.0)
+    - RxSwift (= 6.5.0)
+  - RxRelay (6.5.0):
+    - RxSwift (= 6.5.0)
+  - RxSwift (6.5.0)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - SwiftProtobuf (1.37.0)
+  - Zip (2.1.2)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - PolarBleSdk (~> 5.8.0)
+  - RxCocoa (~> 6.0)
+  - RxSwift (~> 6.0)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
+
+SPEC REPOS:
+  trunk:
+    - Alamofire
+    - PolarBleSdk
+    - RxCocoa
+    - RxRelay
+    - RxSwift
+    - SwiftProtobuf
+    - Zip
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
 
 SPEC CHECKSUMS:
+  Alamofire: 3ca42e259043ee0dc5c0cdd76c4bc568b8e42af7
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+  PolarBleSdk: c13d71b90b4f65c24cd19803170c5e2c83d18fe4
+  RxCocoa: 94f817b71c07517321eb4f9ad299112ca8af743b
+  RxRelay: 1de1523e604c72b6c68feadedd1af3b1b4d0ecbd
+  RxSwift: 5710a9e6b17f3c3d6e40d6e559b9fa1e813b2ef8
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
+  SwiftProtobuf: 3fafd1b2fb97e6d95ad9c8adb2215da9afec7c83
+  Zip: b3fef584b147b6e582b2256a9815c897d60ddc67
 
-PODFILE CHECKSUM: 251cb053df7158f337c0712f2ab29f4e0fa474ce
+PODFILE CHECKSUM: 2dfe41bf176dfaccf112d8c242255fb05f0f2bff
 
 COCOAPODS: 1.16.2

@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/presentation/screens/welcome_screen.dart';
+import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
-import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
-import '../../features/onboarding/presentation/screens/background_context_screen.dart';
+import '../../features/auth/presentation/screens/basic_profile_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
-import '../../features/onboarding/presentation/screens/onboarding_complete_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
 import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
-import '../../features/reflection/presentation/screens/reflection_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
+import '../../features/polar/presentation/screens/polar_device_screen.dart';
 import '../services/storage_service.dart';
 
 class AppRouter {
@@ -30,30 +30,37 @@ class AppRouter {
     redirect: (context, state) {
       final path = state.fullPath ?? '';
       final isLoggedIn = StorageService.getAuthToken() != null;
+      final isProfileSetupDone = StorageService.isProfileSetupComplete();
       final isOnboardingDone = StorageService.isOnboardingComplete();
 
-      final publicPaths = ['/splash', '/login', '/otp'];
-      final onboardingPaths = [
-        '/onboarding/details',
-        '/onboarding/background',
-        '/onboarding/assessment',
-        '/onboarding/complete',
-      ];
+      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
 
       if (path == '/splash') return null;
 
+      // Not logged in → send to welcome
       if (!isLoggedIn && !publicPaths.contains(path)) {
-        return '/login';
+        return '/welcome';
       }
 
-      if (isLoggedIn && !isOnboardingDone && !onboardingPaths.contains(path)) {
-        return '/onboarding/details';
-      }
+      if (isLoggedIn) {
+        // Step 1 incomplete → basic profile
+        if (!isProfileSetupDone) {
+          if (path == '/profile/setup') return null;
+          return '/profile/setup';
+        }
 
-      if (isLoggedIn &&
-          isOnboardingDone &&
-          (publicPaths.contains(path) || onboardingPaths.contains(path))) {
-        return '/home';
+        // Step 2 incomplete → questionnaire
+        if (!isOnboardingDone) {
+          if (path == '/onboarding/assessment') return null;
+          return '/onboarding/assessment';
+        }
+
+        // Fully done → home (kick off public/setup paths)
+        if (publicPaths.contains(path) ||
+            path == '/profile/setup' ||
+            path == '/onboarding/assessment') {
+          return '/home';
+        }
       }
 
       return null;
@@ -64,29 +71,33 @@ class AppRouter {
         builder: (_, __) => const SplashScreen(),
       ),
       GoRoute(
+        path: '/welcome',
+        builder: (_, __) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        builder: (_, __) => const SignUpScreen(),
+      ),
+      GoRoute(
         path: '/login',
         builder: (_, __) => const LoginScreen(),
       ),
       GoRoute(
         path: '/otp',
-        builder: (_, state) =>
-            OtpScreen(phoneOrEmail: state.extra as String),
+        builder: (_, state) => OtpScreen(phoneOrEmail: state.extra as String),
       ),
       GoRoute(
-        path: '/onboarding/details',
-        builder: (_, __) => const AthleteDetailsScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/background',
-        builder: (_, __) => const BackgroundContextScreen(),
+        path: '/profile/setup',
+        builder: (_, __) => const BasicProfileScreen(),
       ),
       GoRoute(
         path: '/onboarding/assessment',
         builder: (_, __) => const BaselineAssessmentScreen(),
       ),
       GoRoute(
-        path: '/onboarding/complete',
-        builder: (_, __) => const OnboardingCompleteScreen(),
+        path: '/polar',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const PolarDeviceScreen(),
       ),
       GoRoute(
         path: '/session/pre',
@@ -128,14 +139,6 @@ class AppRouter {
               GoRoute(
                 path: '/sessions',
                 builder: (_, __) => const SessionsListScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/journal',
-                builder: (_, __) => const ReflectionScreen(),
               ),
             ],
           ),

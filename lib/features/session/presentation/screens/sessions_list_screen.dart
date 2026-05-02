@@ -85,6 +85,7 @@ class _SessionsListView extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_sessions',
         onPressed: () => context.push('/session/pre'),
         backgroundColor: DSColors.brand,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
