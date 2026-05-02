@@ -30,19 +30,19 @@ class _DSExampleAppState extends State<DSExampleApp> {
         useMaterial3: true,
         brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF97316),
+          seedColor: const Color(0xFF14B8A6),
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+        scaffoldBackgroundColor: const Color(0xFFF0F9FF),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF97316),
+          seedColor: const Color(0xFF14B8A6),
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(0xFF0A0E1A),
+        scaffoldBackgroundColor: const Color(0xFF040C18),
       ),
       home: ShellScreen(onToggleTheme: _toggleTheme, themeMode: _themeMode),
     );

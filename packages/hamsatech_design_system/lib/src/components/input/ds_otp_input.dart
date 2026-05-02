@@ -246,7 +246,7 @@ class _OtpCellState extends State<_OtpCell> {
         height: widget.size,
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: DSRadius.borderMd,
+          borderRadius: DSRadius.borderSm,
           border: Border.all(
             color: borderColor,
             width: isFocused ? 1.5 : 1.0,
@@ -275,10 +275,6 @@ class _OtpCellState extends State<_OtpCell> {
                     : (isDark ? DSColors.gray100 : DSColors.gray900),
               ),
               decoration: InputDecoration(
-                hintText: '0',
-                hintStyle: DSTypography.headingMd.copyWith(
-                  color: isDark ? DSColors.gray700 : DSColors.gray300,
-                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,

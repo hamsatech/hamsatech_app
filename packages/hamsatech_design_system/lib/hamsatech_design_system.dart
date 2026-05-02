@@ -39,3 +39,7 @@ export 'src/components/checkbox/ds_checkbox_tree.dart';
 
 // Misc
 export 'src/components/misc/ds_score_ring.dart';
+
+// Onboarding
+export 'src/components/onboarding/ds_primary_button.dart';
+export 'src/components/onboarding/ds_secondary_text_button.dart';
