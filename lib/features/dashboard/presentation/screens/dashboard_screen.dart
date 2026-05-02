@@ -43,6 +43,7 @@ class _DashboardView extends StatelessWidget {
                   .read<DashboardBloc>()
                   .add(const DashboardRefreshRequested());
               await Future.delayed(const Duration(milliseconds: 500));
+              context.push('/polar');
             },
             child: CustomScrollView(
               slivers: [
@@ -107,6 +108,7 @@ class _DashboardView extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_dashboard',
         onPressed: () => context.push('/session/pre'),
         backgroundColor: DSColors.brand,
         icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),

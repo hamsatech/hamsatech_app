@@ -26,7 +26,10 @@ class DSInputLabel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label, style: DSTypography.labelMd.copyWith(color: labelColor)),
+        Text(
+          label,
+          style: DSTypography.labelMd.copyWith(color: labelColor),
+        ),
         if (isRequired) ...[
           const SizedBox(width: DSSpacing.xxs),
           Text(

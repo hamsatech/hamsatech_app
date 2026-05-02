@@ -10,6 +10,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       )) {
     on<OnboardingAthleteDetailsSubmitted>(_onAthleteDetails);
     on<OnboardingBackgroundContextSubmitted>(_onBackgroundContext);
+    on<OnboardingAssessmentStarted>(_onAssessmentStarted);
     on<OnboardingAnswerSelected>(_onAnswerSelected);
     on<OnboardingNextQuestion>(_onNextQuestion);
     on<OnboardingPreviousQuestion>(_onPreviousQuestion);
@@ -39,6 +40,19 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     emit(state.copyWith(
       familySupport: event.familySupport,
       pressureSources: event.pressureSources,
+      questions: questions,
+      step: OnboardingStep.assessment,
+      currentQuestionIndex: 0,
+    ));
+  }
+
+  void _onAssessmentStarted(
+    OnboardingAssessmentStarted event,
+    Emitter<OnboardingState> emit,
+  ) {
+    if (state.questions.isNotEmpty) return;
+    final questions = _repository.getBaselineQuestions();
+    emit(state.copyWith(
       questions: questions,
       step: OnboardingStep.assessment,
       currentQuestionIndex: 0,
