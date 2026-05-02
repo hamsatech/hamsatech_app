@@ -15,6 +15,7 @@ import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
+import '../../features/polar/presentation/screens/polar_device_screen.dart';
 import '../services/storage_service.dart';
 
 class AppRouter {
@@ -92,6 +93,11 @@ class AppRouter {
       GoRoute(
         path: '/onboarding/assessment',
         builder: (_, __) => const BaselineAssessmentScreen(),
+      ),
+      GoRoute(
+        path: '/polar',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const PolarDeviceScreen(),
       ),
       GoRoute(
         path: '/session/pre',

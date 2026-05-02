@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../data/repositories/login_repository_impl.dart';
 import '../../domain/entities/onboarding_slide_entity.dart';
