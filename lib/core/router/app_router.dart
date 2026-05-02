@@ -15,14 +15,13 @@ import '../../features/onboarding/presentation/screens/athlete_details_screen.da
 import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
 import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_complete_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
 import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
+import '../../features/reflection/presentation/screens/reflection_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
@@ -184,7 +183,7 @@ class AppRouter {
       // ── ONBOARDING COMPLETE ───────────────────────────────────────────────
       GoRoute(
         path: '/onboarding/complete',
-        builder: (_, __) => const _PlaceholderScreen(title: 'Onboarding Complete'),
+        builder: (_, __) => const OnboardingCompleteScreen(),
       ),
 
       // ── PROFILE SETUP (post-auth, pre-onboarding) ─────────────────────────
@@ -253,6 +252,14 @@ class AppRouter {
               GoRoute(
                 path: '/sessions',
                 builder: (_, __) => const SessionsListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/journal',
+                builder: (_, __) => const ReflectionScreen(),
               ),
             ],
           ),
