@@ -50,6 +50,7 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
       'name': _nameController.text.trim(),
       'discipline': _selectedDiscipline,
     });
+    await StorageService.setProfileSetupComplete(true);
     if (mounted) context.go('/onboarding/assessment');
   }
 

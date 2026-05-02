@@ -29,26 +29,37 @@ class AppRouter {
     redirect: (context, state) {
       final path = state.fullPath ?? '';
       final isLoggedIn = StorageService.getAuthToken() != null;
-      final isProfileDone = StorageService.isOnboardingComplete();
+      final isProfileSetupDone = StorageService.isProfileSetupComplete();
+      final isOnboardingDone = StorageService.isOnboardingComplete();
 
       const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
-      const profileSetupPath = '/profile/setup';
-      const onboardingPaths = {profileSetupPath, '/onboarding/assessment'};
 
       if (path == '/splash') return null;
 
+      // Not logged in → send to welcome
       if (!isLoggedIn && !publicPaths.contains(path)) {
         return '/welcome';
       }
 
-      if (isLoggedIn && !isProfileDone && !onboardingPaths.contains(path)) {
-        return profileSetupPath;
-      }
+      if (isLoggedIn) {
+        // Step 1 incomplete → basic profile
+        if (!isProfileSetupDone) {
+          if (path == '/profile/setup') return null;
+          return '/profile/setup';
+        }
 
-      if (isLoggedIn &&
-          isProfileDone &&
-          (publicPaths.contains(path) || path == profileSetupPath)) {
-        return '/home';
+        // Step 2 incomplete → questionnaire
+        if (!isOnboardingDone) {
+          if (path == '/onboarding/assessment') return null;
+          return '/onboarding/assessment';
+        }
+
+        // Fully done → home (kick off public/setup paths)
+        if (publicPaths.contains(path) ||
+            path == '/profile/setup' ||
+            path == '/onboarding/assessment') {
+          return '/home';
+        }
       }
 
       return null;
