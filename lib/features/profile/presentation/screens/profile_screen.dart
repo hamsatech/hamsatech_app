@@ -176,7 +176,7 @@ class _ProfileView extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: DSColors.appCard,
         title: const Text('Sign Out?'),
-        content: const Text(
+        content:  Text(
           'Your local data will be cleared. Are you sure?',
           style: DSTypography.bodyMedium,
         ),
