@@ -1,11 +1,27 @@
+import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/di/injection.dart';
 import '../bloc/polar_bloc.dart';
 import '../bloc/polar_event.dart';
 import '../bloc/polar_state.dart';
+
+// ── Colours local to this screen (light theme) ───────────────────────────────
+const _kBg = Colors.white;
+const _kTextPrimary = Color(0xFF111827);
+const _kTextSecondary = Color(0xFF6B7280);
+const _kBorderColor = Color(0xFFE5E7EB);
+const _kSearchIconBg = Color(0xFF2563EB);
+const _kConnectedIconBg = Color(0xFF16A34A);
+const _kConnectedText = Color(0xFF16A34A);
+const _kConnectedBg = Color(0xFFF0FDF4);
+const _kConnectBtnBg = Color(0xFF14574A);
+const _kConnectingBg = Color(0xFFEFF6FF);
+const _kConnectingText = Color(0xFF1D4ED8);
+const _kTroubleshootText = Color(0xFFC94B2A);
+const _kDoneBtnBg = Color(0xFFC94B2A);
 
 class PolarDeviceScreen extends StatelessWidget {
   const PolarDeviceScreen({super.key});
@@ -28,12 +44,37 @@ class _PolarDeviceView extends StatefulWidget {
 
 class _PolarDeviceViewState extends State<_PolarDeviceView>
     with WidgetsBindingObserver {
-  final _deviceIdController = TextEditingController();
+  bool _permissionGranted = false;
+  bool _permissionChecked = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _checkPermission();
+  }
+
+  // Permission was already requested at app open (SplashScreen).
+  // Here we only check the current status and start scanning if granted,
+  // or show the denied view if the user previously denied it.
+  Future<void> _checkPermission() async {
+    bool granted;
+    if (Platform.isAndroid) {
+      final scan = await Permission.bluetoothScan.status;
+      final connect = await Permission.bluetoothConnect.status;
+      granted = scan.isGranted && connect.isGranted;
+    } else {
+      final status = await Permission.bluetooth.status;
+      granted = status.isGranted || status.isLimited;
+    }
+    if (!mounted) return;
+    setState(() {
+      _permissionGranted = granted;
+      _permissionChecked = true;
+    });
+    if (granted) {
+      context.read<PolarBloc>().add(const PolarScanStarted());
+    }
   }
 
   @override
@@ -51,38 +92,26 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _deviceIdController.dispose();
     super.dispose();
-  }
-
-  void _connect(BuildContext context) {
-    final deviceId = _deviceIdController.text.trim().toUpperCase();
-    if (deviceId.isEmpty) return;
-    HapticFeedback.lightImpact();
-    context.read<PolarBloc>().add(PolarConnectRequested(deviceId));
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_permissionChecked) {
+      return const Scaffold(
+        backgroundColor: _kBg,
+        body: Center(child: CircularProgressIndicator(color: _kSearchIconBg)),
+      );
+    }
+    if (!_permissionGranted) {
+      return const Scaffold(
+        backgroundColor: _kBg,
+        body: _PermissionDeniedView(),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: DSColors.appBackground,
-      appBar: AppBar(
-        backgroundColor: DSColors.appBackground,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_rounded,
-              color: DSColors.textPrimary, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Polar Device',
-          style: TextStyle(
-            color: DSColors.textPrimary,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      backgroundColor: _kBg,
       body: BlocConsumer<PolarBloc, PolarState>(
         listener: (context, state) {
           if (state.connectionStatus == PolarConnectionStatus.error &&
@@ -90,7 +119,7 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage!),
-                backgroundColor: DSColors.error,
+                backgroundColor: Colors.red.shade700,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -102,25 +131,29 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
           }
         },
         builder: (context, state) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
+          return SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ConnectCard(
-                  controller: _deviceIdController,
-                  state: state,
-                  onConnect: () => _connect(context),
-                  onDisconnect: () => context
-                      .read<PolarBloc>()
-                      .add(const PolarDisconnectRequested()),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _StatusIconSection(state: state),
+                        const SizedBox(height: 32),
+                        _SectionHeader(state: state),
+                        const SizedBox(height: 20),
+                        _FoundDevicesDivider(),
+                        const SizedBox(height: 16),
+                        _DeviceList(state: state),
+                        const SizedBox(height: 20),
+                        _TroubleshootRow(),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 24),
-                if (state.isConnected) ...[
-                  _HrDisplay(state: state),
-                  const SizedBox(height: 20),
-                  _RrIntervalsCard(state: state),
-                ],
+                if (state.isConnected) _DoneButton(state: state),
               ],
             ),
           );
@@ -130,331 +163,606 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
   }
 }
 
-class _ConnectCard extends StatelessWidget {
-  const _ConnectCard({
-    required this.controller,
-    required this.state,
-    required this.onConnect,
-    required this.onDisconnect,
-  });
+// ── Status icon + text at the top ────────────────────────────────────────────
 
-  final TextEditingController controller;
+class _StatusIconSection extends StatelessWidget {
+  const _StatusIconSection({required this.state});
   final PolarState state;
-  final VoidCallback onConnect;
-  final VoidCallback onDisconnect;
 
   @override
   Widget build(BuildContext context) {
     final isConnected = state.isConnected;
-    final isConnecting =
-        state.connectionStatus == PolarConnectionStatus.connecting;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: DSColors.appCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: DSColors.appBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isConnected
-                      ? const Color(0xFF34D399)
-                      : isConnecting
-                          ? DSColors.brand
-                          : DSColors.textMuted,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isConnected
-                    ? 'Connected · ${state.connectedDeviceId}'
-                    : isConnecting
-                        ? 'Connecting...'
-                        : 'Not connected',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isConnected
-                      ? const Color(0xFF34D399)
-                      : DSColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+    return Column(
+      children: [
+        _StatusIcon(isConnected: isConnected),
+        const SizedBox(height: 12),
+        Text(
+          isConnected
+              ? 'Connected to ${state.connectedDeviceName ?? state.connectedDeviceId ?? 'device'}'
+              : 'Searching...',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isConnected ? _kConnectedText : _kTextSecondary,
           ),
-          const SizedBox(height: 16),
-          if (!isConnected && !isConnecting) ...[
+        ),
+        const SizedBox(height: 4),
+        if (!isConnected)
+          Text(
+            'Make sure your Polar device is on and nearby.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              color: _kTextSecondary,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _StatusIcon extends StatefulWidget {
+  const _StatusIcon({required this.isConnected});
+  final bool isConnected;
+
+  @override
+  State<_StatusIcon> createState() => _StatusIconState();
+}
+
+class _StatusIconState extends State<_StatusIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.isConnected) {
+      return Container(
+        width: 72,
+        height: 72,
+        decoration: const BoxDecoration(
+          color: _kConnectedIconBg,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.check_circle_rounded,
+            color: Colors.white, size: 36),
+      );
+    }
+
+    return ScaleTransition(
+      scale: _scale,
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: const BoxDecoration(
+          color: _kSearchIconBg,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.wifi_rounded, color: Colors.white, size: 36),
+      ),
+    );
+  }
+}
+
+// ── Section header (title + subtitle) ────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.state});
+  final PolarState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final isConnected = state.isConnected;
+    return Column(
+      children: [
+        Text(
+          isConnected ? 'Device connected' : 'Connecting to Polar',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: _kTextPrimary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          isConnected
+              ? 'Your heart rate and HRV data will now be\ntracked during sessions.'
+              : 'Select a device below to pair it with the app.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 13,
+            color: _kTextSecondary,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── "Found devices" divider ───────────────────────────────────────────────────
+
+class _FoundDevicesDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: _kBorderColor, thickness: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'Found devices',
+            style: const TextStyle(
+              fontSize: 12,
+              color: _kTextSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const Expanded(child: Divider(color: _kBorderColor, thickness: 1)),
+      ],
+    );
+  }
+}
+
+// ── Permission denied view ────────────────────────────────────────────────────
+
+class _PermissionDeniedView extends StatelessWidget {
+  const _PermissionDeniedView();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
             Container(
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                color: DSColors.appCardElevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: DSColors.appBorder),
+                color: const Color(0xFFFEF2F2),
+                shape: BoxShape.circle,
               ),
-              child: TextField(
-                controller: controller,
-                textCapitalization: TextCapitalization.characters,
-                textInputAction: TextInputAction.done,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: DSColors.textPrimary,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 2,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Device ID (e.g. A1B2C3)',
-                  hintStyle: TextStyle(
-                    color: DSColors.textMuted,
-                    fontSize: 14,
-                    letterSpacing: 0,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  prefixIcon: Icon(Icons.bluetooth_rounded,
-                      color: DSColors.brand, size: 20),
-                ),
-                onSubmitted: (_) => onConnect(),
+              child: const Icon(Icons.bluetooth_disabled_rounded,
+                  color: Color(0xFFEF4444), size: 36),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Bluetooth permission required',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _kTextPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            const Text(
+              'Allow Bluetooth access in Settings so the app can find and connect to your Polar device.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: _kTextSecondary, height: 1.5),
+            ),
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 50,
               child: ElevatedButton(
-                onPressed: onConnect,
+                onPressed: openAppSettings,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: DSColors.brand,
+                  backgroundColor: _kConnectBtnBg,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text(
-                  'Connect',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
+                child: const Text('Open Settings',
+                    style:
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
               ),
             ),
           ],
-          if (isConnecting)
-            const Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          if (isConnected)
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton(
-                onPressed: onDisconnect,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: DSColors.error,
-                  side: BorderSide(color: DSColors.error.withValues(alpha: 0.5)),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: const Text(
-                  'Disconnect',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _HrDisplay extends StatelessWidget {
-  const _HrDisplay({required this.state});
+// ── Device list ───────────────────────────────────────────────────────────────
+
+class _DeviceList extends StatelessWidget {
+  const _DeviceList({required this.state});
   final PolarState state;
 
   @override
   Widget build(BuildContext context) {
-    final hr = state.latestReading;
-    final hasContact = hr?.sensorContact ?? false;
+    if (state.discoveredDevices.isEmpty && !state.isConnected) {
+      return const _EmptySearchState();
+    }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-      decoration: BoxDecoration(
-        color: DSColors.appCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: DSColors.appBorder),
-      ),
+    return Column(
+      children: state.discoveredDevices
+          .map((device) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _DeviceCard(device: device, state: state),
+              ))
+          .toList(),
+    );
+  }
+}
+
+// ── Empty state while scanning ────────────────────────────────────────────────
+
+class _EmptySearchState extends StatefulWidget {
+  const _EmptySearchState();
+
+  @override
+  State<_EmptySearchState> createState() => _EmptySearchStateState();
+}
+
+class _EmptySearchStateState extends State<_EmptySearchState>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _anim, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.favorite_rounded,
-                color: hasContact
-                    ? const Color(0xFFF87171)
-                    : DSColors.textMuted,
-                size: 18,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                hasContact ? 'Sensor in contact' : 'No skin contact',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: hasContact
-                      ? const Color(0xFFF87171)
-                      : DSColors.textMuted,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          FadeTransition(
+            opacity: _opacity,
+            child: const Icon(Icons.wifi_tethering_rounded,
+                size: 36, color: _kTextSecondary),
           ),
-          const SizedBox(height: 16),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: Text(
-              hr != null ? '${hr.bpm}' : '--',
-              key: ValueKey(hr?.bpm),
-              style: TextStyle(
-                fontSize: 88,
-                fontWeight: FontWeight.w800,
-                color: DSColors.textPrimary,
-                height: 1,
-              ),
+          const SizedBox(height: 10),
+          const Text(
+            'Looking for the device',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: _kTextPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            'BPM',
-            style: TextStyle(
-              fontSize: 16,
-              color: DSColors.textSecondary,
-              fontWeight: FontWeight.w400,
-              letterSpacing: 3,
-            ),
+          const Text(
+            'This usually takes a few seconds',
+            style: TextStyle(fontSize: 13, color: _kTextSecondary),
           ),
-          if (!state.isStreaming) ...[
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: DSColors.brand,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Starting stream…',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: DSColors.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-class _RrIntervalsCard extends StatelessWidget {
-  const _RrIntervalsCard({required this.state});
+// ── Individual device card ────────────────────────────────────────────────────
+
+class _DeviceCard extends StatelessWidget {
+  const _DeviceCard({required this.device, required this.state});
+  final PolarDiscoveredDevice device;
+  final PolarState state;
+
+  bool get _isConnectingThis =>
+      state.isConnecting && state.connectedDeviceId == device.deviceId;
+
+  bool get _isConnectedThis =>
+      state.isConnected && state.connectedDeviceId == device.deviceId;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: _isConnectingThis
+            ? _kConnectingBg
+            : _isConnectedThis
+                ? _kConnectedBg
+                : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _isConnectingThis
+              ? const Color(0xFFBFDBFE)
+              : _isConnectedThis
+                  ? const Color(0xFFBBF7D0)
+                  : _kBorderColor,
+        ),
+      ),
+      child: Row(
+        children: [
+          _BluetoothAvatar(
+            isConnectedThis: _isConnectedThis,
+            isConnectingThis: _isConnectingThis,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  device.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _kTextPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                if (_isConnectedThis)
+                  const Text(
+                    'Connected',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _kConnectedText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )
+                else if (_isConnectingThis)
+                  const _ConnectingDots()
+                else
+                  Text(
+                    device.deviceType ?? 'Polar device',
+                    style: const TextStyle(
+                        fontSize: 12, color: _kTextSecondary),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (_isConnectedThis)
+            const Icon(Icons.check_circle_outline_rounded,
+                color: _kConnectedText, size: 22)
+          else if (_isConnectingThis)
+            const Text(
+              'Connecting',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: _kConnectingText,
+              ),
+            )
+          else
+            _ConnectButton(
+              onTap: () {
+                context
+                    .read<PolarBloc>()
+                    .add(PolarConnectRequested(device.deviceId));
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BluetoothAvatar extends StatelessWidget {
+  const _BluetoothAvatar({
+    required this.isConnectedThis,
+    required this.isConnectingThis,
+  });
+  final bool isConnectedThis;
+  final bool isConnectingThis;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: isConnectedThis
+            ? _kConnectedBg
+            : isConnectingThis
+                ? _kConnectingBg
+                : const Color(0xFFEFF6FF),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        Icons.bluetooth_rounded,
+        size: 18,
+        color: isConnectedThis
+            ? _kConnectedText
+            : isConnectingThis
+                ? _kConnectingText
+                : _kSearchIconBg,
+      ),
+    );
+  }
+}
+
+class _ConnectButton extends StatelessWidget {
+  const _ConnectButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          color: _kConnectBtnBg,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Text(
+          'Connect',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Animated "• •" dots for connecting state ──────────────────────────────────
+
+class _ConnectingDots extends StatefulWidget {
+  const _ConnectingDots();
+
+  @override
+  State<_ConnectingDots> createState() => _ConnectingDotsState();
+}
+
+class _ConnectingDotsState extends State<_ConnectingDots>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final t = _ctrl.value;
+        return Row(
+          children: [
+            _Dot(opacity: math.sin(t * math.pi * 2).abs()),
+            const SizedBox(width: 4),
+            _Dot(opacity: math.sin((t + 0.3) * math.pi * 2).abs()),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot({required this.opacity});
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: opacity.clamp(0.2, 1.0),
+      child: Container(
+        width: 6,
+        height: 6,
+        decoration: const BoxDecoration(
+          color: _kConnectingText,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Troubleshoot link ─────────────────────────────────────────────────────────
+
+class _TroubleshootRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.warning_amber_rounded,
+            size: 14, color: _kTextSecondary),
+        const SizedBox(width: 4),
+        const Text(
+          "Can't find your device? ",
+          style: TextStyle(fontSize: 13, color: _kTextSecondary),
+        ),
+        GestureDetector(
+          onTap: () {},
+          child: const Text(
+            'Troubleshoot',
+            style: TextStyle(
+              fontSize: 13,
+              color: _kTroubleshootText,
+              fontWeight: FontWeight.w500,
+              decoration: TextDecoration.underline,
+              decorationColor: _kTroubleshootText,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── "Done Let's go" CTA at bottom ────────────────────────────────────────────
+
+class _DoneButton extends StatelessWidget {
+  const _DoneButton({required this.state});
   final PolarState state;
 
   @override
   Widget build(BuildContext context) {
-    final rrs = state.latestReading?.rrIntervals ?? [];
-    final rmssd = state.latestReading?.rmssd ?? 0;
-
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: DSColors.appCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: DSColors.appBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'RR INTERVALS',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: DSColors.textMuted,
-              letterSpacing: 2,
+      color: _kBg,
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: () => Navigator.of(context).pop(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kDoneBtnBg,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
-          const SizedBox(height: 16),
-          if (rrs.isEmpty)
-            Text(
-              'Waiting for data…',
-              style: TextStyle(color: DSColors.textMuted, fontSize: 14),
-            )
-          else ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: rrs.map((rr) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: DSColors.appCardElevated,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${rr}ms',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: DSColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Text(
-                  'RMSSD',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: DSColors.textMuted,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  rmssd.toStringAsFixed(1),
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: DSColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
+          child: const Text(
+            "Done Let's go",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
       ),
     );
   }

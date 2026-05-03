@@ -36,7 +36,7 @@ class OnboardingStep2State extends Equatable {
     this.experience = '',
     this.yearsShoot = 0,
     this.academy = '',
-    this.stepTitle = 'STEP 2 OF 5',
+    this.stepTitle = 'STEP 2 OF 4',
     this.progress = 0.4,
     this.heading = 'Your shooting profile',
     this.subtitle =

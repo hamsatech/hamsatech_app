@@ -33,6 +33,7 @@ class PolarPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var hrJob: Job? = null
+    private var searchJob: Job? = null
     private var hrSink: EventChannel.EventSink? = null
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -83,6 +84,31 @@ class PolarPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
+            "scan" -> {
+                searchJob?.cancel()
+                searchJob = scope.launch {
+                    try {
+                        api.searchForDevice(null).collect { info ->
+                            methodChannel.invokeMethod(
+                                "deviceFound",
+                                mapOf(
+                                    "deviceId" to info.deviceId,
+                                    "name" to info.name.ifEmpty { info.deviceId },
+                                    "type" to deviceTypeFor(info.name),
+                                )
+                            )
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {}
+                }
+                result.success(null)
+            }
+            "stopScan" -> {
+                searchJob?.cancel()
+                searchJob = null
+                result.success(null)
+            }
             "connect" -> {
                 val deviceId = call.argument<String>("deviceId")
                     ?: return result.error("INVALID_ARG", "deviceId required", null)
@@ -140,5 +166,11 @@ class PolarPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         methodChannel.setMethodCallHandler(null)
         scope.cancel()
         try { api.shutDown() } catch (_: Exception) {}
+    }
+
+    private fun deviceTypeFor(name: String): String = when {
+        name.contains("H10", ignoreCase = true) || name.contains("H9", ignoreCase = true) -> "Chest strap"
+        name.contains("Verity Sense", ignoreCase = true) || name.contains("OH1", ignoreCase = true) -> "Optical sensor"
+        else -> "Polar device"
     }
 }

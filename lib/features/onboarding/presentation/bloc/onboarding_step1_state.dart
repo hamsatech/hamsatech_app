@@ -29,6 +29,7 @@ class OnboardingStep1State extends Equatable {
   final String ctaLabel;
 
   final bool isValid;
+  final bool isSubmitting;
   final String? errorMessage;
   final bool submissionSuccess;
 
@@ -37,7 +38,7 @@ class OnboardingStep1State extends Equatable {
     this.age = '',
     this.gender = OnboardingGender.unknown,
     this.city = '',
-    this.stepTitle = 'STEP 1 OF 5',
+    this.stepTitle = 'STEP 1 OF 4',
     this.progress = 0.2,
 
     this.heading = "Let's get to know you",
@@ -58,6 +59,7 @@ class OnboardingStep1State extends Equatable {
     this.ctaLabel = 'Continue to Step 2',
 
     this.isValid = false,
+    this.isSubmitting = false,
     this.errorMessage,
     this.submissionSuccess = false,
   });
@@ -88,6 +90,7 @@ class OnboardingStep1State extends Equatable {
     String? ctaLabel,
 
     bool? isValid,
+    bool? isSubmitting,
     String? errorMessage,
     bool? submissionSuccess,
   }) {
@@ -117,6 +120,7 @@ class OnboardingStep1State extends Equatable {
       ctaLabel: ctaLabel ?? this.ctaLabel,
 
       isValid: isValid ?? this.isValid,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: errorMessage ?? this.errorMessage,
       submissionSuccess: submissionSuccess ?? this.submissionSuccess,
     );
@@ -142,6 +146,7 @@ class OnboardingStep1State extends Equatable {
         cityHint,
         ctaLabel,
         isValid,
+        isSubmitting,
         errorMessage,
         submissionSuccess,
       ];
