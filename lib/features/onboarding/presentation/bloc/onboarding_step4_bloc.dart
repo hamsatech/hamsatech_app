@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/storage_service.dart';
 import 'onboarding_step4_event.dart';
 import 'onboarding_step4_state.dart';
 
@@ -41,6 +42,7 @@ class OnboardingStep4Bloc
       emit(validated.copyWith(errorMessage: validated.errorMessage));
       return;
     }
+    await StorageService.setProfileSetupComplete(true);
     emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
     emit(validated.copyWith(submissionSuccess: true));
   }

@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'onboarding_step1_event.dart';
 import 'onboarding_step1_state.dart';
 
@@ -50,20 +50,17 @@ class OnboardingStep1Bloc
     emit(_validate(next));
   }
 
-  void _onSubmit(
+  Future<void> _onSubmit(
     OnSubmit event,
     Emitter<OnboardingStep1State> emit,
   ) async {
     final validated = _validate(state);
-    if (!validated.isValid) {
-      emit(validated.copyWith(errorMessage: validated.errorMessage));
-      return;
-    }
+    // if (!validated.isValid) {
+    //   emit(validated.copyWith(errorMessage: validated.errorMessage));
+    //   return;
+    // }
 
-    // simulate submission or call repository here
-    emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
-    // For now, mark success immediately. In real app, call async repository.
-    emit(validated.copyWith(submissionSuccess: true));
+    emit(validated.copyWith(submissionSuccess: true, errorMessage: null));
   }
 
   OnboardingStep1State _validate(OnboardingStep1State s) {
