@@ -8,6 +8,14 @@ abstract class PolarEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class PolarScanStarted extends PolarEvent {
+  const PolarScanStarted();
+}
+
+class PolarScanStopped extends PolarEvent {
+  const PolarScanStopped();
+}
+
 class PolarConnectRequested extends PolarEvent {
   const PolarConnectRequested(this.deviceId);
   final String deviceId;
@@ -28,6 +36,19 @@ class PolarStopHrStreamRequested extends PolarEvent {
 }
 
 // Internal events from native callbacks
+class PolarDeviceFoundEvent extends PolarEvent {
+  const PolarDeviceFoundEvent({
+    required this.deviceId,
+    required this.name,
+    this.deviceType,
+  });
+  final String deviceId;
+  final String name;
+  final String? deviceType;
+  @override
+  List<Object?> get props => [deviceId, name, deviceType];
+}
+
 class PolarDeviceConnectedEvent extends PolarEvent {
   const PolarDeviceConnectedEvent(this.deviceId);
   final String deviceId;

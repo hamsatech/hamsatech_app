@@ -7,20 +7,32 @@ import 'polar_state.dart';
 
 class PolarBloc extends Bloc<PolarEvent, PolarState> {
   PolarBloc(this._service) : super(const PolarState()) {
+    on<PolarScanStarted>(_onScanStarted);
+    on<PolarScanStopped>(_onScanStopped);
     on<PolarConnectRequested>(_onConnect);
     on<PolarDisconnectRequested>(_onDisconnect);
     on<PolarStartHrStreamRequested>(_onStartHrStream);
     on<PolarStopHrStreamRequested>(_onStopHrStream);
+    on<PolarDeviceFoundEvent>(_onDeviceFound);
     on<PolarDeviceConnectedEvent>(_onDeviceConnected);
     on<PolarDeviceDisconnectedEvent>(_onDeviceDisconnected);
     on<PolarHrReceivedEvent>(_onHrReceived);
     on<PolarHrErrorEvent>(_onHrError);
 
     _deviceSubscription = _service.deviceEvents.listen((event) {
-      if (event.status == PolarDeviceStatus.connected) {
-        add(PolarDeviceConnectedEvent(event.deviceId));
-      } else if (event.status == PolarDeviceStatus.disconnected) {
-        add(PolarDeviceDisconnectedEvent(event.deviceId));
+      switch (event.status) {
+        case PolarDeviceStatus.found:
+          add(PolarDeviceFoundEvent(
+            deviceId: event.deviceId,
+            name: event.name ?? event.deviceId,
+            deviceType: event.deviceType,
+          ));
+        case PolarDeviceStatus.connected:
+          add(PolarDeviceConnectedEvent(event.deviceId));
+        case PolarDeviceStatus.disconnected:
+          add(PolarDeviceDisconnectedEvent(event.deviceId));
+        case PolarDeviceStatus.connecting:
+          break;
       }
     });
   }
@@ -29,13 +41,67 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
   StreamSubscription<PolarDeviceEvent>? _deviceSubscription;
   StreamSubscription<HrReading>? _hrSubscription;
 
+  Future<void> _onScanStarted(
+    PolarScanStarted event,
+    Emitter<PolarState> emit,
+  ) async {
+    emit(state.copyWith(
+      connectionStatus: PolarConnectionStatus.scanning,
+      discoveredDevices: [],
+      errorMessage: null,
+    ));
+    try {
+      await _service.scanForDevices();
+    } catch (e) {
+      emit(state.copyWith(
+        connectionStatus: PolarConnectionStatus.error,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> _onScanStopped(
+    PolarScanStopped event,
+    Emitter<PolarState> emit,
+  ) async {
+    try {
+      await _service.stopScan();
+    } catch (_) {}
+    if (state.isScanning) {
+      emit(state.copyWith(connectionStatus: PolarConnectionStatus.initial));
+    }
+  }
+
+  void _onDeviceFound(
+    PolarDeviceFoundEvent event,
+    Emitter<PolarState> emit,
+  ) {
+    if (state.discoveredDevices.any((d) => d.deviceId == event.deviceId)) return;
+    emit(state.copyWith(
+      discoveredDevices: [
+        ...state.discoveredDevices,
+        PolarDiscoveredDevice(
+          deviceId: event.deviceId,
+          name: event.name,
+          deviceType: event.deviceType,
+        ),
+      ],
+    ));
+  }
+
   Future<void> _onConnect(
     PolarConnectRequested event,
     Emitter<PolarState> emit,
   ) async {
+    final device = state.discoveredDevices.firstWhere(
+      (d) => d.deviceId == event.deviceId,
+      orElse: () =>
+          PolarDiscoveredDevice(deviceId: event.deviceId, name: event.deviceId),
+    );
     emit(state.copyWith(
       connectionStatus: PolarConnectionStatus.connecting,
       connectedDeviceId: event.deviceId,
+      connectedDeviceName: device.name,
       errorMessage: null,
     ));
     try {
