@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
 
 // Auth
-import '../../features/auth/presentation/screens/basic_profile_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
@@ -42,9 +41,6 @@ import '../../features/polar/presentation/screens/polar_device_screen.dart';
 // Profile
 import '../../features/profile/presentation/screens/profile_screen.dart';
 
-// Services
-import '../services/storage_service.dart';
-
 class AppRouter {
   AppRouter._();
 
@@ -53,9 +49,11 @@ class AppRouter {
 
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+
+    // ✅ single entry point
     initialLocation: '/permissions',
 
-    // Keep simple for now (testing)
+    // ✅ keep simple during dev
     redirect: (context, state) => null,
 
     routes: [
@@ -63,14 +61,6 @@ class AppRouter {
       GoRoute(
         path: '/permissions',
         builder: (_, __) => const PermissionsScreen(),
-      ),
-
-      // TEMP next screen
-      GoRoute(
-        path: '/next-screen',
-        builder: (_, __) => const Scaffold(
-          body: Center(child: Text('Next Screen — Placeholder')),
-        ),
       ),
 
       // Auth
@@ -116,7 +106,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/onboarding/step5',
-        builder: (_, __) => const OnboardingStep4Screen(), // placeholder
+        builder: (_, __) => const OnboardingStep4Screen(), // TODO replace
       ),
       GoRoute(
         path: '/onboarding/details',
@@ -142,7 +132,7 @@ class AppRouter {
         builder: (_, __) => const PolarDeviceScreen(),
       ),
 
-      // Session Flow
+      // Session
       GoRoute(
         path: '/session/pre',
         parentNavigatorKey: _rootNavigatorKey,
@@ -168,7 +158,7 @@ class AppRouter {
         },
       ),
 
-      // Main App Shell
+      // Shell
       StatefulShellRoute.indexedStack(
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __, shell) => MainShellScreen(shell: shell),
