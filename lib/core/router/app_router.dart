@@ -21,6 +21,8 @@ import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
+import '../../features/baseline/presentation/view/baseline_screen.dart';
+import '../../features/onboarding_completion/presentation/view/onboarding_completion_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
 import '../../features/polar/presentation/screens/polar_device_screen.dart';
 import '../services/storage_service.dart';
@@ -40,23 +42,17 @@ class AppRouter {
       final isProfileSetupDone = StorageService.isProfileSetupComplete();
       final isOnboardingDone = StorageService.isOnboardingComplete();
 
-<<<<<<< HEAD
-      final publicPaths = [
+      const publicPaths = [
         '/splash',
+        '/welcome',
+        '/signup',
         '/login',
         '/otp',
         '/permissions',
         '/permissions/next',
+        '/baseline',
+        '/onboarding-completion',
       ];
-      final onboardingPaths = [
-        '/onboarding/details',
-        '/onboarding/background',
-        '/onboarding/assessment',
-        '/onboarding/complete',
-      ];
-=======
-      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
->>>>>>> 063f8990560ca136db22b7f3be4686b33feb3797
 
       if (path == '/splash') return null;
 
@@ -104,28 +100,27 @@ class AppRouter {
       GoRoute(
         path: '/otp',
         builder: (_, state) => OtpScreen(phoneOrEmail: state.extra as String),
-GoRoute(
-  path: '/permissions',
-  parentNavigatorKey: _rootNavigatorKey,
-  builder: (_, __) => const PermissionsScreen(),
-),
-
-GoRoute(
-  path: '/permissions/next',
-  parentNavigatorKey: _rootNavigatorKey,
-  builder: (_, __) => const PermissionsNextScreen(),
-),
-
-GoRoute(
-  path: '/profile/setup',
-  builder: (_, __) => const BasicProfileScreen(),
-),
-
-GoRoute(
-  path: '/onboarding/assessment',
-  builder: (_, __) => const BaselineAssessmentScreen(),
-),
-      
+      ),
+      GoRoute(
+        path: '/permissions',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const PermissionsScreen(),
+      ),
+      GoRoute(
+        path: '/permissions/next',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const _PermissionsNextScreen(),
+      ),
+      GoRoute(
+        path: '/baseline',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const BaselineScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding-completion',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const OnboardingCompletionScreen(),
+      ),
       GoRoute(
         path: '/onboarding/step1',
         builder: (_, __) => const OnboardingStep1Screen(),
