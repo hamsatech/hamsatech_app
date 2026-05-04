@@ -43,6 +43,7 @@ class _DashboardView extends StatelessWidget {
                   .read<DashboardBloc>()
                   .add(const DashboardRefreshRequested());
               await Future.delayed(const Duration(milliseconds: 500));
+              if (!context.mounted) return;
               context.push('/polar');
             },
             child: CustomScrollView(

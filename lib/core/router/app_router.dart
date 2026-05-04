@@ -7,8 +7,13 @@ import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
-import '../../features/auth/presentation/screens/basic_profile_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_step1_screen.dart';
+import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
+import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
@@ -55,27 +60,23 @@ class AppRouter {
 
       if (path == '/splash') return null;
 
-      // Not logged in → send to welcome
       if (!isLoggedIn && !publicPaths.contains(path)) {
         return '/welcome';
       }
 
       if (isLoggedIn) {
-        // Step 1 incomplete → basic profile
         if (!isProfileSetupDone) {
-          if (path == '/profile/setup') return null;
-          return '/profile/setup';
+          if (path.startsWith('/onboarding/')) return null;
+          return '/onboarding/step1';
         }
 
-        // Step 2 incomplete → questionnaire
         if (!isOnboardingDone) {
           if (path == '/onboarding/assessment') return null;
           return '/onboarding/assessment';
         }
 
-        // Fully done → home (kick off public/setup paths)
         if (publicPaths.contains(path) ||
-            path == '/profile/setup' ||
+            path == '/onboarding/step1' ||
             path == '/onboarding/assessment') {
           return '/home';
         }
@@ -126,8 +127,28 @@ GoRoute(
 ),
       
       GoRoute(
-        path: '/profile/setup',
-        builder: (_, __) => const BasicProfileScreen(),
+        path: '/onboarding/step1',
+        builder: (_, __) => const OnboardingStep1Screen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step2',
+        builder: (_, __) => const OnboardingStep2Screen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step3',
+        builder: (_, __) => const OnboardingStep3Screen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step4',
+        builder: (_, __) => const OnboardingStep4Screen(),
+      ),
+      GoRoute(
+        path: '/onboarding/details',
+        builder: (_, __) => const AthleteDetailsScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/background',
+        builder: (_, __) => const BackgroundContextScreen(),
       ),
       GoRoute(
         path: '/onboarding/assessment',

@@ -7,6 +7,7 @@ import RxSwift
     private var methodChannel: FlutterMethodChannel?
     private var hrSink: FlutterEventSink?
     private var hrDisposable: Disposable?
+    private var searchDisposable: Disposable?
 
     @objc public static func register(with registrar: FlutterPluginRegistrar) {
         let methodChannel = FlutterMethodChannel(
@@ -27,13 +28,35 @@ import RxSwift
         super.init()
         api = PolarBleApiDefaultImpl.polarImplementation(
             self,
-            features: [.hrStreaming]
+            features: [.hrStreaming, .deviceInfo]
         )
     }
 
     func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         let args = call.arguments as? [String: Any]
         switch call.method {
+
+        case "scan":
+            searchDisposable?.dispose()
+            searchDisposable = api.searchForDevice(typeFilter: false)
+                .observe(on: MainScheduler.instance)
+                .subscribe(
+                    onNext: { [weak self] info in
+                        self?.methodChannel?.invokeMethod("deviceFound", arguments: [
+                            "deviceId": info.deviceId,
+                            "name": info.name.isEmpty ? info.deviceId : info.name,
+                            "type": PolarPlugin.deviceType(for: info.name),
+                        ])
+                    },
+                    onError: { _ in }
+                )
+            result(nil)
+
+        case "stopScan":
+            searchDisposable?.dispose()
+            searchDisposable = nil
+            result(nil)
+
         case "connect":
             guard let deviceId = args?["deviceId"] as? String else {
                 return result(FlutterError(code: "INVALID_ARG", message: "deviceId required", details: nil))
@@ -84,9 +107,16 @@ import RxSwift
             hrDisposable?.dispose()
             hrDisposable = nil
             result(nil)
+
         default:
             result(FlutterMethodNotImplemented)
         }
+    }
+    private static func deviceType(for name: String) -> String {
+        let lower = name.lowercased()
+        if lower.contains("h10") || lower.contains("h9") { return "Chest strap" }
+        if lower.contains("verity") || lower.contains("oh1") { return "Optical sensor" }
+        return "Polar device"
     }
 }
 
