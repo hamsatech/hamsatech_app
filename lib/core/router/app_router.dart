@@ -147,17 +147,6 @@ class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const _PermissionsNextScreen(),
       ),
-
-GoRoute(
-  path: '/profile/setup',
-  builder: (_, __) => const BasicProfileScreen(),
-),
-
-GoRoute(
-  path: '/onboarding/assessment',
-  builder: (_, __) => const BaselineAssessmentScreen(),
-),
-      
       GoRoute(
         path: '/onboarding/step1',
         builder: (_, __) => const OnboardingStep1Screen(),
