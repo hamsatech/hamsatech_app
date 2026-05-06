@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../bloc/onboarding_step1_bloc.dart';
 import '../bloc/onboarding_step1_event.dart';
@@ -67,7 +68,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
         }
 
         if (state.submissionSuccess) {
-          Navigator.of(context).pop(true);
+          context.go('/onboarding/step2');
         } else if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage!)),

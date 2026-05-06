@@ -7,13 +7,14 @@ import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/basic_profile_screen.dart';
-import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart'; // TEMP TEST ROUTE
+import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
 import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_complete_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
@@ -23,6 +24,36 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
 import '../../features/polar/presentation/screens/polar_device_screen.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// REQUIRED FLOW
+//
+// AUTH
+//   /splash → /welcome → /signup or /login → /otp
+//
+// ONBOARDING (after OTP success)
+//   /permissions → /onboarding/step1 → /onboarding/step2 → /onboarding/step3
+//   → /onboarding/step3b → /onboarding/step4 → /polar → /polar/connect
+//   → /baseline → /baseline/result → /onboarding/complete → /home
+//
+// NAVIGATION CALLS — use context.go() everywhere (replaces stack, no back-stack leak)
+//
+//   SplashScreen        → context.go('/welcome')
+//   WelcomeScreen       → context.go('/signup') or context.go('/login')
+//   SignUpScreen/Login  → context.go('/otp', extra: phoneOrEmail)
+//   OtpScreen           → context.go('/permissions')
+//   PermissionsScreen   → context.go('/onboarding/step1')
+//   Step1               → context.go('/onboarding/step2')
+//   Step2               → context.go('/onboarding/step3')
+//   Step3               → context.go('/onboarding/step3b')
+//   Step3b              → context.go('/onboarding/step4')
+//   Step4               → context.go('/polar')
+//   PolarDeviceScreen   → context.go('/polar/connect')
+//   PolarConnectScreen  → context.go('/baseline')
+//   BaselineScreen      → context.go('/baseline/result')
+//   BaselineResult      → context.go('/onboarding/complete')
+//   OnboardingComplete  → context.go('/home')
+// ─────────────────────────────────────────────────────────────────────────────
+
 class AppRouter {
   AppRouter._();
 
@@ -31,57 +62,27 @@ class AppRouter {
 
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/onboarding/step4', // TEMP TEST ROUTE (revert to '/onboarding/step1')
-    // TEMP: Force Step4 for UI testing — restore original redirect block to re-enable auth guards
+    initialLocation: '/splash',
     redirect: (context, state) => null,
-    /* ORIGINAL REDIRECT — uncomment to restore:
+    /* ORIGINAL REDIRECT — restore once StorageService is wired up:
     redirect: (context, state) {
       final path = state.fullPath ?? '';
       final isLoggedIn = StorageService.getAuthToken() != null;
-      final isProfileSetupDone = StorageService.isProfileSetupComplete();
       final isOnboardingDone = StorageService.isOnboardingComplete();
 
-      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
-      const onboardingPaths = [
-        '/onboarding/step1',
-        '/onboarding/details',
-        '/onboarding/background',
-        '/onboarding/assessment',
-        '/onboarding/complete',
-      ];
+      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp', '/permissions'];
 
-      if (path == '/splash') return null;
+      if (publicPaths.contains(path)) return null;
 
-      // Not logged in → send to welcome
-      if (!isLoggedIn && !publicPaths.contains(path)) {
-        return '/welcome';
-      }
+      if (!isLoggedIn) return '/welcome';
 
-      if (isLoggedIn) {
-        // Step 1 incomplete → basic profile
-        if (!isProfileSetupDone) {
-          if (path == '/profile/setup') return null;
-          return '/profile/setup';
-        }
-
-        // Step 2 incomplete → questionnaire
-        if (!isOnboardingDone) {
-          if (path == '/onboarding/assessment') return null;
-          return '/onboarding/assessment';
-        }
-
-        // Fully done → home (kick off public/setup paths)
-        if (publicPaths.contains(path) ||
-            path == '/profile/setup' ||
-            path == '/onboarding/assessment') {
-          return '/home';
-        }
-      }
+      if (!isOnboardingDone && path == '/home') return '/onboarding/step1';
 
       return null;
     },
     */
     routes: [
+      // ── AUTH ──────────────────────────────────────────────────────────────
       GoRoute(
         path: '/splash',
         builder: (_, __) => const SplashScreen(),
@@ -102,9 +103,12 @@ class AppRouter {
         path: '/otp',
         builder: (_, state) => OtpScreen(phoneOrEmail: state.extra as String),
       ),
+
+      // ── ONBOARDING ────────────────────────────────────────────────────────
+      // TODO: replace builder with PermissionsScreen once feature/permissions-screen is merged
       GoRoute(
-        path: '/profile/setup',
-        builder: (_, __) => const BasicProfileScreen(),
+        path: '/permissions',
+        builder: (_, __) => const _PlaceholderScreen(title: 'Permissions'),
       ),
       GoRoute(
         path: '/onboarding/step1',
@@ -118,14 +122,53 @@ class AppRouter {
         path: '/onboarding/step3',
         builder: (_, __) => const OnboardingStep3Screen(),
       ),
+      // step3b — athlete discipline / competition details
+      GoRoute(
+        path: '/onboarding/step3b',
+        builder: (_, __) => const AthleteDetailsScreen(),
+      ),
       GoRoute(
         path: '/onboarding/step4',
         builder: (_, __) => const OnboardingStep4Screen(),
       ),
+
+      // ── POLAR / BLUETOOTH ─────────────────────────────────────────────────
       GoRoute(
-        path: '/onboarding/step5',
-        builder: (_, __) => const OnboardingStep4Screen(), // temp
+        path: '/polar',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const PolarDeviceScreen(),
       ),
+      // TODO: replace builder with PolarConnectScreen once built
+      GoRoute(
+        path: '/polar/connect',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const _PlaceholderScreen(title: 'Connect Device'),
+      ),
+
+      // ── BASELINE ──────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/baseline',
+        builder: (_, __) => const BaselineAssessmentScreen(),
+      ),
+      // TODO: replace builder with BaselineResultScreen once built
+      GoRoute(
+        path: '/baseline/result',
+        builder: (_, __) => const _PlaceholderScreen(title: 'Baseline Result'),
+      ),
+
+      // ── ONBOARDING COMPLETE ───────────────────────────────────────────────
+      GoRoute(
+        path: '/onboarding/complete',
+        builder: (_, __) => const OnboardingCompleteScreen(),
+      ),
+
+      // ── PROFILE SETUP (post-auth, pre-onboarding) ─────────────────────────
+      GoRoute(
+        path: '/profile/setup',
+        builder: (_, __) => const BasicProfileScreen(),
+      ),
+
+      // ── LEGACY ROUTES — kept for backward compatibility ───────────────────
       GoRoute(
         path: '/onboarding/details',
         builder: (_, __) => const AthleteDetailsScreen(),
@@ -138,11 +181,8 @@ class AppRouter {
         path: '/onboarding/assessment',
         builder: (_, __) => const BaselineAssessmentScreen(),
       ),
-      GoRoute(
-        path: '/polar',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const PolarDeviceScreen(),
-      ),
+
+      // ── SESSION ───────────────────────────────────────────────────────────
       GoRoute(
         path: '/session/pre',
         parentNavigatorKey: _rootNavigatorKey,
@@ -165,6 +205,8 @@ class AppRouter {
           );
         },
       ),
+
+      // ── SHELL (bottom nav) ────────────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __, shell) => MainShellScreen(shell: shell),
@@ -198,4 +240,25 @@ class AppRouter {
       ),
     ],
   );
+}
+
+// Temporary stand-in for screens not yet built.
+// Replace each usage with the real screen class once implemented.
+class _PlaceholderScreen extends StatelessWidget {
+  const _PlaceholderScreen({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Text(
+          '$title — coming soon',
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      ),
+    );
+  }
 }
