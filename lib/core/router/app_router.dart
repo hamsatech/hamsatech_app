@@ -15,6 +15,9 @@ import '../../features/onboarding/presentation/screens/athlete_details_screen.da
 import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
 import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
+import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
@@ -97,6 +100,8 @@ class AppRouter {
         if (!isProfileSetupDone) {
           if (path.startsWith('/onboarding/')) return null;
           return '/onboarding/step1';
+          if (path.startsWith('/onboarding/')) return null;
+          return '/onboarding/step1';
         }
 
         if (!isOnboardingDone) {
@@ -105,6 +110,7 @@ class AppRouter {
         }
 
         if (publicPaths.contains(path) ||
+            path == '/onboarding/step1' ||
             path == '/onboarding/step1' ||
             path == '/onboarding/assessment') {
           return '/home';
