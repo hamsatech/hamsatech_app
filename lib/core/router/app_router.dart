@@ -72,9 +72,9 @@ class AppRouter {
       final isProfileSetupDone = StorageService.isProfileSetupComplete();
       final isOnboardingDone = StorageService.isOnboardingComplete();
 
-<<<<<<< HEAD
       final publicPaths = [
         '/splash',
+        '/welcome', '/signup',
         '/login',
         '/otp',
         '/permissions',
@@ -86,9 +86,6 @@ class AppRouter {
         '/onboarding/assessment',
         '/onboarding/complete',
       ];
-=======
-      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
->>>>>>> 063f8990560ca136db22b7f3be4686b33feb3797
 
       if (path == '/splash') return null;
 
