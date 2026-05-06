@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
-import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 

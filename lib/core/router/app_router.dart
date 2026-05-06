@@ -11,14 +11,10 @@ import '../../features/auth/presentation/screens/basic_profile_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/screens/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
 import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
@@ -27,7 +23,6 @@ import '../../features/session/presentation/screens/post_session_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
-import '../../features/polar/presentation/screens/polar_device_screen.dart';
 import '../../features/polar/presentation/screens/polar_device_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,17 +138,18 @@ class AppRouter {
       GoRoute(
         path: '/otp',
         builder: (_, state) => OtpScreen(phoneOrEmail: state.extra as String),
-GoRoute(
-  path: '/permissions',
-  parentNavigatorKey: _rootNavigatorKey,
-  builder: (_, __) => const PermissionsScreen(),
-),
+      ),
+      GoRoute(
+        path: '/permissions',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const PermissionsScreen(),
+      ),
 
-GoRoute(
-  path: '/permissions/next',
-  parentNavigatorKey: _rootNavigatorKey,
-  builder: (_, __) => const PermissionsNextScreen(),
-),
+      GoRoute(
+        path: '/permissions/next',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const _PermissionsNextScreen(),
+      ),
 
 GoRoute(
   path: '/profile/setup',
@@ -196,7 +192,7 @@ GoRoute(
       // ── ONBOARDING COMPLETE ───────────────────────────────────────────────
       GoRoute(
         path: '/onboarding/complete',
-        builder: (_, __) => const OnboardingCompleteScreen(),
+        builder: (_, __) => const _PlaceholderScreen(title: 'Onboarding Complete'),
       ),
 
       // ── PROFILE SETUP (post-auth, pre-onboarding) ─────────────────────────
