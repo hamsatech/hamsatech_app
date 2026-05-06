@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
+import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/services/storage_service.dart';
 
@@ -39,7 +42,12 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 2200));
+    // Request Bluetooth permission during splash so the Polar screen can
+    // start scanning immediately without interrupting the user later.
+    await Future.wait([
+      Future.delayed(const Duration(milliseconds: 2200)),
+      _requestBluetoothPermission(),
+    ]);
     if (!mounted) return;
     final isLoggedIn = StorageService.getAuthToken() != null;
     final isProfileDone = StorageService.isOnboardingComplete();
@@ -47,9 +55,21 @@ class _SplashScreenState extends State<SplashScreen>
     if (!isLoggedIn) {
       context.go('/welcome');
     } else if (!isProfileDone) {
-      context.go('/profile/setup');
+      context.go('/onboarding/step1');
     } else {
       context.go('/home');
+    }
+  }
+
+  Future<void> _requestBluetoothPermission() async {
+    if (Platform.isAndroid) {
+      await [
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+        Permission.location,
+      ].request();
+    } else {
+      await Permission.bluetooth.request();
     }
   }
 

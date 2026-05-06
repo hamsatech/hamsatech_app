@@ -60,7 +60,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
           _targetScoreController.text = state.targetScore;
         }
         if (state.submissionSuccess) {
-          context.go('/onboarding/step4');
+          context.push('/onboarding/step4');
         } else if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage!)),

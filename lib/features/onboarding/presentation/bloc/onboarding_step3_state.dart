@@ -29,7 +29,7 @@ class OnboardingStep3State extends Equatable {
   final bool submissionSuccess;
 
   const OnboardingStep3State({
-    this.stepTitle = 'STEP 3 OF 5',
+    this.stepTitle = 'STEP 3 OF 4',
     this.progress = 0.6,
     this.title = 'Where are you now?',
     this.subtitle =

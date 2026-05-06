@@ -59,7 +59,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
           _goal6MonthController.text = state.goal6MonthValue;
         }
         if (state.submissionSuccess) {
-          context.go('/home');
+          context.push('/onboarding/assessment');
         } else if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage!)),

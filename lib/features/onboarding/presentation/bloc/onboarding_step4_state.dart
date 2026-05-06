@@ -26,8 +26,8 @@ class OnboardingStep4State extends Equatable {
   final bool submissionSuccess;
 
   const OnboardingStep4State({
-    this.stepTitle = 'STEP 4 OF 5',
-    this.progress = 0.8,
+    this.stepTitle = 'STEP 4 OF 4',
+    this.progress = 1.0,
     this.title = 'Set your goals',
     this.subtitle =
         'Clear goals give your training direction. Be as specific as you can — we\'ll help you work towards them.',
@@ -41,7 +41,7 @@ class OnboardingStep4State extends Equatable {
     this.goal6MonthValue = '',
     this.tipText =
         'Tip: The most effective goals are specific and measurable — include a score, event, or date where you can.',
-    this.ctaText = 'Continue to Step 5',
+    this.ctaText = 'Next',
     this.helperText = 'Fill in at least one goal to continue',
     this.isValid = false,
     this.errorMessage,
