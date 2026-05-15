@@ -20,7 +20,7 @@ class AthleteProfileModel extends AthleteProfileEntity {
         familySupport: json['familySupport'] as String,
         pressureSources: List<String>.from(json['pressureSources'] as List),
         baselineScores: (json['baselineScores'] as Map<String, dynamic>)
-            .map((k, v) => MapEntry(k, (v as num).toDouble())),
+            .map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0.0)),
       );
 
   Map<String, dynamic> toJson() => {

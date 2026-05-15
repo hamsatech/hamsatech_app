@@ -33,7 +33,7 @@ class _SignUpView extends StatelessWidget {
   void _handleState(BuildContext context, SignUpState state) {
     switch (state.status) {
       case SignUpStatus.navigateToPhone:
-        context.push('/login');
+        context.go('/login');
       case SignUpStatus.comingSoon:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -71,21 +71,20 @@ class _SignUpView extends StatelessWidget {
       listenWhen: (prev, curr) => curr.status != prev.status,
       listener: _handleState,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: DSColors.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: DSColors.appBackground,
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            onPressed: () =>
-                context.canPop() ? context.pop() : context.go('/welcome'),
+            onPressed: () => context.go('/welcome'),
             icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Color(0xFF0D1F2D)),
+                size: 18, color: Color(0xFF000F12)),
           ),
           title: Text(
             SignUpViewModel.screenTitle,
-            style: DSTypography.headingMd
-                .copyWith(color: const Color(0xFF0D1F2D)),
+            style:
+                DSTypography.headingMd.copyWith(color: const Color(0xFF000F12)),
           ),
           centerTitle: true,
         ),
@@ -96,11 +95,11 @@ class _SignUpView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                 SizedBox(height: MediaQuery.of(context).size.height * 0.17),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.17),
                 Text(
                   SignUpViewModel.welcomeTitle,
                   style: DSTypography.onboardingCaption.copyWith(
-                    color: const Color(0xFF0D1F2D),
+                    color: const Color(0xFF000F12),
                     height: 1.25,
                   ),
                   textAlign: TextAlign.center,
@@ -152,7 +151,7 @@ class _SignUpView extends StatelessWidget {
                           icon: const FaIcon(
                             FontAwesomeIcons.apple,
                             size: 22,
-                            color: Color(0xFF0D1F2D),
+                            color: Color(0xFF000F12),
                           ),
                           onPressed: isLoading
                               ? null
@@ -191,15 +190,16 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Divider(color: Color(0xFFE5E7EB), thickness: 1)),
+        const Expanded(child: Divider(color: Color(0xFFCAE8EE), thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             label,
-            style: DSTypography.labelMd.copyWith(color: const Color(0xFF6B7280)),
+            style:
+                DSTypography.labelMd.copyWith(color: const Color(0x99000F12)),
           ),
         ),
-        const Expanded(child: Divider(color: Color(0xFFE5E7EB), thickness: 1)),
+        const Expanded(child: Divider(color: Color(0xFFCAE8EE), thickness: 1)),
       ],
     );
   }
@@ -226,11 +226,11 @@ class _SocialAuthButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.2),
+          side: const BorderSide(color: Color(0xFFB0D8E0), width: 1.2),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(DSRadius.xl)),
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF0D1F2D),
+          backgroundColor: DSColors.appBackground,
+          foregroundColor: const Color(0xFF000F12),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -240,7 +240,7 @@ class _SocialAuthButton extends StatelessWidget {
             Text(
               label,
               style: DSTypography.headingSm
-                  .copyWith(color: const Color(0xFF0D1F2D)),
+                  .copyWith(color: const Color(0xFF000F12)),
             ),
           ],
         ),
@@ -268,7 +268,7 @@ class _PrivacyText extends StatelessWidget {
       textAlign: TextAlign.center,
       text: TextSpan(
         style: DSTypography.bodySm.copyWith(
-          color: const Color(0xFF6B7280),
+          color: const Color(0x99000F12),
           height: 1.6,
         ),
         children: [

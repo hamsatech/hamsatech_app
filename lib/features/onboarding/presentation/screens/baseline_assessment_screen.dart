@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
-import '../../../../core/services/storage_service.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -43,8 +42,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
     return BlocConsumer<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.complete) {
-          StorageService.setOnboardingComplete(true);
-          context.go('/home');
+          context.go('/permissions');
         } else if (state.status == OnboardingStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -57,7 +55,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
       builder: (context, state) {
         if (state.questions.isEmpty) {
           return const Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: DSColors.appBackground,
             body: Center(child: CircularProgressIndicator()),
           );
         }
@@ -76,7 +74,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
         }
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: DSColors.appBackground,
           body: SafeArea(
             child: Column(
               children: [
@@ -89,7 +87,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
                       Text(
                         'Questions',
                         style: DSTypography.bodyMd.copyWith(
-                          color: const Color(0xFF6B7280),
+                          color: const Color(0x99000F12),
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -101,12 +99,12 @@ class _AssessmentViewState extends State<_AssessmentView> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: const Color(0xFFD1D5DB), width: 1),
+                              color: const Color(0xFFB0D8E0), width: 1),
                         ),
                         child: Text(
                           '$current/$total',
                           style: DSTypography.bodySm.copyWith(
-                            color: const Color(0xFF374151),
+                            color: const Color(0xFF000F12),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -118,9 +116,9 @@ class _AssessmentViewState extends State<_AssessmentView> {
                 // ── Progress bar ────────────────────────────────────────
                 LinearProgressIndicator(
                   value: state.assessmentProgress,
-                  backgroundColor: const Color(0xFFE4E4E7),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                      DSColors.terracotta),
+                  backgroundColor: const Color(0xFFCAE8EE),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(DSColors.terracotta),
                   minHeight: 3,
                 ),
 
@@ -135,7 +133,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
                         Text(
                           question.question,
                           style: DSTypography.onboardingCaption.copyWith(
-                            color: const Color(0xFF0D1F2D),
+                            color: const Color(0xFF000F12),
                             fontWeight: FontWeight.w700,
                             height: 1.35,
                           ),
@@ -174,12 +172,12 @@ class _AssessmentViewState extends State<_AssessmentView> {
                           controller: _explainController,
                           maxLines: 4,
                           style: DSTypography.bodyMd.copyWith(
-                            color: const Color(0xFF0D1F2D),
+                            color: const Color(0xFF000F12),
                           ),
                           decoration: InputDecoration(
                             hintText: 'Write your message here...',
                             hintStyle: DSTypography.bodyMd.copyWith(
-                              color: const Color(0xFF9CA3AF),
+                              color: const Color(0x66000F12),
                             ),
                             filled: true,
                             fillColor: Colors.white,
@@ -187,7 +185,8 @@ class _AssessmentViewState extends State<_AssessmentView> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
-                                  color: DSColors.terracotta.withValues(alpha: 0.3),
+                                  color: DSColors.terracotta
+                                      .withValues(alpha: 0.3),
                                   width: 1),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -204,7 +203,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
                 ),
 
                 // ── Bottom navigation ───────────────────────────────────
-                const Divider(height: 1, color: Color(0xFFE4E4E7)),
+                const Divider(height: 1, color: Color(0xFFCAE8EE)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
                   child: Row(
@@ -217,7 +216,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                 .read<OnboardingBloc>()
                                 .add(const OnboardingPreviousQuestion());
                           } else {
-                            context.pop();
+                            context.go('/login');
                           }
                         },
                         child: SizedBox(
@@ -244,9 +243,8 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                   isLoading:
                                       state.status == OnboardingStatus.loading,
                                   onPressed: selectedIndex != null
-                                      ? () => context
-                                          .read<OnboardingBloc>()
-                                          .add(const OnboardingAssessmentCompleted())
+                                      ? () => context.read<OnboardingBloc>().add(
+                                          const OnboardingAssessmentCompleted())
                                       : () {},
                                   textStyle: DSTypography.labelMd.copyWith(
                                     color: Colors.white,
@@ -275,7 +273,6 @@ class _AssessmentViewState extends State<_AssessmentView> {
             ),
           ),
         );
-
       },
     );
   }
@@ -310,11 +307,10 @@ class _OptionRow extends StatelessWidget {
                     text,
                     style: DSTypography.bodyMd.copyWith(
                       color: isSelected
-                          ? const Color(0xFF0D1F2D)
-                          : const Color(0xFF6B7280),
-                      fontWeight: isSelected
-                          ? FontWeight.w500
-                          : FontWeight.w400,
+                          ? const Color(0xFF000F12)
+                          : const Color(0xFF4D8F9C),
+                      fontWeight:
+                          isSelected ? FontWeight.w500 : FontWeight.w400,
                     ),
                   ),
                 ),
@@ -324,14 +320,13 @@ class _OptionRow extends StatelessWidget {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? DSColors.terracotta
-                        : Colors.transparent,
+                    color:
+                        isSelected ? DSColors.terracotta : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: isSelected
                           ? DSColors.terracotta
-                          : const Color(0xFFD1D5DB),
+                          : const Color(0xFFB0D8E0),
                       width: 1.5,
                     ),
                   ),
@@ -344,7 +339,7 @@ class _OptionRow extends StatelessWidget {
             ),
           ),
         ),
-        const Divider(height: 1, color: Color(0xFFF3F4F6)),
+        const Divider(height: 1, color: Color(0xFFE2F4F7)),
       ],
     );
   }

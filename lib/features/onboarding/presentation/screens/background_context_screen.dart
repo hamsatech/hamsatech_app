@@ -3,7 +3,6 @@ import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-
 import '../../../../core/di/injection.dart';
 
 import '../bloc/onboarding_bloc.dart';
@@ -26,8 +25,7 @@ class _BackgroundContextView extends StatefulWidget {
   const _BackgroundContextView();
 
   @override
-  State<_BackgroundContextView> createState() =>
-      _BackgroundContextViewState();
+  State<_BackgroundContextView> createState() => _BackgroundContextViewState();
 }
 
 class _BackgroundContextViewState extends State<_BackgroundContextView> {
@@ -68,14 +66,14 @@ class _BackgroundContextViewState extends State<_BackgroundContextView> {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.assessment) {
-          context.push('/onboarding/assessment');
+          context.go('/questions');
         }
       },
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => context.pop(),
+            onPressed: () => context.go('/onboarding/details'),
           ),
         ),
         body: SafeArea(
@@ -94,8 +92,7 @@ class _BackgroundContextViewState extends State<_BackgroundContextView> {
                       .copyWith(color: DSColors.textSecondary),
                 ),
                 const SizedBox(height: 36),
-                Text('Family support level',
-                    style: DSTypography.headingSmall),
+                Text('Family support level', style: DSTypography.headingSmall),
                 const SizedBox(height: 12),
                 _SupportSelector(
                   selected: _familySupport,
@@ -198,8 +195,8 @@ class _SupportSelector extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(icon, color: isSelected ? color : DSColors.textMuted,
-                      size: 28),
+                  Icon(icon,
+                      color: isSelected ? color : DSColors.textMuted, size: 28),
                   const SizedBox(height: 6),
                   Text(
                     label,

@@ -65,7 +65,7 @@ class _PhoneVerificationViewState extends State<_PhoneVerificationView> {
         selected: _selectedCountry,
         onSelect: (country) {
           setState(() => _selectedCountry = country);
-          Navigator.of(context).pop();
+          context.pop();
         },
       ),
     );
@@ -76,7 +76,7 @@ class _PhoneVerificationViewState extends State<_PhoneVerificationView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthOtpSent) {
-          context.push('/otp', extra: state.phoneOrEmail);
+          context.go('/otp', extra: state.phoneOrEmail);
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -95,102 +95,101 @@ class _PhoneVerificationViewState extends State<_PhoneVerificationView> {
       child: Theme(
         data: ThemeData(useMaterial3: true, brightness: Brightness.light),
         child: Scaffold(
-        backgroundColor: Colors.white,
-        resizeToAvoidBottomInset: true,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            onPressed: () =>
-                context.canPop() ? context.pop() : context.go('/welcome'),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Color(0xFF0D1F2D)),
+          backgroundColor: DSColors.appBackground,
+          resizeToAvoidBottomInset: true,
+          appBar: AppBar(
+            backgroundColor: DSColors.appBackground,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            leading: IconButton(
+              onPressed: () => context.go('/welcome'),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                  size: 18, color: Color(0xFF000F12)),
+            ),
+            title: Text(
+              PhoneVerificationViewModel.screenTitle,
+              style: DSTypography.headingMd
+                  .copyWith(color: const Color(0xFF000F12)),
+            ),
+            centerTitle: true,
           ),
-          title: Text(
-            PhoneVerificationViewModel.screenTitle,
-            style: DSTypography.headingMd
-                .copyWith(color: const Color(0xFF0D1F2D)),
-          ),
-          centerTitle: true,
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 32),
-                SvgPicture.asset(
-                  'assets/icons/hand_holding_phone.svg',
-                  width: 129,
-                  height: 157,
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  PhoneVerificationViewModel.heading,
-                  style: DSTypography.onboardingCaption
-                      .copyWith(color: const Color(0xFF0D1F2D)),
-                ),
-                const SizedBox(height: 20),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _controller,
-                  builder: (context, value, _) {
-                    return DSPhoneInput(
-                      controller: _controller,
-                      label: 'Mobile number',
-                      selectedCountry: _selectedCountry,
-                      onCountryTap: () => _showCountryPicker(context),
-                      placeholder: '123-456-7890',
-                      helperText: PhoneVerificationViewModel.helperText,
-                      onChanged: (_) => setState(() {}),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: () {},
-                  child: Center(
-                    child: Text(
-                      PhoneVerificationViewModel.changeNumberText,
-                      style: DSTypography.labelMd.copyWith(
-                        color: DSColors.terracotta,
-                        fontWeight: FontWeight.w600,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 32),
+                  SvgPicture.asset(
+                    'assets/icons/hand_holding_phone.svg',
+                    width: 129,
+                    height: 157,
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    PhoneVerificationViewModel.heading,
+                    style: DSTypography.onboardingCaption
+                        .copyWith(color: const Color(0xFF000F12)),
+                  ),
+                  const SizedBox(height: 20),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _controller,
+                    builder: (context, value, _) {
+                      return DSPhoneInput(
+                        controller: _controller,
+                        label: 'Mobile number',
+                        selectedCountry: _selectedCountry,
+                        onCountryTap: () => _showCountryPicker(context),
+                        placeholder: '123-456-7890',
+                        helperText: PhoneVerificationViewModel.helperText,
+                        onChanged: (_) => setState(() {}),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Center(
+                      child: Text(
+                        PhoneVerificationViewModel.changeNumberText,
+                        style: DSTypography.labelMd.copyWith(
+                          color: DSColors.terracotta,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                BlocBuilder<AuthBloc, AuthState>(
-                  builder: (context, state) {
-                    final isLoading = state is AuthOtpSending;
-                    final isEnabled = PhoneVerificationViewModel.isPhoneValid(
-                        _controller.text.trim());
-                    return AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: isEnabled ? 1.0 : 0.45,
-                      child: DSPrimaryButton(
-                        label: PhoneVerificationViewModel.continueLabel,
-                        color: DSColors.terracotta,
-                        isLoading: isLoading,
-                        onPressed: (isEnabled && !isLoading)
-                            ? () => _submit(context)
-                            : () {},
-                        textStyle: DSTypography.headingMd.copyWith(
-                          color: Colors.white,
-                          letterSpacing: 0.2,
+                  const SizedBox(height: 32),
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      final isLoading = state is AuthOtpSending;
+                      final isEnabled = PhoneVerificationViewModel.isPhoneValid(
+                          _controller.text.trim());
+                      return AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: isEnabled ? 1.0 : 0.45,
+                        child: DSPrimaryButton(
+                          label: PhoneVerificationViewModel.continueLabel,
+                          color: DSColors.terracotta,
+                          isLoading: isLoading,
+                          onPressed: (isEnabled && !isLoading)
+                              ? () => _submit(context)
+                              : () {},
+                          textStyle: DSTypography.headingMd.copyWith(
+                            color: Colors.white,
+                            letterSpacing: 0.2,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-              ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -228,8 +227,8 @@ class _CountryPickerSheet extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
             'Select country',
-            style: DSTypography.headingMd
-                .copyWith(color: const Color(0xFF0D1F2D)),
+            style:
+                DSTypography.headingMd.copyWith(color: const Color(0xFF000F12)),
           ),
         ),
         const SizedBox(height: 8),
@@ -251,15 +250,14 @@ class _CountryPickerSheet extends StatelessWidget {
                 title: Text(
                   country.name,
                   style: DSTypography.bodyMd.copyWith(
-                    color: const Color(0xFF0D1F2D),
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: const Color(0xFF000F12),
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
                 trailing: Text(
                   country.dialCode,
                   style: DSTypography.labelMd
-                      .copyWith(color: const Color(0xFF6B7280)),
+                      .copyWith(color: const Color(0x99000F12)),
                 ),
                 selected: isSelected,
                 selectedTileColor: DSColors.terracotta.withValues(alpha: 0.06),

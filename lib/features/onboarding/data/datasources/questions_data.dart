@@ -1,339 +1,536 @@
 import '../../domain/entities/baseline_question_entity.dart';
 
 const List<BaselineQuestionEntity> kBaselineQuestions = [
-  // ── FOCUS (Q1–Q6) ────────────────────────────────────────────────────────
+  // ── FOCUS (Q1, Q4, Q5, Q11, Q13, Q15, Q24) ───────────────────────────────
 
   BaselineQuestionEntity(
     id: 1,
     question:
-        "You're in a competition and you've just scored your two worst shots consecutively. Your next move is to:",
+        'You are entering the final series and notice your pulse is racing. How do you manage your heart rate?',
     category: 'focus',
     options: [
-      AnswerOptionEntity(text: 'Think about the impact on your total score', score: 1),
-      AnswerOptionEntity(text: 'Your concentration breaks and you struggle to recover', score: 2),
-      AnswerOptionEntity(text: 'Feel frustrated but push through the next shot', score: 3),
-      AnswerOptionEntity(text: 'Immediately analyze what went wrong technically', score: 4),
-      AnswerOptionEntity(text: 'Take a deliberate reset breath and return to your routine', score: 5),
+      AnswerOptionEntity(
+          text: 'Take a deep rhythmic breath and reset my trigger finger focus.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Tell myself to stay calm and try to ignore the heartbeat.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Speed up my shots to get the series over with quickly.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Panic and worry that the shaking will cause a poor shot.',
+          score: 1),
     ],
   ),
+
+  // ── EMOTIONAL STABILITY (Q2, Q9, Q16, Q17, Q18, Q19, Q21, Q22, Q23) ──────
 
   BaselineQuestionEntity(
     id: 2,
-    question: 'During a 60-shot series, your concentration typically:',
-    category: 'focus',
+    question:
+        'You have hit a string of perfect 10s and feel a "rush" of excitement. How do you handle this sudden surge?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Is generally poor with only occasional moments of clarity', score: 1),
-      AnswerOptionEntity(text: 'Fluctuates unpredictably throughout', score: 2),
-      AnswerOptionEntity(text: 'Is strong at the start and gradually fades', score: 3),
-      AnswerOptionEntity(text: 'Builds up slowly and peaks in the middle', score: 4),
-      AnswerOptionEntity(text: 'Stays consistent throughout the entire series', score: 5),
+      AnswerOptionEntity(
+          text: 'Acknowledge the success, exhale, and return to my technical process.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Enjoy the feeling but try to keep my physical movements steady.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Start thinking about the perfect score and feel my heart race.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Get overexcited and rush the next shot to keep the streak going.',
+          score: 1),
     ],
   ),
 
+  // ── DECISION STYLE (Q3, Q6, Q7, Q14, Q20) ────────────────────────────────
+
   BaselineQuestionEntity(
     id: 3,
-    question: 'External noise or movement nearby during a critical shot:',
-    category: 'focus',
+    question:
+        'The range officer calls "1 minute remaining" with two shots left. In this high-speed moment, what do you do?',
+    category: 'decision_style',
     options: [
-      AnswerOptionEntity(text: 'Significantly disrupts your aim and triggers a false shot', score: 1),
-      AnswerOptionEntity(text: 'Often forces you to abort and restart your preparation', score: 2),
-      AnswerOptionEntity(text: 'Is noticeable but you recover within the same shot', score: 3),
-      AnswerOptionEntity(text: 'Causes slight hesitation but you manage to complete the shot', score: 4),
-      AnswerOptionEntity(text: 'Barely registers — you\'re fully absorbed in your routine', score: 5),
+      AnswerOptionEntity(
+          text: 'Quickly stabilize my breath and trust my shot routine.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Speed up slightly while trying to maintain control.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Feel tense and shoot faster than normal.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Panic about the time and fire without a proper sight picture.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 4,
-    question: 'In training, your coach gives you a technical correction mid-series. You:',
+    question:
+        'You feel a slight tremor in your physical hold during sighting. In this situation, what is your primary focus?',
     category: 'focus',
     options: [
-      AnswerOptionEntity(text: 'Find it hard to continue; the correction stays in your head', score: 1),
-      AnswerOptionEntity(text: 'Struggle to maintain focus while processing the instruction', score: 2),
-      AnswerOptionEntity(text: 'Note it but feel your flow disrupted for the next 2–3 shots', score: 3),
-      AnswerOptionEntity(text: 'Acknowledge it but apply it only after completing the series', score: 4),
-      AnswerOptionEntity(text: 'Immediately integrate it without losing your rhythm', score: 5),
+      AnswerOptionEntity(
+          text: 'Lower the weapon slightly and rebuild my hold calmly.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Wait for the tremor to settle before committing to the shot.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Try to "fight" the movement with extra muscle tension.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Feel discouraged and lose confidence in the shot.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 5,
-    question: 'Before a major competition, your mind is typically:',
+    question:
+        'You are performing exceptionally well and exceeding your PB. How do you keep your mind from drifting to the final score?',
     category: 'focus',
     options: [
-      AnswerOptionEntity(text: 'Overwhelmed with worry and negative self-talk', score: 1),
-      AnswerOptionEntity(text: 'Frequently drifting to scores, rankings, or expectations', score: 2),
-      AnswerOptionEntity(text: 'Busy with performance scenarios and possible outcomes', score: 3),
-      AnswerOptionEntity(text: 'Focused but with occasional distracting thoughts', score: 4),
-      AnswerOptionEntity(text: 'Clear and locked onto your pre-performance routine', score: 5),
+      AnswerOptionEntity(
+          text: 'Stay in the present and focus only on the next shot.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Tell myself not to think about the result.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Keep checking the scoreboard mentally.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Start imagining winning or breaking records.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 6,
-    question: 'When you are in the middle of a good performance, you:',
-    category: 'focus',
+    question:
+        'You feel a coach\'s instruction may not be working for you today. Do you follow the advice or trust your gut?',
+    category: 'decision_style',
     options: [
-      AnswerOptionEntity(text: 'Begin calculating scores, breaking your concentration', score: 1),
-      AnswerOptionEntity(text: 'Start thinking "I need to keep this up" and tighten up', score: 2),
-      AnswerOptionEntity(text: 'Become slightly aware of the good run and feel pressure', score: 3),
-      AnswerOptionEntity(text: 'Consciously tell yourself to stay focused on the process', score: 4),
-      AnswerOptionEntity(text: 'Stay in the moment and trust your process', score: 5),
+      AnswerOptionEntity(
+          text: 'Trial the instruction carefully while monitoring my rhythm.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Follow the coach while adjusting slightly to my comfort.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Reject the instruction and rely fully on instinct.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Get confused and lose clarity in execution.',
+          score: 1),
     ],
   ),
-
-  // ── EMOTIONAL STABILITY (Q7–Q12) ─────────────────────────────────────────
 
   BaselineQuestionEntity(
     id: 7,
-    question: 'After a disappointing competition result, you typically:',
-    category: 'emotional_stability',
+    question:
+        'You must choose between a "safe" shot or a risky, high-speed correction. What determines your decision?',
+    category: 'decision_style',
     options: [
-      AnswerOptionEntity(text: 'Feel demotivated for weeks and question your ability', score: 1),
-      AnswerOptionEntity(text: 'Remain affected for a week, reducing training quality', score: 2),
-      AnswerOptionEntity(text: 'Feel down for 1–2 days but then bounce back', score: 3),
-      AnswerOptionEntity(text: 'Recover within a few hours and refocus on training', score: 4),
-      AnswerOptionEntity(text: 'Analyze calmly, identify lessons, and adjust your plan', score: 5),
+      AnswerOptionEntity(
+          text: 'Calculate the probability and trust my technical judgment.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Take the safer option under pressure.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Take the risk impulsively.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Hesitate for too long and lose timing.',
+          score: 1),
     ],
   ),
 
+  // ── MOTIVATION (Q8, Q10, Q12, Q25) ───────────────────────────────────────
+
   BaselineQuestionEntity(
     id: 8,
-    question: 'If a teammate outperforms you significantly in a competition, you feel:',
-    category: 'emotional_stability',
+    question:
+        'You are given technical feedback on your stance. What is your process for integrating this into muscle memory?',
+    category: 'motivation',
     options: [
-      AnswerOptionEntity(text: 'Distracted from your own game, affecting your scores', score: 1),
-      AnswerOptionEntity(text: 'Anxious and compare yourself throughout the event', score: 2),
-      AnswerOptionEntity(text: 'Slightly envious but ultimately inspired', score: 3),
-      AnswerOptionEntity(text: 'Neutrally competitive — motivated to work harder', score: 4),
-      AnswerOptionEntity(text: 'Proud of them with no effect on your own focus', score: 5),
+      AnswerOptionEntity(
+          text: 'Use visualization and structured repetition in training.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Repeat the new stance consistently in practice.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Try the change inconsistently and forget details.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Feel frustrated and resist changing technique.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 9,
-    question: 'When a well-prepared performance is disrupted by equipment issues, you:',
+    question:
+        'You face a highly skilled opponent in a head-to-head shoot-off. What is your primary goal during this confrontation?',
     category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Allow it to significantly alter your mental game', score: 1),
-      AnswerOptionEntity(text: 'Take considerable time to regain your mental composure', score: 2),
-      AnswerOptionEntity(text: 'Feel frustrated initially but reset within 5 minutes', score: 3),
-      AnswerOptionEntity(text: 'Stay calm, manage the delay, and refocus effectively', score: 4),
-      AnswerOptionEntity(text: 'Use the extra time for productive mental preparation', score: 5),
+      AnswerOptionEntity(
+          text: 'Focus entirely on my own shot execution.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Remind myself to stay calm and competitive.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Keep glancing at the opponent\'s score.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Feel intimidated and pressured immediately.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 10,
-    question: 'After scoring a personal best, your next training session tends to be:',
-    category: 'emotional_stability',
+    question:
+        'You wake up feeling low energy on a match day. How do you "switch on" your performance mindset despite your mood?',
+    category: 'motivation',
     options: [
-      AnswerOptionEntity(text: 'Filled with pressure to repeat or surpass the performance', score: 1),
-      AnswerOptionEntity(text: 'Relaxed to the point of reduced effort or focus', score: 2),
-      AnswerOptionEntity(text: 'Slightly overconfident, causing technical lapses', score: 3),
-      AnswerOptionEntity(text: 'Approached normally — you treat every session equally', score: 4),
-      AnswerOptionEntity(text: 'Performed with heightened confidence and consistency', score: 5),
+      AnswerOptionEntity(
+          text: 'Activate my competition routine and mental cues.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Push myself mentally to become match ready.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Feel uncertain whether performance will suffer.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Struggle to motivate myself for the match.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 11,
-    question: 'When your coach criticizes your technique or mental approach, you:',
-    category: 'emotional_stability',
+    question:
+        'There is a sudden loud noise or electronic target malfunction nearby. How quickly do you return to your rhythm?',
+    category: 'focus',
     options: [
-      AnswerOptionEntity(text: 'Take it personally and experience a drop in motivation', score: 1),
-      AnswerOptionEntity(text: 'Feel defensive and find it hard to apply the feedback', score: 2),
-      AnswerOptionEntity(text: 'Understand it intellectually but feel emotionally affected', score: 3),
-      AnswerOptionEntity(text: 'Accept it professionally and use it immediately', score: 4),
-      AnswerOptionEntity(text: 'Welcome it as valuable information for your improvement', score: 5),
+      AnswerOptionEntity(
+          text: 'Refocus almost immediately using my breathing routine.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Pause briefly and continue steadily.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Stay distracted for several shots.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Lose concentration completely.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 12,
     question:
-        'On a match day where conditions are difficult (weather, crowd, pressure), your emotional state is:',
-    category: 'emotional_stability',
+        'You are doing repetitive dry-fire practice that feels boring. How do you maintain the quality of every trigger pull?',
+    category: 'motivation',
     options: [
-      AnswerOptionEntity(text: 'Completely destabilized — this is your biggest challenge', score: 1),
-      AnswerOptionEntity(text: 'Significantly affected — your performance drops noticeably', score: 2),
-      AnswerOptionEntity(text: 'Somewhat shaken but manageable with effort', score: 3),
-      AnswerOptionEntity(text: 'Adaptable — you adjust quickly to the environment', score: 4),
-      AnswerOptionEntity(text: 'Stable and focused — external conditions don\'t control you', score: 5),
+      AnswerOptionEntity(
+          text: 'Treat every repetition like a competition shot.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Stay disciplined and complete the routine carefully.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Rush repetitions without full attention.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Mentally disengage from practice.',
+          score: 1),
     ],
   ),
 
-  // ── DECISION STYLE (Q13–Q18) ──────────────────────────────────────────────
-
   BaselineQuestionEntity(
     id: 13,
-    question: 'Before executing a shot, your pre-shot routine:',
-    category: 'decision_style',
+    question:
+        'You notice your thoughts drifting to school or home during a series. What "anchor" do you use to bring focus back?',
+    category: 'focus',
     options: [
-      AnswerOptionEntity(text: 'Does not exist — you approach each shot instinctively', score: 1),
-      AnswerOptionEntity(text: 'Varies significantly depending on your mood or results', score: 2),
-      AnswerOptionEntity(text: 'Is sometimes skipped when you feel rushed or anxious', score: 3),
-      AnswerOptionEntity(text: 'Is partially completed under high pressure', score: 4),
-      AnswerOptionEntity(text: 'Is consistently followed regardless of score or pressure', score: 5),
+      AnswerOptionEntity(
+          text: 'Return attention to breathing and sight alignment.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Use a simple mental cue like "focus now."',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Struggle to stop unrelated thoughts.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Become fully distracted from shooting.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 14,
-    question: 'When your performance strategy is not working in a competition, you:',
+    question:
+        'The lighting or wind conditions at the range suddenly change. How do you adjust your focus to these variables?',
     category: 'decision_style',
     options: [
-      AnswerOptionEntity(text: 'Panic and try different things without a clear rationale', score: 1),
-      AnswerOptionEntity(text: 'Make multiple changes simultaneously, losing consistency', score: 2),
-      AnswerOptionEntity(text: 'Stick to the plan even if it\'s clearly not working', score: 3),
-      AnswerOptionEntity(text: 'Consult your coach or mental notes for a reset cue', score: 4),
-      AnswerOptionEntity(text: 'Calmly identify one variable and adjust it systematically', score: 5),
+      AnswerOptionEntity(
+          text: 'Adapt calmly and adjust technique accordingly.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Make cautious corrections and continue.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Feel unsettled and lose rhythm temporarily.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Lose confidence in my ability to adapt.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 15,
-    question: 'Under competition pressure, the quality of your decision-making:',
-    category: 'decision_style',
+    question:
+        'You feel mentally tired halfway through a 60-shot match. What is your strategy to keep your concentration sharp?',
+    category: 'focus',
     options: [
-      AnswerOptionEntity(text: 'Breaks down completely in high-stakes situations', score: 1),
-      AnswerOptionEntity(text: 'Noticeably deteriorates under pressure', score: 2),
-      AnswerOptionEntity(text: 'Is somewhat reduced but remains functional', score: 3),
-      AnswerOptionEntity(text: 'Remains consistent with your training performance', score: 4),
-      AnswerOptionEntity(text: 'Slightly improves — pressure activates your focus', score: 5),
+      AnswerOptionEntity(
+          text: 'Mentally reset between shots and trust my routine.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Push through fatigue with discipline.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Notice increasing distractions and errors.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Mentally give up consistency.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 16,
-    question: 'After a bad shot, how long does it take you to fully reset?',
-    category: 'decision_style',
+    question:
+        'You make a visible mistake (e.g., a 7 or 8) but must continue. In this moment, where does your internal dialogue go?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'It affects the rest of the series', score: 1),
-      AnswerOptionEntity(text: 'Several shots — the mistake stays with you', score: 2),
-      AnswerOptionEntity(text: 'Within the next 2–3 shots', score: 3),
-      AnswerOptionEntity(text: 'By the start of your next shot\'s routine', score: 4),
-      AnswerOptionEntity(text: 'Immediately — you have a reliable reset cue', score: 5),
+      AnswerOptionEntity(
+          text: 'Toward calmly correcting the next shot.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Brief disappointment before refocusing.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Self-doubt about repeating mistakes.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Harsh negative self-criticism.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 17,
-    question: 'In training, you respond to a coach\'s tactical instruction by:',
-    category: 'decision_style',
+    question:
+        'You experience multiple low-scoring shots in a row. What do you usually do to break this negative cycle?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Struggling to integrate new information mid-session', score: 2),
-      AnswerOptionEntity(text: 'Asking for clarification multiple times before applying', score: 2),
-      AnswerOptionEntity(text: 'Applying it inconsistently — cognitive load is high', score: 3),
-      AnswerOptionEntity(text: 'Understanding it but needing a practice rep first', score: 4),
-      AnswerOptionEntity(text: 'Immediately processing and applying it accurately', score: 5),
+      AnswerOptionEntity(
+          text: 'Reset my breathing and return to fundamentals.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Slow down and carefully rebuild rhythm.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Feel anxious about continuing mistakes.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Panic and lose emotional control.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 18,
     question:
-        'You are 3 shots from the end, and the score is extremely close. You:',
-    category: 'decision_style',
+        'You return to the range after a long break. How do you handle the pressure of not being at your peak immediately?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Lose technical control as your mind races ahead', score: 1),
-      AnswerOptionEntity(text: 'Rush through the shots to reduce the pressure', score: 2),
-      AnswerOptionEntity(text: 'Become overly cautious — your shots become tentative', score: 3),
-      AnswerOptionEntity(text: 'Feel the pressure but stay process-focused', score: 4),
-      AnswerOptionEntity(text: 'Rely on your routine, one shot at a time, no score awareness', score: 5),
+      AnswerOptionEntity(
+          text: 'Stay patient and trust gradual improvement.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Accept that rebuilding form takes time.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Feel frustrated with reduced performance.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Lose confidence quickly.',
+          score: 1),
     ],
   ),
 
-  // ── MOTIVATION (Q19–Q25) ──────────────────────────────────────────────────
-
   BaselineQuestionEntity(
     id: 19,
-    question: 'What primarily drives you to train daily?',
-    category: 'motivation',
+    question:
+        'You fail to qualify for a final despite maximum effort. What is your immediate internal reaction to this failure?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Habit or obligation — you\'re not sure why anymore', score: 1),
-      AnswerOptionEntity(text: 'Pressure from family, coach, or peers', score: 2),
-      AnswerOptionEntity(text: 'The excitement of competition and winning', score: 3),
-      AnswerOptionEntity(text: 'The desire to represent your country or institution', score: 4),
-      AnswerOptionEntity(text: 'Genuine love for the sport and the pursuit of mastery', score: 5),
+      AnswerOptionEntity(
+          text: 'Learn from the experience and prepare stronger.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Feel disappointed but motivated to improve.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Doubt my ability after the result.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Feel emotionally defeated.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 20,
-    question: 'When training feels repetitive and unrewarding, you:',
-    category: 'motivation',
+    question:
+        'You notice you are repeating the same technical mistake. In this situation, what is your process for self-correction?',
+    category: 'decision_style',
     options: [
-      AnswerOptionEntity(text: 'Skip the session or significantly reduce duration', score: 1),
-      AnswerOptionEntity(text: 'Reduce the quality of your effort to get through it', score: 2),
-      AnswerOptionEntity(text: 'Talk to your coach to regain perspective and motivation', score: 3),
-      AnswerOptionEntity(text: 'Push through with full intensity and commitment', score: 4),
-      AnswerOptionEntity(text: 'Find creative ways to make it challenging and meaningful', score: 5),
+      AnswerOptionEntity(
+          text: 'Analyze the mistake calmly and adjust deliberately.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Try gradual corrections during practice.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Become frustrated by repetition.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Feel helpless about improving it.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 21,
-    question: 'You have just missed selection for an important competition. You:',
-    category: 'motivation',
+    question:
+        'Your coach or a top competitor is standing directly behind you, watching. How does this change your performance?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Question whether you belong in the sport', score: 1),
-      AnswerOptionEntity(text: 'Continue training mechanically, but motivation is low', score: 2),
-      AnswerOptionEntity(text: 'Feel demotivated for weeks, impacting your training', score: 2),
-      AnswerOptionEntity(text: 'Use it as direct fuel to train harder and smarter', score: 4),
-      AnswerOptionEntity(text: 'Experience brief disappointment, then refocus with a clear goal', score: 5),
+      AnswerOptionEntity(
+          text: 'Stay focused on my process and routine.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Feel pressure but remain composed.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Become self-conscious about performance.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Perform significantly worse under observation.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 22,
-    question: 'Your relationship with your performance goals can best be described as:',
-    category: 'motivation',
+    question:
+        'You receive direct, sharp criticism about your technique from a mentor. How do you process this feedback?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Non-existent — you train without specific targets', score: 1),
-      AnswerOptionEntity(text: 'Dependent on others\' expectations', score: 2),
-      AnswerOptionEntity(text: 'Vague — you have a general desire to improve', score: 3),
-      AnswerOptionEntity(text: 'Present in your mind but not formally defined', score: 4),
-      AnswerOptionEntity(text: 'Clear, written, and revisited regularly with purpose', score: 5),
+      AnswerOptionEntity(
+          text: 'Use the criticism constructively to improve.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Feel uncomfortable but still listen carefully.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Take the criticism personally for some time.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Become emotionally upset and discouraged.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 23,
-    question: 'When facing a multi-month performance plateau, your response is to:',
-    category: 'motivation',
+    question:
+        'You are corrected or criticized in front of your teammates. How do you manage your emotional response?',
+    category: 'emotional_stability',
     options: [
-      AnswerOptionEntity(text: 'Seriously consider reducing or stopping training', score: 1),
-      AnswerOptionEntity(text: 'Wait passively for the plateau to pass on its own', score: 2),
-      AnswerOptionEntity(text: 'Increase volume of training hoping to break through', score: 3),
-      AnswerOptionEntity(text: 'Seek external help — coach, sports psychologist, etc.', score: 4),
-      AnswerOptionEntity(text: 'Systematically analyze contributing factors and adapt', score: 5),
+      AnswerOptionEntity(
+          text: 'Stay professional and focus on learning.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Feel embarrassed but remain controlled.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Become defensive internally.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Feel humiliated and lose concentration.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 24,
-    question: 'How important is psychological training to your overall preparation?',
-    category: 'motivation',
+    question:
+        'An opponent is performing much better than you and receiving praise. How do you stay focused on your own target?',
+    category: 'focus',
     options: [
-      AnswerOptionEntity(text: 'I believe mental strength is fixed and cannot be trained', score: 1),
-      AnswerOptionEntity(text: 'Not a priority — technique is what matters most', score: 2),
-      AnswerOptionEntity(text: 'Somewhat important — I focus mainly on technical drills', score: 3),
-      AnswerOptionEntity(text: 'Very important — I\'d like to do more but lack structure', score: 4),
-      AnswerOptionEntity(text: 'It\'s a core part of my weekly routine', score: 5),
+      AnswerOptionEntity(
+          text: 'Concentrate fully on my own process.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Acknowledge their performance but stay composed.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Compare myself negatively to them.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Feel discouraged and distracted.',
+          score: 1),
     ],
   ),
 
   BaselineQuestionEntity(
     id: 25,
-    question: 'Looking ahead to the next 12 months, you feel:',
+    question:
+        'You succeed and receive high recognition. How do you ensure it does not lead to overconfidence?',
     category: 'motivation',
     options: [
-      AnswerOptionEntity(text: 'Uncertain whether to continue in the sport at this level', score: 1),
-      AnswerOptionEntity(text: 'Anxious about performance expectations and outcomes', score: 2),
-      AnswerOptionEntity(text: 'Neutral — you\'ll train and see what happens', score: 3),
-      AnswerOptionEntity(text: 'Optimistic but uncertain about how to achieve your goals', score: 4),
-      AnswerOptionEntity(text: 'Excited and clear — you have a defined path to improve', score: 5),
+      AnswerOptionEntity(
+          text: 'Stay humble and continue disciplined training.',
+          score: 4),
+      AnswerOptionEntity(
+          text: 'Enjoy success while remaining balanced.',
+          score: 3),
+      AnswerOptionEntity(
+          text: 'Become overly focused on reputation.',
+          score: 2),
+      AnswerOptionEntity(
+          text: 'Underestimate future challenges after success.',
+          score: 1),
     ],
   ),
 ];

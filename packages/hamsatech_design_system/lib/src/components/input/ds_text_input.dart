@@ -108,8 +108,8 @@ class _DSTextInputState extends State<DSTextInput> {
     final borderWidth = (_isFocused || isError) ? 1.5 : 1.0;
 
     final fillColor = isDisabled
-        ? (isDark ? const Color(0xFF0D1117) : DSColors.gray50)
-        : (isDark ? const Color(0xFF111827) : DSColors.white);
+        ? (isDark ? const Color(0xFF001418) : DSColors.gray50)
+        : (isDark ? const Color(0xFF0A1C20) : DSColors.white);
 
     OutlineInputBorder border(Color c, [double? w]) => OutlineInputBorder(
           borderRadius: DSRadius.borderMd,
@@ -171,13 +171,13 @@ class _DSTextInputState extends State<DSTextInput> {
           enabled: !isDisabled,
           style: DSTypography.bodyMd.copyWith(
             color: isDisabled
-                ? (isDark ? DSColors.gray600 : DSColors.gray400)
-                : (isDark ? DSColors.gray100 : DSColors.gray900),
+                ? (isDark ? DSColors.textMuted : DSColors.textDisabled)
+                : (isDark ? DSColors.white : DSColors.textPrimary),
           ),
           decoration: InputDecoration(
             hintText: widget.placeholder,
             hintStyle: DSTypography.bodyMd.copyWith(
-              color: isDark ? DSColors.gray600 : DSColors.gray400,
+              color: isDark ? DSColors.textMuted : DSColors.textPlaceholder,
             ),
             filled: true,
             fillColor: fillColor,

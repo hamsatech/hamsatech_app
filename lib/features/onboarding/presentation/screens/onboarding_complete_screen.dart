@@ -3,9 +3,8 @@ import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-
 import '../../../../core/di/injection.dart';
-
+import '../../../../core/services/storage_service.dart';
 
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_state.dart';
@@ -40,8 +39,10 @@ class _OnboardingCompleteView extends StatelessWidget {
         final emotional = scores['emotionalStability'] ?? 0;
         final decision = scores['decisionStyle'] ?? 0;
         final motivation = scores['motivation'] ?? 0;
-        final overall =
-            focus * 0.30 + emotional * 0.25 + decision * 0.25 + motivation * 0.20;
+        final overall = focus * 0.30 +
+            emotional * 0.25 +
+            decision * 0.25 +
+            motivation * 0.20;
 
         return Scaffold(
           body: SafeArea(
@@ -137,7 +138,10 @@ class _OnboardingCompleteView extends StatelessWidget {
                   const SizedBox(height: 36),
                   DSButton(
                     label: 'Enter My Dashboard',
-                    onPressed: () => context.go('/home'),
+                    onPressed: () async {
+                      await StorageService.setOnboardingComplete(true);
+                      if (context.mounted) context.go('/alex-summary');
+                    },
                     leadingIcon: const Icon(Icons.dashboard_rounded),
                     isFullWidth: true,
                   ),
@@ -168,16 +172,14 @@ class _OnboardingCompleteView extends StatelessWidget {
                 value: score / 100,
                 minHeight: 6,
                 backgroundColor: DSColors.appBorder,
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(_levelColor(level)),
+                valueColor: AlwaysStoppedAnimation<Color>(_levelColor(level)),
               ),
             ),
           ),
           const SizedBox(width: 8),
           Text(
             level,
-            style: DSTypography.caption
-                .copyWith(color: _levelColor(level)),
+            style: DSTypography.caption.copyWith(color: _levelColor(level)),
           ),
         ],
       ),

@@ -7,7 +7,7 @@ class PageIndicator extends StatelessWidget {
     required this.count,
     required this.currentIndex,
     this.activeColor = DSColors.brand,
-    this.inactiveColor = const Color(0xFFD8E0E8),
+    this.inactiveColor = const Color(0xFFB0D8E0),
     this.dotSize = 8.0,
     this.spacing = 6.0,
   });

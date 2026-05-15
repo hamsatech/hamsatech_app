@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Hamsa — Mental Performance',
+      title: 'ASTRA',
       theme: DSTheme.darkTheme,
       routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,

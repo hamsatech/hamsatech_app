@@ -3,9 +3,7 @@ import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-
 import '../../../../core/di/injection.dart';
-
 
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
@@ -79,8 +77,7 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.backgroundContext) {
-          context.push('/onboarding/background',
-              extra: context.read<OnboardingBloc>());
+          context.go('/onboarding/background');
         }
       },
       child: Scaffold(
@@ -95,7 +92,8 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                   const SizedBox(height: 16),
                   _StepIndicator(current: 1, total: 3),
                   const SizedBox(height: 32),
-                  Text('Tell us about yourself', style: DSTypography.displayMedium),
+                  Text('Tell us about yourself',
+                      style: DSTypography.displayMedium),
                   const SizedBox(height: 8),
                   Text(
                     'We\'ll use this to personalise your training insights',
@@ -108,11 +106,9 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                     label: 'Full Name',
                     placeholder: 'Enter your full name',
                     prefixIcon: Padding(
-
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-
-                      child: Icon(Icons.person_outline_rounded, size: 20, color: DSColors.textMuted),
-
+                      child: Icon(Icons.person_outline_rounded,
+                          size: 20, color: DSColors.textMuted),
                     ),
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'Required' : null,
@@ -123,11 +119,9 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                     label: 'Age',
                     placeholder: 'Enter your age',
                     prefixIcon: Padding(
-
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-
-                      child: Icon(Icons.cake_outlined, size: 20, color: DSColors.textMuted),
-
+                      child: Icon(Icons.cake_outlined,
+                          size: 20, color: DSColors.textMuted),
                     ),
                     keyboardType: TextInputType.number,
                     validator: (v) {
@@ -151,12 +145,11 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                     label: 'Experience Level',
                     value: _experienceLevel,
                     items: _experienceLevels,
-                    onChanged: (v) =>
-                        setState(() => _experienceLevel = v!),
+                    onChanged: (v) => setState(() => _experienceLevel = v!),
                   ),
                   const SizedBox(height: 40),
                   // Example navigation to the newly added route:
-                  // context.push('/onboarding/step1');
+                  // context.go('/onboarding/step1');
                   DSButton(
                     label: 'Continue',
                     onPressed: () => _submit(context),
@@ -195,9 +188,8 @@ class _DropdownField extends StatelessWidget {
       decoration: InputDecoration(labelText: label),
       dropdownColor: DSColors.appCard,
       style: DSTypography.bodyMedium,
-      items: items
-          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-          .toList(),
+      items:
+          items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
       onChanged: onChanged,
     );
   }

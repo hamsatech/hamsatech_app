@@ -9,7 +9,8 @@ class MainShellScreen extends StatelessWidget {
 
   static const _tabs = [
     _TabItem(icon: Icons.home_rounded, label: 'Home', path: '/home'),
-    _TabItem(icon: Icons.timer_rounded, label: 'Sessions', path: '/sessions'),
+    _TabItem(icon: Icons.gps_fixed_rounded, label: 'Train', path: '/sessions'),
+    _TabItem(icon: Icons.chat_bubble_outline_rounded, label: 'Coach', path: '/journal'),
     _TabItem(icon: Icons.person_rounded, label: 'Profile', path: '/profile'),
   ];
 
@@ -39,7 +40,7 @@ class _BottomNav extends StatelessWidget {
       ),
       child: SafeArea(
         child: SizedBox(
-          height: 64,
+          height: 68,
           child: Row(
             children: tabs.asMap().entries.map((entry) {
               final i = entry.key;
@@ -60,7 +61,7 @@ class _BottomNav extends StatelessWidget {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
+                              horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
                             color: isActive
                                 ? DSColors.brandMuted

@@ -51,7 +51,7 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
       'discipline': _selectedDiscipline,
     });
     await StorageService.setProfileSetupComplete(true);
-    if (mounted) context.go('/onboarding/assessment');
+    if (mounted) context.go('/questions');
   }
 
   @override
@@ -160,8 +160,7 @@ class _StepBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person_outline_rounded,
-              size: 14, color: DSColors.brand),
+          Icon(Icons.person_outline_rounded, size: 14, color: DSColors.brand),
           const SizedBox(width: 6),
           Text(
             'BASIC PROFILE',
@@ -297,8 +296,7 @@ class _DisciplineCard extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                 color: selected ? DSColors.textPrimary : DSColors.textSecondary,
               ),
             ),

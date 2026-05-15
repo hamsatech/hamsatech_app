@@ -59,18 +59,14 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
           _goal6MonthController.text = state.goal6MonthValue;
         }
         if (state.submissionSuccess) {
-          context.push('/onboarding/assessment');
-        } else if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          context.go('/questions');
         }
       },
       builder: (context, state) {
         final bloc = context.read<OnboardingStep4Bloc>();
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF5FDFF),
 
           // ── AppBar + Progress Bar ──────────────────────────────────────
           appBar: PreferredSize(
@@ -99,7 +95,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                                 color: Colors.black,
                                 size: 20,
                               ),
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => context.go('/onboarding/step3'),
                             ),
                           ),
                           Expanded(
@@ -109,7 +105,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF8E8E8E),
+                                  color: const Color(0x99000F12),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -134,7 +130,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                             Container(
                               width: double.infinity,
                               height: 3,
-                              color: const Color(0xFFE6E6E6),
+                              color: const Color(0xFFCAE8EE),
                             ),
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
@@ -142,7 +138,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                               width: constraints.maxWidth *
                                   state.progress.clamp(0.0, 1.0),
                               height: 3,
-                              color: const Color(0xFFE53935),
+                              color: const Color(0xFF2F7E8F),
                             ),
                           ],
                         );
@@ -166,7 +162,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1A1A),
+                    color: Color(0xFF000F12),
                     height: 1.3,
                   ),
                 ),
@@ -178,7 +174,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF6E6E6E),
+                    color: const Color(0x99000F12),
                     height: 1.5,
                   ),
                 ),
@@ -193,6 +189,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                 _goalTextArea(
                   controller: _goal30Controller,
                   hint: state.goal30Hint,
+                  isInvalid: _areGoalsInvalid(state),
                   onChanged: (v) => bloc.add(OnGoal30Changed(v)),
                 ),
                 const SizedBox(height: 24),
@@ -206,6 +203,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                 _goalTextArea(
                   controller: _goal6MonthController,
                   hint: state.goal6MonthHint,
+                  isInvalid: _areGoalsInvalid(state),
                   onChanged: (v) => bloc.add(OnGoal6MonthChanged(v)),
                 ),
                 const SizedBox(height: 24),
@@ -230,10 +228,15 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                     height: 52,
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => bloc.add(const OnStep4Submit()),
+                      onPressed: state.isValid
+                          ? () => bloc.add(const OnStep4Submit())
+                          : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE53935),
-                        disabledBackgroundColor: const Color(0xFFE53935),
+                        backgroundColor: const Color(0xFF2F7E8F),
+                        disabledBackgroundColor:
+                            const Color(0xFF2F7E8F).withValues(alpha: 0.45),
+                        disabledForegroundColor:
+                            Colors.white.withValues(alpha: 0.85),
                         foregroundColor: Colors.white,
                         shadowColor: Colors.transparent,
                         elevation: 0,
@@ -257,7 +260,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF8E8E8E),
+                      color: const Color(0x99000F12),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -271,6 +274,10 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
     );
   }
 
+  bool _areGoalsInvalid(OnboardingStep4State state) {
+    return state.errorMessage == 'Please fill in at least one goal to continue';
+  }
+
   // ── Goal label row: bold label left + pill tag right ────────────────────
   Widget _goalLabelRow({required String label, required String tag}) {
     return Row(
@@ -281,14 +288,14 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
+            color: Color(0xFF000F12),
           ),
         ),
         const Spacer(),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFCCCCCC), width: 1),
+            border: Border.all(color: const Color(0xFFCAE8EE), width: 1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -296,7 +303,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF555555),
+              color: const Color(0x99000F12),
             ),
           ),
         ),
@@ -308,8 +315,12 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
   Widget _goalTextArea({
     required TextEditingController controller,
     required String hint,
+    required bool isInvalid,
     required ValueChanged<String> onChanged,
   }) {
+    final borderColor =
+        isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE);
+
     return Stack(
       children: [
         TextField(
@@ -322,7 +333,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: Color(0xFF1A1A1A),
+            color: Color(0xFF000F12),
             height: 1.5,
           ),
           decoration: InputDecoration(
@@ -330,7 +341,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
             hintStyle: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: Color(0xFFA0A0A0),
+              color: const Color(0x66000F12),
               height: 1.5,
             ),
             filled: true,
@@ -338,15 +349,16 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
             contentPadding: const EdgeInsets.fromLTRB(14, 14, 40, 14),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: borderColor, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5),
+              borderSide:
+                  const BorderSide(color: Color(0xFF2F7E8F), width: 1.5),
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              borderSide: BorderSide(color: borderColor, width: 1),
             ),
           ),
         ),
@@ -358,7 +370,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
           child: Icon(
             Icons.mic_none_rounded,
             size: 18,
-            color: Color(0xFFBBBBBB),
+            color: const Color(0x66000F12),
           ),
         ),
       ],
@@ -370,7 +382,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF3FF),
+        color: const Color(0xFFE2F4F7),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -384,7 +396,7 @@ class _OnboardingStep4ViewState extends State<_OnboardingStep4View> {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF1D4ED8),
+                color: Color(0xFF2F7E8F),
                 height: 1.5,
               ),
             ),

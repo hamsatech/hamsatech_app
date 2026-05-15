@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/di/injection.dart';
 import '../bloc/polar_bloc.dart';
@@ -9,19 +11,19 @@ import '../bloc/polar_event.dart';
 import '../bloc/polar_state.dart';
 
 // ── Colours local to this screen (light theme) ───────────────────────────────
-const _kBg = Colors.white;
-const _kTextPrimary = Color(0xFF111827);
-const _kTextSecondary = Color(0xFF6B7280);
-const _kBorderColor = Color(0xFFE5E7EB);
-const _kSearchIconBg = Color(0xFF2563EB);
+const _kBg = Color(0xFFF5FDFF);
+const _kTextPrimary = Color(0xFF000F12);
+const _kTextSecondary = Color(0x99000F12);
+const _kBorderColor = Color(0xFFCAE8EE);
+const _kSearchIconBg = Color(0xFF2F7E8F);
 const _kConnectedIconBg = Color(0xFF16A34A);
 const _kConnectedText = Color(0xFF16A34A);
 const _kConnectedBg = Color(0xFFF0FDF4);
-const _kConnectBtnBg = Color(0xFF14574A);
-const _kConnectingBg = Color(0xFFEFF6FF);
-const _kConnectingText = Color(0xFF1D4ED8);
-const _kTroubleshootText = Color(0xFFC94B2A);
-const _kDoneBtnBg = Color(0xFFC94B2A);
+const _kConnectBtnBg = Color(0xFF1D6070);
+const _kConnectingBg = Color(0xFFEAF7FA);
+const _kConnectingText = Color(0xFF2F7E8F);
+const _kDoneBtnBg = Color(0xFF2F7E8F);
+const _kScanTimeout = Duration(seconds: 10);
 
 class PolarDeviceScreen extends StatelessWidget {
   const PolarDeviceScreen({super.key});
@@ -46,6 +48,8 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
     with WidgetsBindingObserver {
   bool _permissionGranted = false;
   bool _permissionChecked = false;
+  bool _scanTimedOut = false;
+  Timer? _scanTimeoutTimer;
 
   @override
   void initState() {
@@ -74,7 +78,34 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
     });
     if (granted) {
       context.read<PolarBloc>().add(const PolarScanStarted());
+      _startScanTimeout();
     }
+  }
+
+  void _startScanTimeout() {
+    _scanTimeoutTimer?.cancel();
+    _scanTimedOut = false;
+    _scanTimeoutTimer = Timer(_kScanTimeout, _handleScanTimeout);
+  }
+
+  void _handleScanTimeout() {
+    if (!mounted) return;
+
+    final bloc = context.read<PolarBloc>();
+    final state = bloc.state;
+    if (state.isConnected || state.discoveredDevices.isNotEmpty) return;
+
+    if (state.isScanning) {
+      bloc.add(const PolarScanStopped());
+    }
+
+    setState(() => _scanTimedOut = true);
+  }
+
+  void _retryScan() {
+    setState(() => _scanTimedOut = false);
+    context.read<PolarBloc>().add(const PolarScanStarted());
+    _startScanTimeout();
   }
 
   @override
@@ -91,6 +122,7 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
 
   @override
   void dispose() {
+    _scanTimeoutTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -116,6 +148,10 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
         listener: (context, state) {
           if (state.connectionStatus == PolarConnectionStatus.error &&
               state.errorMessage != null) {
+            _scanTimeoutTimer?.cancel();
+            if (!_scanTimedOut) {
+              setState(() => _scanTimedOut = true);
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage!),
@@ -126,11 +162,21 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
               ),
             );
           }
+          if (state.isConnected || state.discoveredDevices.isNotEmpty) {
+            _scanTimeoutTimer?.cancel();
+            if (_scanTimedOut && state.isConnected) {
+              setState(() => _scanTimedOut = false);
+            }
+          }
           if (state.isConnected && !state.isStreaming) {
             context.read<PolarBloc>().add(const PolarStartHrStreamRequested());
           }
         },
         builder: (context, state) {
+          final showFallback = !state.isConnected &&
+              (state.connectionStatus == PolarConnectionStatus.error ||
+                  (_scanTimedOut && state.discoveredDevices.isEmpty));
+
           return SafeArea(
             child: Column(
               children: [
@@ -140,20 +186,31 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        _StatusIconSection(state: state),
+                        _StatusIconSection(
+                          state: state,
+                          showFallback: showFallback,
+                        ),
                         const SizedBox(height: 32),
-                        _SectionHeader(state: state),
+                        _SectionHeader(
+                          state: state,
+                          showFallback: showFallback,
+                        ),
                         const SizedBox(height: 20),
                         _FoundDevicesDivider(),
                         const SizedBox(height: 16),
-                        _DeviceList(state: state),
-                        const SizedBox(height: 20),
-                        _TroubleshootRow(),
+                        _DeviceList(state: state, showFallback: showFallback),
+                        if (showFallback) ...[
+                          const SizedBox(height: 16),
+                          _TroubleshootCard(onRetry: _retryScan),
+                        ],
                       ],
                     ),
                   ),
                 ),
-                if (state.isConnected) _DoneButton(state: state),
+                if (state.isConnected)
+                  _DoneButton(state: state)
+                else if (showFallback)
+                  const _ContinueWithoutDeviceButton(),
               ],
             ),
           );
@@ -166,8 +223,13 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
 // ── Status icon + text at the top ────────────────────────────────────────────
 
 class _StatusIconSection extends StatelessWidget {
-  const _StatusIconSection({required this.state});
+  const _StatusIconSection({
+    required this.state,
+    required this.showFallback,
+  });
+
   final PolarState state;
+  final bool showFallback;
 
   @override
   Widget build(BuildContext context) {
@@ -175,12 +237,17 @@ class _StatusIconSection extends StatelessWidget {
 
     return Column(
       children: [
-        _StatusIcon(isConnected: isConnected),
+        _StatusIcon(
+          isConnected: isConnected,
+          isSearching: !showFallback,
+        ),
         const SizedBox(height: 12),
         Text(
           isConnected
               ? 'Connected to ${state.connectedDeviceName ?? state.connectedDeviceId ?? 'device'}'
-              : 'Searching...',
+              : showFallback
+                  ? 'Can’t find your device?'
+                  : 'Searching...',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -190,7 +257,9 @@ class _StatusIconSection extends StatelessWidget {
         const SizedBox(height: 4),
         if (!isConnected)
           Text(
-            'Make sure your Polar device is on and nearby.',
+            showFallback
+                ? 'Try again or continue without Polar for now.'
+                : 'Make sure your Polar device is on and nearby.',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 13,
@@ -203,8 +272,13 @@ class _StatusIconSection extends StatelessWidget {
 }
 
 class _StatusIcon extends StatefulWidget {
-  const _StatusIcon({required this.isConnected});
+  const _StatusIcon({
+    required this.isConnected,
+    required this.isSearching,
+  });
+
   final bool isConnected;
+  final bool isSearching;
 
   @override
   State<_StatusIcon> createState() => _StatusIconState();
@@ -248,26 +322,32 @@ class _StatusIconState extends State<_StatusIcon>
       );
     }
 
-    return ScaleTransition(
-      scale: _scale,
-      child: Container(
-        width: 72,
-        height: 72,
-        decoration: const BoxDecoration(
-          color: _kSearchIconBg,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Icons.wifi_rounded, color: Colors.white, size: 36),
+    final icon = Container(
+      width: 72,
+      height: 72,
+      decoration: const BoxDecoration(
+        color: _kSearchIconBg,
+        shape: BoxShape.circle,
       ),
+      child: const Icon(Icons.wifi_rounded, color: Colors.white, size: 36),
     );
+
+    if (!widget.isSearching) return icon;
+
+    return ScaleTransition(scale: _scale, child: icon);
   }
 }
 
 // ── Section header (title + subtitle) ────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.state});
+  const _SectionHeader({
+    required this.state,
+    required this.showFallback,
+  });
+
   final PolarState state;
+  final bool showFallback;
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +355,11 @@ class _SectionHeader extends StatelessWidget {
     return Column(
       children: [
         Text(
-          isConnected ? 'Device connected' : 'Connecting to Polar',
+          isConnected
+              ? 'Device connected'
+              : showFallback
+                  ? 'Having trouble?'
+                  : 'Connecting to Polar',
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -286,7 +370,9 @@ class _SectionHeader extends StatelessWidget {
         Text(
           isConnected
               ? 'Your heart rate and HRV data will now be\ntracked during sessions.'
-              : 'Select a device below to pair it with the app.',
+              : showFallback
+                  ? 'No Polar device was found during this scan.'
+                  : 'Select a device below to pair it with the app.',
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 13,
@@ -361,7 +447,8 @@ class _PermissionDeniedView extends StatelessWidget {
             const Text(
               'Allow Bluetooth access in Settings so the app can find and connect to your Polar device.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: _kTextSecondary, height: 1.5),
+              style:
+                  TextStyle(fontSize: 14, color: _kTextSecondary, height: 1.5),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -391,12 +478,18 @@ class _PermissionDeniedView extends StatelessWidget {
 // ── Device list ───────────────────────────────────────────────────────────────
 
 class _DeviceList extends StatelessWidget {
-  const _DeviceList({required this.state});
+  const _DeviceList({
+    required this.state,
+    required this.showFallback,
+  });
+
   final PolarState state;
+  final bool showFallback;
 
   @override
   Widget build(BuildContext context) {
     if (state.discoveredDevices.isEmpty && !state.isConnected) {
+      if (showFallback) return const SizedBox.shrink();
       return const _EmptySearchState();
     }
 
@@ -407,6 +500,78 @@ class _DeviceList extends StatelessWidget {
                 child: _DeviceCard(device: device, state: state),
               ))
           .toList(),
+    );
+  }
+}
+
+class _TroubleshootCard extends StatelessWidget {
+  const _TroubleshootCard({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFD97706),
+                size: 18,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Having trouble?',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: _kTextPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Can’t find your device? Make sure your Polar is awake and close by, or continue without it for now.',
+            style: TextStyle(
+              fontSize: 13,
+              color: _kTextSecondary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                foregroundColor: _kDoneBtnBg,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'Troubleshoot / Try again',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -541,8 +706,8 @@ class _DeviceCard extends StatelessWidget {
                 else
                   Text(
                     device.deviceType ?? 'Polar device',
-                    style: const TextStyle(
-                        fontSize: 12, color: _kTextSecondary),
+                    style:
+                        const TextStyle(fontSize: 12, color: _kTextSecondary),
                   ),
               ],
             ),
@@ -592,7 +757,7 @@ class _BluetoothAvatar extends StatelessWidget {
             ? _kConnectedBg
             : isConnectingThis
                 ? _kConnectingBg
-                : const Color(0xFFEFF6FF),
+                : const Color(0xFFEAF7FA),
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -701,39 +866,6 @@ class _Dot extends StatelessWidget {
   }
 }
 
-// ── Troubleshoot link ─────────────────────────────────────────────────────────
-
-class _TroubleshootRow extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.warning_amber_rounded,
-            size: 14, color: _kTextSecondary),
-        const SizedBox(width: 4),
-        const Text(
-          "Can't find your device? ",
-          style: TextStyle(fontSize: 13, color: _kTextSecondary),
-        ),
-        GestureDetector(
-          onTap: () {},
-          child: const Text(
-            'Troubleshoot',
-            style: TextStyle(
-              fontSize: 13,
-              color: _kTroubleshootText,
-              fontWeight: FontWeight.w500,
-              decoration: TextDecoration.underline,
-              decorationColor: _kTroubleshootText,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // ── "Done Let's go" CTA at bottom ────────────────────────────────────────────
 
 class _DoneButton extends StatelessWidget {
@@ -749,7 +881,7 @@ class _DoneButton extends StatelessWidget {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.go('/heartrate'),
           style: ElevatedButton.styleFrom(
             backgroundColor: _kDoneBtnBg,
             foregroundColor: Colors.white,
@@ -760,6 +892,37 @@ class _DoneButton extends StatelessWidget {
           ),
           child: const Text(
             "Done Let's go",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContinueWithoutDeviceButton extends StatelessWidget {
+  const _ContinueWithoutDeviceButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _kBg,
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: () => context.go('/heartrate'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kDoneBtnBg,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: const Text(
+            'Continue without Polar',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
