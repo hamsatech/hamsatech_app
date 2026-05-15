@@ -52,18 +52,14 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
           _academyController.text = state.academy;
         }
         if (state.submissionSuccess) {
-          context.push('/onboarding/step3');
-        } else if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          context.go('/onboarding/step3');
         }
       },
       builder: (context, state) {
         final bloc = context.read<OnboardingStep2Bloc>();
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF5FDFF),
 
           // ── AppBar + Progress Bar ──────────────────────────────────────
           appBar: PreferredSize(
@@ -92,7 +88,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                                 color: Colors.black,
                                 size: 20,
                               ),
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => context.go('/onboarding/step1'),
                             ),
                           ),
                           Expanded(
@@ -102,7 +98,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF8E8E8E),
+                                  color: const Color(0x99000F12),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -127,7 +123,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                             Container(
                               width: double.infinity,
                               height: 3,
-                              color: const Color(0xFFE6E6E6),
+                              color: const Color(0xFFCAE8EE),
                             ),
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
@@ -135,7 +131,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                               width: constraints.maxWidth *
                                   state.progress.clamp(0.0, 1.0),
                               height: 3,
-                              color: const Color(0xFFE53935),
+                              color: const Color(0xFF2F7E8F),
                             ),
                           ],
                         );
@@ -159,7 +155,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1A1A),
+                    color: Color(0xFF000F12),
                     height: 1.3,
                   ),
                 ),
@@ -171,7 +167,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF6E6E6E),
+                    color: const Color(0x99000F12),
                     height: 1.5,
                   ),
                 ),
@@ -184,6 +180,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   context: context,
                   state: state,
                   bloc: bloc,
+                  isInvalid: _isDisciplineInvalid(state),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -191,7 +188,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF999999),
+                    color: const Color(0x66000F12),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -202,6 +199,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                 _experienceSelector(
                   options: state.experienceOptions,
                   selected: state.experience,
+                  isInvalid: _isExperienceInvalid(state),
                   onSelect: (v) => bloc.add(OnExperienceChanged(v)),
                 ),
                 const SizedBox(height: 20),
@@ -225,7 +223,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF4A4A4A),
+                        color: const Color(0x99000F12),
                       ),
                     ),
                     const Spacer(),
@@ -234,7 +232,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF999999),
+                        color: const Color(0x66000F12),
                       ),
                     ),
                   ],
@@ -260,10 +258,15 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                 height: 52,
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => bloc.add(const OnStep2Submit()),
+                  onPressed: state.isValid
+                      ? () => bloc.add(const OnStep2Submit())
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
-                    disabledBackgroundColor: const Color(0xFFE53935),
+                    backgroundColor: const Color(0xFF2F7E8F),
+                    disabledBackgroundColor:
+                        const Color(0xFF2F7E8F).withValues(alpha: 0.45),
+                    disabledForegroundColor:
+                        Colors.white.withValues(alpha: 0.85),
                     foregroundColor: Colors.white,
                     shadowColor: Colors.transparent,
                     elevation: 0,
@@ -288,6 +291,14 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
     );
   }
 
+  bool _isDisciplineInvalid(OnboardingStep2State state) {
+    return state.errorMessage == 'Please select a discipline';
+  }
+
+  bool _isExperienceInvalid(OnboardingStep2State state) {
+    return state.errorMessage == 'Please select your experience level';
+  }
+
   // ── Field Label ──────────────────────────────────────────────────────────
   Widget _fieldLabel(String label) {
     return Text(
@@ -295,7 +306,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF4A4A4A),
+        color: const Color(0x99000F12),
       ),
     );
   }
@@ -314,14 +325,14 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
       style: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF000F12),
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: Color(0xFFA0A0A0),
+          color: const Color(0x66000F12),
         ),
         filled: true,
         fillColor: Colors.white,
@@ -331,15 +342,15 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+          borderSide: const BorderSide(color: Color(0xFFCAE8EE), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF2F7E8F), width: 1.5),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+          borderSide: const BorderSide(color: Color(0xFFCAE8EE), width: 1),
         ),
       ),
     );
@@ -350,8 +361,11 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
     required BuildContext context,
     required OnboardingStep2State state,
     required OnboardingStep2Bloc bloc,
+    required bool isInvalid,
   }) {
     final hasValue = state.discipline.isNotEmpty;
+    final borderColor =
+        isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE);
 
     return GestureDetector(
       onTap: () => _showDisciplinePicker(context, state, bloc),
@@ -362,7 +376,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+          border: Border.all(color: borderColor, width: 1),
         ),
         child: Row(
           children: [
@@ -373,15 +387,15 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: hasValue
-                      ? const Color(0xFF1A1A1A)
-                      : const Color(0xFFA0A0A0),
+                      ? const Color(0xFF000F12)
+                      : const Color(0xFF7FB8C4),
                 ),
               ),
             ),
             const Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 20,
-              color: Color(0xFF888888),
+              color: const Color(0x66000F12),
             ),
           ],
         ),
@@ -396,7 +410,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
   ) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5FDFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -411,7 +425,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                 height: 4,
                 margin: const EdgeInsets.only(top: 12, bottom: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDDDDD),
+                  color: const Color(0xFFCAE8EE),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -422,11 +436,11 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF111111),
+                    color: Color(0xFF000F12),
                   ),
                 ),
               ),
-              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              const Divider(height: 1, color: Color(0xFFCAE8EE)),
               Flexible(
                 child: ListView.builder(
                   shrinkWrap: true,
@@ -437,7 +451,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                     return InkWell(
                       onTap: () {
                         bloc.add(OnDisciplineChanged(opt));
-                        Navigator.of(sheetCtx).pop();
+                        sheetCtx.pop();
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -455,8 +469,8 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                                       ? FontWeight.w600
                                       : FontWeight.w400,
                                   color: isSelected
-                                      ? const Color(0xFFE53935)
-                                      : const Color(0xFF333333),
+                                      ? const Color(0xFF2F7E8F)
+                                      : const Color(0xFF000F12),
                                 ),
                               ),
                             ),
@@ -464,7 +478,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                               const Icon(
                                 Icons.check_rounded,
                                 size: 18,
-                                color: Color(0xFFE53935),
+                                color: Color(0xFF2F7E8F),
                               ),
                           ],
                         ),
@@ -485,12 +499,17 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
   Widget _experienceSelector({
     required List<String> options,
     required String selected,
+    required bool isInvalid,
     required ValueChanged<String> onSelect,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2),
+        color: const Color(0xFFE2F4F7),
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isInvalid ? const Color(0xFF2F7E8F) : Colors.transparent,
+          width: 1,
+        ),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
@@ -522,11 +541,10 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   opt,
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     color: isSelected
-                        ? const Color(0xFF1A1A1A)
-                        : const Color(0xFF888888),
+                        ? const Color(0xFF000F12)
+                        : const Color(0xFF7FB8C4),
                   ),
                 ),
               ),
@@ -545,7 +563,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+        border: Border.all(color: const Color(0xFFCAE8EE), width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: IntrinsicHeight(
@@ -557,7 +575,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
               onTap: onDecrement,
               enabled: value > 0,
             ),
-            Container(width: 1, color: const Color(0xFFE0E0E0)),
+            Container(width: 1, color: const Color(0xFFCAE8EE)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Text(
@@ -565,11 +583,11 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
+                  color: Color(0xFF000F12),
                 ),
               ),
             ),
-            Container(width: 1, color: const Color(0xFFE0E0E0)),
+            Container(width: 1, color: const Color(0xFFCAE8EE)),
             _stepperButton(
               icon: Icons.add,
               onTap: onIncrement,
@@ -595,7 +613,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
         child: Icon(
           icon,
           size: 20,
-          color: enabled ? const Color(0xFF333333) : const Color(0xFFCCCCCC),
+          color: enabled ? const Color(0xFF000F12) : const Color(0xFFCAE8EE),
         ),
       ),
     );

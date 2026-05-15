@@ -13,3 +13,7 @@ class DashboardLoadRequested extends DashboardEvent {
 class DashboardRefreshRequested extends DashboardEvent {
   const DashboardRefreshRequested();
 }
+
+class DashboardCoachFeedbackMarkRead extends DashboardEvent {
+  const DashboardCoachFeedbackMarkRead();
+}

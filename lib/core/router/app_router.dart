@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
-import '../../features/auth/presentation/screens/basic_profile_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
-import '../../features/onboarding/presentation/screens/background_context_screen.dart';
+import '../../features/onboarding/presentation/screens/alex_summary_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
-import '../../features/onboarding/presentation/screens/onboarding_complete_screen.dart';
+import '../../features/onboarding/presentation/screens/baseline_result_screen.dart';
+import '../../features/onboarding/presentation/screens/baseline_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
@@ -25,7 +23,27 @@ import '../../features/reflection/presentation/screens/reflection_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
+import '../../features/checkin/presentation/screens/daily_checkin_screen.dart';
+import '../../features/session_setup/presentation/screens/session_setup_screen.dart';
+import '../../features/polar/presentation/screens/heartrate_screen.dart';
 import '../../features/polar/presentation/screens/polar_device_screen.dart';
+import '../../features/pre_session_ritual/presentation/screens/breathing_screen.dart';
+import '../../features/pre_session_ritual/presentation/screens/body_scan_screen.dart';
+import '../../features/pre_session_ritual/presentation/screens/intention_screen.dart';
+import '../../features/pre_session_ritual/presentation/screens/visualization_screen.dart';
+import '../../features/live_training/presentation/screens/live_session_screen.dart';
+import '../../features/live_training/presentation/screens/reflect_screen.dart';
+import '../../features/score_entry/presentation/screens/score_entry_screen.dart';
+import '../../features/score_entry/presentation/screens/series_complete_screen.dart';
+import '../../features/score_entry/presentation/screens/final_scores_summary_screen.dart';
+import '../../features/session_summary/presentation/screens/session_summary_screen.dart';
+import '../../features/session_summary/bloc/session_summary_bloc.dart';
+import '../../features/session_report/presentation/screens/session_report_screen.dart';
+import '../../features/session_report/bloc/session_report_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../di/injection.dart';
+import '../services/storage_service.dart';
+import '../../features/score_entry/bloc/score_entry_bloc.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REQUIRED FLOW
@@ -34,27 +52,28 @@ import '../../features/polar/presentation/screens/polar_device_screen.dart';
 //   /splash → /welcome → /signup or /login → /otp
 //
 // ONBOARDING (after OTP success)
-//   /permissions → /onboarding/step1 → /onboarding/step2 → /onboarding/step3
-//   → /onboarding/step3b → /onboarding/step4 → /polar → /polar/connect
-//   → /baseline → /baseline/result → /onboarding/complete → /home
+//   /onboarding/step1 → /onboarding/step2 → /onboarding/step3
+//   → /onboarding/step4 → /questions → /permissions
+//   → /polar → /heartrate → /baseline → /baseline/result
+//   → /alex-summary → /home
 //
 // NAVIGATION CALLS — use context.go() everywhere (replaces stack, no back-stack leak)
 //
 //   SplashScreen        → context.go('/welcome')
 //   WelcomeScreen       → context.go('/signup') or context.go('/login')
 //   SignUpScreen/Login  → context.go('/otp', extra: phoneOrEmail)
-//   OtpScreen           → context.go('/permissions')
-//   PermissionsScreen   → context.go('/onboarding/step1')
+//   OtpScreen           → context.go('/onboarding/step1')
 //   Step1               → context.go('/onboarding/step2')
 //   Step2               → context.go('/onboarding/step3')
-//   Step3               → context.go('/onboarding/step3b')
-//   Step3b              → context.go('/onboarding/step4')
-//   Step4               → context.go('/polar')
-//   PolarDeviceScreen   → context.go('/polar/connect')
-//   PolarConnectScreen  → context.go('/baseline')
+//   Step3               → context.go('/onboarding/step4')
+//   Step4               → context.go('/questions')
+//   Questions           → context.go('/permissions')
+//   PermissionsScreen   → context.go('/polar')
+//   PolarDeviceScreen   → context.go('/heartrate')
+//   HeartRateScreen     → context.go('/baseline')
 //   BaselineScreen      → context.go('/baseline/result')
-//   BaselineResult      → context.go('/onboarding/complete')
-//   OnboardingComplete  → context.go('/home')
+//   BaselineResult      → context.go('/alex-summary')
+//   AlexSummaryScreen   → context.go('/home')
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AppRouter {
@@ -63,62 +82,31 @@ class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+  // Routes that mark onboarding progress — tracked for cold-start resume.
+  static const _onboardingRoutes = {
+    '/onboarding/step1',
+    '/onboarding/step2',
+    '/onboarding/step3',
+    '/onboarding/step4',
+    '/questions',
+    '/permissions',
+    '/polar',
+    '/heartrate',
+    '/baseline',
+    '/baseline/result',
+    '/alex-summary',
+  };
+
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/permissions',
-    redirect: (context, state) => null,
-    /* ORIGINAL REDIRECT — restore once StorageService is wired up:
+    initialLocation: '/splash',
     redirect: (context, state) {
-      final path = state.fullPath ?? '';
-      final isLoggedIn = StorageService.getAuthToken() != null;
-      final isProfileSetupDone = StorageService.isProfileSetupComplete();
-      final isOnboardingDone = StorageService.isOnboardingComplete();
-
-      final publicPaths = [
-        '/splash',
-        '/welcome', '/signup',
-        '/login',
-        '/otp',
-        '/permissions',
-        '/permissions/next',
-      ];
-      final onboardingPaths = [
-        '/onboarding/details',
-        '/onboarding/background',
-        '/onboarding/assessment',
-        '/onboarding/complete',
-      ];
-
-      if (path == '/splash') return null;
-
-      if (!isLoggedIn && !publicPaths.contains(path)) {
-        return '/welcome';
+      final loc = state.matchedLocation;
+      if (_onboardingRoutes.contains(loc)) {
+        StorageService.saveOnboardingStep(loc); // fire-and-forget
       }
-
-      if (isLoggedIn) {
-        if (!isProfileSetupDone) {
-          if (path.startsWith('/onboarding/')) return null;
-          return '/onboarding/step1';
-          if (path.startsWith('/onboarding/')) return null;
-          return '/onboarding/step1';
-        }
-
-        if (!isOnboardingDone) {
-          if (path == '/onboarding/assessment') return null;
-          return '/onboarding/assessment';
-        }
-
-        if (publicPaths.contains(path) ||
-            path == '/onboarding/step1' ||
-            path == '/onboarding/step1' ||
-            path == '/onboarding/assessment') {
-          return '/home';
-        }
-      }
-
       return null;
     },
-    */
     routes: [
       // ── AUTH ──────────────────────────────────────────────────────────────
       GoRoute(
@@ -148,11 +136,6 @@ class AppRouter {
       ),
 
       GoRoute(
-        path: '/permissions/next',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const _PermissionsNextScreen(),
-      ),
-      GoRoute(
         path: '/onboarding/step1',
         builder: (_, __) => const OnboardingStep1Screen(),
       ),
@@ -171,44 +154,111 @@ class AppRouter {
 
       // ── BASELINE ──────────────────────────────────────────────────────────
       GoRoute(
-        path: '/baseline',
+        path: '/questions',
         builder: (_, __) => const BaselineAssessmentScreen(),
       ),
-      // TODO: replace builder with BaselineResultScreen once built
+      GoRoute(
+        path: '/baseline',
+        builder: (_, __) => const BaselineScreen(),
+      ),
       GoRoute(
         path: '/baseline/result',
-        builder: (_, __) => const _PlaceholderScreen(title: 'Baseline Result'),
+        builder: (_, __) => const BaselineResultScreen(),
+      ),
+      GoRoute(
+        path: '/alex-summary',
+        builder: (_, __) => const AlexSummaryScreen(),
       ),
 
-      // ── ONBOARDING COMPLETE ───────────────────────────────────────────────
-      GoRoute(
-        path: '/onboarding/complete',
-        builder: (_, __) => const OnboardingCompleteScreen(),
-      ),
-
-      // ── PROFILE SETUP (post-auth, pre-onboarding) ─────────────────────────
-      GoRoute(
-        path: '/profile/setup',
-        builder: (_, __) => const BasicProfileScreen(),
-      ),
-
-      // ── LEGACY ROUTES — kept for backward compatibility ───────────────────
-      GoRoute(
-        path: '/onboarding/details',
-        builder: (_, __) => const AthleteDetailsScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/background',
-        builder: (_, __) => const BackgroundContextScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/assessment',
-        builder: (_, __) => const BaselineAssessmentScreen(),
-      ),
       GoRoute(
         path: '/polar',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const PolarDeviceScreen(),
+      ),
+      GoRoute(
+        path: '/heartrate',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const HeartRateScreen(),
+      ),
+      GoRoute(
+        path: '/checkin',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const DailyCheckinScreen(),
+      ),
+      GoRoute(
+        path: '/session/setup',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const SessionSetupScreen(),
+      ),
+      GoRoute(
+        path: '/ritual/breathing',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const BreathingScreen(),
+      ),
+      GoRoute(
+        path: '/ritual/body-scan',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const BodyScanScreen(),
+      ),
+      GoRoute(
+        path: '/ritual/intention',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const IntentionScreen(),
+      ),
+      GoRoute(
+        path: '/ritual/visualization',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const VisualizationScreen(),
+      ),
+      GoRoute(
+        path: '/session/live',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const LiveSessionScreen(),
+      ),
+      GoRoute(
+        path: '/session/reflect',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const ReflectScreen(),
+      ),
+      GoRoute(
+        path: '/session/scores',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => BlocProvider.value(
+          value: getIt<ScoreEntryBloc>(),
+          child: const ScoreEntryScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/session/scores/complete',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => BlocProvider.value(
+          value: getIt<ScoreEntryBloc>(),
+          child: const SeriesCompleteScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/session/scores/summary',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => BlocProvider.value(
+          value: getIt<ScoreEntryBloc>(),
+          child: const FinalScoresSummaryScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/session/summary',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => BlocProvider(
+          create: (_) => getIt<SessionSummaryBloc>(),
+          child: const SessionSummaryScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/session/report',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => BlocProvider(
+          create: (_) => getIt<SessionReportBloc>(),
+          child: const SessionReportScreen(),
+        ),
       ),
       GoRoute(
         path: '/session/pre',
@@ -275,50 +325,4 @@ class AppRouter {
       ),
     ],
   );
-}
-
-class _PermissionsNextScreen extends StatelessWidget {
-  const _PermissionsNextScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DSColors.white,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(DSSpacing.xxl),
-            child: Text(
-              'Next screen placeholder',
-              style: DSTypography.headingLarge.copyWith(
-                color: DSColors.black,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Temporary stand-in for screens not yet built.
-// Replace each usage with the real screen class once implemented.
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          '$title — coming soon',
-          style: const TextStyle(fontSize: 16, color: Colors.grey),
-        ),
-      ),
-    );
-  }
 }

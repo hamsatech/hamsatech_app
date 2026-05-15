@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../core/widgets/astra_logo.dart';
 import '../../data/repositories/login_repository_impl.dart';
 import '../../domain/entities/onboarding_slide_entity.dart';
 import '../bloc/welcome_bloc.dart';
@@ -13,7 +14,7 @@ import '../viewmodels/welcome_view_model.dart';
 import '../widgets/page_indicator.dart';
 
 // ── Palette (matches Figma "login -v2" frame) ─────────────────────────────────
-const _kBrand = DSColors.terracotta;  // #C94B2A
+const _kBrand = DSColors.brand;
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -76,18 +77,19 @@ class _WelcomeViewState extends State<_WelcomeView> {
         }
         HapticFeedback.lightImpact();
         if (state.status == WelcomeStatus.navigateToSignUp) {
-          context.push('/signup');
+          context.go('/signup');
         } else {
-          context.push('/login');
+          context.go('/login');
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: DSColors.appBackground,
         body: SafeArea(
           child: BlocBuilder<WelcomeBloc, WelcomeState>(
             builder: (context, state) {
               return SingleChildScrollView(
-                child: Column(spacing: DSSpacing.xs, 
+                child: Column(
+                  spacing: DSSpacing.xs,
                   children: [
                     const SizedBox(height: 28),
                     const _Header(),
@@ -95,8 +97,9 @@ class _WelcomeViewState extends State<_WelcomeView> {
                     _Carousel(
                       slides: state.slides,
                       pageController: _pageController,
-                      onPageChanged: (page) =>
-                          context.read<WelcomeBloc>().add(WelcomePageChanged(page)),
+                      onPageChanged: (page) => context
+                          .read<WelcomeBloc>()
+                          .add(WelcomePageChanged(page)),
                     ),
                     const SizedBox(height: 20),
                     _Caption(slide: state.currentSlide),
@@ -105,16 +108,19 @@ class _WelcomeViewState extends State<_WelcomeView> {
                       count: state.slides.length,
                       currentIndex: state.currentPage,
                       activeColor: _kBrand,
-                      inactiveColor: const Color(0xFFD6D3D1),
+                      inactiveColor: const Color(0xFFB0D8E0),
                     ),
                     const SizedBox(height: 28),
                     _ActionButtons(
-                      onSignUp: () =>
-                          context.read<WelcomeBloc>().add(const WelcomeSignUpTapped()),
-                      onLogIn: () =>
-                          context.read<WelcomeBloc>().add(const WelcomeLogInTapped()),
-                      onGoogle: () =>
-                          context.read<WelcomeBloc>().add(const WelcomeGoogleTapped()),
+                      onSignUp: () => context
+                          .read<WelcomeBloc>()
+                          .add(const WelcomeSignUpTapped()),
+                      onLogIn: () => context
+                          .read<WelcomeBloc>()
+                          .add(const WelcomeLogInTapped()),
+                      onGoogle: () => context
+                          .read<WelcomeBloc>()
+                          .add(const WelcomeGoogleTapped()),
                     ),
                     const SizedBox(height: 32),
                   ],
@@ -135,24 +141,19 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            WelcomeViewModel.headerSubtitle,
-            textAlign: TextAlign.center,
-            style: DSTypography.onboardingSubheader,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            WelcomeViewModel.headerTitle,
-            textAlign: TextAlign.center,
-            style: DSTypography.onboardingHeader,
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        const AstraLogo(
+          size: 80,
+          wordmarkColor: Color(0xFF000F12),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          WelcomeViewModel.headerSubtitle,
+          textAlign: TextAlign.center,
+          style: DSTypography.onboardingSubheader,
+        ),
+      ],
     );
   }
 }
@@ -196,9 +197,9 @@ class _SlideCard extends StatelessWidget {
   final int index;
 
   static const _gradients = [
-    [Color(0xFF6B2E0F), Color(0xFF9B3A20)],
-    [Color(0xFF3D1A0A), Color(0xFF7A2E14)],
-    [Color(0xFF1A0D05), Color(0xFF6B2810)],
+    [Color(0xFF2F7E8F), Color(0xFF1D6070)],
+    [Color(0xFF26707F), Color(0xFF1D6070)],
+    [Color(0xFF1D6070), Color(0xFF164F5E)],
   ];
 
   static const _icons = [
@@ -361,7 +362,6 @@ class _ActionButtons extends StatelessWidget {
             textStyle: DSTypography.headingSm.copyWith(color: _kBrand),
           ),
           const SizedBox(height: 20),
-       
         ],
       ),
     );

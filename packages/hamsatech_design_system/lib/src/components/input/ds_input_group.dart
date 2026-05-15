@@ -87,8 +87,8 @@ class _DSInputGroupState extends State<DSInputGroup> {
     final borderWidth = (_isFocused || isError) ? 1.5 : 1.0;
 
     final fillColor = isDisabled
-        ? (isDark ? const Color(0xFF0D1117) : DSColors.gray50)
-        : (isDark ? const Color(0xFF111827) : DSColors.white);
+        ? (isDark ? const Color(0xFF001418) : DSColors.gray50)
+        : (isDark ? const Color(0xFF0A1C20) : DSColors.white);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

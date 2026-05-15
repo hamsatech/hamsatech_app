@@ -2,11 +2,20 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
-
 class DashboardDataEntity extends Equatable {
   const DashboardDataEntity({
     required this.athleteName,
+    required this.greeting,
     required this.readiness,
+    required this.sleep,
+    required this.restingHR,
+    required this.hrStatus,
+    required this.hrv,
+    required this.isPolarConnected,
+    this.streakDays,
+    this.coachFeedback,
+    required this.weeklyStats,
+    required this.todayCheckinCompleted,
     required this.aiInsights,
     this.lastSession,
     required this.performanceHistory,
@@ -14,22 +23,153 @@ class DashboardDataEntity extends Equatable {
   });
 
   final String athleteName;
+  final String greeting;
   final ReadinessMetrics readiness;
+  final SleepData sleep;
+  final int restingHR;
+  final String hrStatus;
+  final HrvData hrv;
+  final bool isPolarConnected;
+  final int? streakDays;
+  final CoachFeedbackData? coachFeedback;
+  final WeeklyStats weeklyStats;
+  final bool todayCheckinCompleted;
   final List<String> aiInsights;
   final SessionSummaryData? lastSession;
   final List<PerformanceDataPoint> performanceHistory;
   final List<ActionItem> actionPlan;
 
+  DashboardDataEntity copyWith({
+    bool? isPolarConnected,
+    CoachFeedbackData? coachFeedback,
+    bool? todayCheckinCompleted,
+  }) {
+    return DashboardDataEntity(
+      athleteName: athleteName,
+      greeting: greeting,
+      readiness: readiness,
+      sleep: sleep,
+      restingHR: restingHR,
+      hrStatus: hrStatus,
+      hrv: hrv,
+      isPolarConnected: isPolarConnected ?? this.isPolarConnected,
+      streakDays: streakDays,
+      coachFeedback: coachFeedback ?? this.coachFeedback,
+      weeklyStats: weeklyStats,
+      todayCheckinCompleted: todayCheckinCompleted ?? this.todayCheckinCompleted,
+      aiInsights: aiInsights,
+      lastSession: lastSession,
+      performanceHistory: performanceHistory,
+      actionPlan: actionPlan,
+    );
+  }
+
   @override
   List<Object?> get props => [
         athleteName,
+        greeting,
         readiness,
+        sleep,
+        restingHR,
+        hrStatus,
+        hrv,
+        isPolarConnected,
+        streakDays,
+        coachFeedback,
+        weeklyStats,
+        todayCheckinCompleted,
         aiInsights,
         lastSession,
         performanceHistory,
         actionPlan,
       ];
 }
+
+// ─── New entities for Figma design ──────────────────────────────────────────
+
+class SleepData extends Equatable {
+  const SleepData({
+    required this.duration,
+    required this.quality,
+    required this.score,
+  });
+
+  final String duration; // e.g. "7h 20m"
+  final String quality; // e.g. "Good"
+  final double score; // 0.0–1.0 for progress indicator
+
+  @override
+  List<Object?> get props => [duration, quality, score];
+}
+
+class HrvData extends Equatable {
+  const HrvData({
+    required this.value,
+    required this.status,
+    required this.normalizedScore,
+  });
+
+  final int value; // ms
+  final String status; // "Typical", "Above typical", "Below typical"
+  final double normalizedScore; // 0.0–1.0 for progress indicator
+
+  @override
+  List<Object?> get props => [value, status, normalizedScore];
+}
+
+class CoachFeedbackData extends Equatable {
+  const CoachFeedbackData({
+    required this.coachName,
+    required this.message,
+    required this.about,
+    required this.assigned,
+    required this.timestamp,
+    this.isRead = false,
+  });
+
+  final String coachName;
+  final String message;
+  final String about;
+  final String assigned;
+  final DateTime timestamp;
+  final bool isRead;
+
+  CoachFeedbackData copyWith({bool? isRead}) {
+    return CoachFeedbackData(
+      coachName: coachName,
+      message: message,
+      about: about,
+      assigned: assigned,
+      timestamp: timestamp,
+      isRead: isRead ?? this.isRead,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        coachName,
+        message,
+        about,
+        assigned,
+        timestamp,
+        isRead,
+      ];
+}
+
+class WeeklyStats extends Equatable {
+  const WeeklyStats({
+    required this.averageScore,
+    required this.sessionCount,
+  });
+
+  final double averageScore;
+  final int sessionCount;
+
+  @override
+  List<Object?> get props => [averageScore, sessionCount];
+}
+
+// ─── Existing metrics/entities (kept for full compatibility) ─────────────────
 
 class ReadinessMetrics extends Equatable {
   const ReadinessMetrics({
@@ -59,14 +199,19 @@ class ReadinessMetrics extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [readinessScore, focusScore, stressLevel, energyLevel, emotionalControl];
+  List<Object?> get props => [
+        readinessScore,
+        focusScore,
+        stressLevel,
+        energyLevel,
+        emotionalControl,
+      ];
 }
 
 enum ReadinessLevel {
-  ready('Ready', DSColors.success),
+  ready('Well recovered', DSColors.success),
   moderate('Moderate', DSColors.warning),
-  needsRecovery('Needs Recovery', DSColors.error);
+  needsRecovery('Needs recovery', DSColors.error);
 
   const ReadinessLevel(this.label, this.color);
   final String label;
@@ -122,7 +267,7 @@ class PerformanceDataPoint extends Equatable {
 
   final DateTime date;
   final int sessionNumber;
-  final double overallRating; // 1–5 mapped to 0–100
+  final double overallRating; // 0–100
   final double focusScore;
   final double stressScore;
 

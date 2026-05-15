@@ -20,7 +20,7 @@ class AuthNumpad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF5F8FA),
+      color: const Color(0xFFF5FDFF),
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
       child: SafeArea(
         top: false,
@@ -77,8 +77,8 @@ class _NumKey extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            splashColor: const Color(0xFF14B8A6).withValues(alpha: 0.12),
-            highlightColor: const Color(0xFF14B8A6).withValues(alpha: 0.06),
+            splashColor: const Color(0xFF2F7E8F).withValues(alpha: 0.12),
+            highlightColor: const Color(0xFF2F7E8F).withValues(alpha: 0.06),
             child: SizedBox(
               height: 64,
               child: Center(
@@ -87,7 +87,7 @@ class _NumKey extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF0D1F2D),
+                    color: Color(0xFF000F12),
                   ),
                 ),
               ),
@@ -119,7 +119,7 @@ class _DeleteKey extends StatelessWidget {
               child: Icon(
                 Icons.backspace_outlined,
                 size: 24,
-                color: const Color(0xFF0D1F2D),
+                color: const Color(0xFF000F12),
               ),
             ),
           ),

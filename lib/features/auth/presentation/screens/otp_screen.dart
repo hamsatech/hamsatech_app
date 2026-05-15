@@ -79,8 +79,12 @@ class _OtpViewState extends State<_OtpView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          final isProfileDone = StorageService.isOnboardingComplete();
-          context.go(isProfileDone ? '/home' : '/profile/setup');
+          if (StorageService.isOnboardingComplete()) {
+            context.go('/home');
+          } else {
+            final step = StorageService.getOnboardingStep();
+            context.go(step.isNotEmpty ? step : '/onboarding/step1');
+          }
         } else if (state is AuthFailure) {
           setState(() {
             _otp = '';
@@ -93,20 +97,20 @@ class _OtpViewState extends State<_OtpView> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: DSColors.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: DSColors.appBackground,
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.go('/login'),
             icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Color(0xFF0D1F2D)),
+                size: 18, color: Color(0xFF000F12)),
           ),
           title: Text(
             OtpVerificationViewModel.screenTitle,
-            style: DSTypography.headingMd
-                .copyWith(color: const Color(0xFF0D1F2D)),
+            style:
+                DSTypography.headingMd.copyWith(color: const Color(0xFF000F12)),
           ),
           centerTitle: true,
         ),
@@ -123,7 +127,7 @@ class _OtpViewState extends State<_OtpView> {
                   OtpVerificationViewModel.heading,
                   textAlign: TextAlign.left,
                   style: DSTypography.onboardingCaption
-                      .copyWith(color: const Color(0xFF0D1F2D), height: 1.3),
+                      .copyWith(color: const Color(0xFF000F12), height: 1.3),
                 ),
                 const SizedBox(height: 24),
                 OtpTextField(
@@ -132,8 +136,7 @@ class _OtpViewState extends State<_OtpView> {
                   fieldWidth: 44,
                   borderRadius: BorderRadius.circular(6),
                   borderWidth: 1.0,
-                  borderColor:
-                      isError ? DSColors.error : DSColors.gray200,
+                  borderColor: isError ? DSColors.error : DSColors.gray200,
                   enabledBorderColor:
                       isError ? DSColors.error : DSColors.gray200,
                   focusedBorderColor:
@@ -141,8 +144,8 @@ class _OtpViewState extends State<_OtpView> {
                   disabledBorderColor: DSColors.gray200,
                   filled: true,
                   fillColor: Colors.white,
-                  textStyle: DSTypography.headingMd
-                      .copyWith(color: DSColors.gray900),
+                  textStyle:
+                      DSTypography.headingMd.copyWith(color: DSColors.textPrimary),
                   cursorColor: DSColors.brand,
                   // phone keyboard commits each char immediately — avoids
                   // Android IME composing-text artefacts that appear as symbols
@@ -180,7 +183,7 @@ class _OtpViewState extends State<_OtpView> {
                 RichText(
                   text: TextSpan(
                     style: DSTypography.bodySm
-                        .copyWith(color: const Color(0xFF6B7280)),
+                        .copyWith(color: const Color(0x99000F12)),
                     children: [
                       TextSpan(
                         text: '${OtpVerificationViewModel.sentToPrefix}'
@@ -189,7 +192,7 @@ class _OtpViewState extends State<_OtpView> {
                       WidgetSpan(
                         alignment: PlaceholderAlignment.middle,
                         child: GestureDetector(
-                          onTap: () => context.pop(),
+                          onTap: () => context.go('/login'),
                           child: Text(
                             OtpVerificationViewModel.editLabel,
                             style: DSTypography.bodySm.copyWith(

@@ -10,8 +10,8 @@ class WelcomeViewModel {
   final ILoginRepository _repository;
 
   // ── Static copy ───────────────────────────────────────────────────────────
-  static const String headerSubtitle = 'Welcome to our platform!';
-  static const String headerTitle    = 'HamsaTech Solutions';
+  static const String headerSubtitle = 'Mental Performance AI';
+  static const String headerTitle    = 'ASTRA';
   static const String signUpLabel    = 'Sign Up Now';
   static const String loginLabel     = 'Log In Here';
 

@@ -7,7 +7,7 @@ import '../bloc/onboarding_step1_event.dart';
 import '../bloc/onboarding_step1_state.dart';
 
 class OnboardingStep1Screen extends StatelessWidget {
-  const OnboardingStep1Screen({Key? key}) : super(key: key);
+  const OnboardingStep1Screen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class OnboardingStep1Screen extends StatelessWidget {
 }
 
 class _OnboardingStep1View extends StatefulWidget {
-  const _OnboardingStep1View({Key? key}) : super(key: key);
+  const _OnboardingStep1View();
 
   @override
   State<_OnboardingStep1View> createState() => _OnboardingStep1ViewState();
@@ -69,17 +69,13 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
 
         if (state.submissionSuccess) {
           context.go('/onboarding/step2');
-        } else if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
         }
       },
       builder: (context, state) {
         final bloc = context.read<OnboardingStep1Bloc>();
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF5FDFF),
 
           // ── AppBar + Progress Bar ──────────────────────────────────────
           appBar: PreferredSize(
@@ -110,7 +106,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                                 color: Colors.black,
                                 size: 20,
                               ),
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => context.go('/questions'),
                             ),
                           ),
 
@@ -122,7 +118,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF666666),
+                                  color: const Color(0x99000F12),
                                 ),
                               ),
                             ),
@@ -148,7 +144,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                             Container(
                               width: double.infinity,
                               height: 3,
-                              color: const Color(0xFFE6E6E6),
+                              color: const Color(0xFFCAE8EE),
                             ),
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
@@ -156,7 +152,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                               width: constraints.maxWidth *
                                   state.progress.clamp(0.0, 1.0),
                               height: 3,
-                              color: const Color(0xFFE53935),
+                              color: const Color(0xFF2F7E8F),
                             ),
                           ],
                         );
@@ -192,7 +188,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                   style: const TextStyle(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF777777),
+                    color: const Color(0x99000F12),
                     height: 1.5,
                   ),
                 ),
@@ -205,6 +201,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                   controller: _nameController,
                   hint: state.nameHint,
                   keyboardType: TextInputType.text,
+                  isInvalid: _isNameInvalid(state),
                   onChanged: (v) => bloc.add(OnNameChanged(v)),
                 ),
                 const SizedBox(height: 18),
@@ -216,6 +213,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                   controller: _ageController,
                   hint: state.ageHint,
                   keyboardType: TextInputType.number,
+                  isInvalid: _isAgeInvalid(state),
                   onChanged: (v) => bloc.add(OnAgeChanged(v)),
                 ),
                 const SizedBox(height: 18),
@@ -226,6 +224,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                 _genderRow(
                   options: state.genderOptions,
                   selected: _genderToString(state.gender),
+                  isInvalid: _isGenderInvalid(state),
                   onSelect: (v) => bloc.add(OnGenderSelected(v)),
                 ),
                 const SizedBox(height: 18),
@@ -237,6 +236,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                   controller: _cityController,
                   hint: state.cityHint,
                   keyboardType: TextInputType.text,
+                  isInvalid: _isCityInvalid(state),
                   onChanged: (v) => bloc.add(OnCityChanged(v)),
                 ),
                 const SizedBox(height: 32),
@@ -253,10 +253,15 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                 height: 52,
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => bloc.add(const OnSubmit()),
+                  onPressed: state.isValid && !state.isSubmitting
+                      ? () => bloc.add(const OnSubmit())
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
-                    disabledBackgroundColor: const Color(0xFFE53935),
+                    backgroundColor: const Color(0xFF2F7E8F),
+                    disabledBackgroundColor:
+                        const Color(0xFF2F7E8F).withValues(alpha: 0.45),
+                    disabledForegroundColor:
+                        Colors.white.withValues(alpha: 0.85),
                     foregroundColor: Colors.white,
                     shadowColor: Colors.transparent,
                     elevation: 0,
@@ -282,6 +287,26 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
     );
   }
 
+  bool _isNameInvalid(OnboardingStep1State state) {
+    final message = state.errorMessage;
+    return message == 'Please enter your full name' ||
+        message == 'Name is too short';
+  }
+
+  bool _isAgeInvalid(OnboardingStep1State state) {
+    final message = state.errorMessage;
+    return message == 'Please enter a valid age' ||
+        message == 'Please enter a realistic age';
+  }
+
+  bool _isGenderInvalid(OnboardingStep1State state) {
+    return state.errorMessage == 'Please select a gender';
+  }
+
+  bool _isCityInvalid(OnboardingStep1State state) {
+    return state.errorMessage == 'Please enter your city';
+  }
+
   // ── Field Label ──────────────────────────────────────────────────────────
   Widget _fieldLabel(String label) {
     return Text(
@@ -289,7 +314,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
       style: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF555555),
+        color: const Color(0x99000F12),
       ),
     );
   }
@@ -299,8 +324,12 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
     required TextEditingController controller,
     required String hint,
     required TextInputType keyboardType,
+    required bool isInvalid,
     required ValueChanged<String> onChanged,
   }) {
+    final borderColor =
+        isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE);
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
@@ -308,14 +337,14 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
       style: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: Color(0xFF111111),
+        color: Color(0xFF000F12),
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: Color(0xFFBBBBBB),
+          color: const Color(0x66000F12),
         ),
         filled: true,
         fillColor: Colors.white,
@@ -325,22 +354,22 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: Color(0xFFE0E0E0),
+          borderSide: BorderSide(
+            color: borderColor,
             width: 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(
-            color: Color(0xFFE53935),
+            color: Color(0xFF2F7E8F),
             width: 1.5,
           ),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: Color(0xFFE0E0E0),
+          borderSide: BorderSide(
+            color: borderColor,
             width: 1,
           ),
         ),
@@ -352,6 +381,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
   Widget _genderRow({
     required List<String> options,
     required String selected,
+    required bool isInvalid,
     required ValueChanged<String> onSelect,
   }) {
     return Row(
@@ -374,14 +404,14 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFE53935)
-                        : Colors.white,
+                    color: isSelected ? const Color(0xFF2F7E8F) : Colors.white,
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFFE53935)
-                          : const Color(0xFFBBBBBB),
+                          ? const Color(0xFF2F7E8F)
+                          : isInvalid
+                              ? const Color(0xFF2F7E8F)
+                              : const Color(0xFF7FB8C4),
                       width: 1.5,
                     ),
                   ),
@@ -399,7 +429,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF333333),
+                    color: Color(0xFF000F12),
                   ),
                 ),
               ],

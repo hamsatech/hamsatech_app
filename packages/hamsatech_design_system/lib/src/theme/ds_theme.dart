@@ -22,13 +22,14 @@ class DSTheme {
         onSurface: DSColors.textPrimary,
         onError: DSColors.white,
       ),
-      appBarTheme:  AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: DSColors.appBackground,
         foregroundColor: DSColors.textPrimary,
         elevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
         ),
         titleTextStyle: DSTypography.headingMedium,
         centerTitle: false,
@@ -60,8 +61,16 @@ class DSTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: DSColors.error),
         ),
-        labelStyle: const TextStyle(color: DSColors.textSecondary),
-        hintStyle: const TextStyle(color: DSColors.textMuted),
+        labelStyle: const TextStyle(
+          color: DSColors.textSecondary,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        hintStyle: const TextStyle(
+          color: DSColors.textPlaceholder,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
