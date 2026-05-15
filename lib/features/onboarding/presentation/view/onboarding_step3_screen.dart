@@ -60,18 +60,14 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
           _targetScoreController.text = state.targetScore;
         }
         if (state.submissionSuccess) {
-          context.push('/onboarding/step4');
-        } else if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          context.go('/onboarding/step4');
         }
       },
       builder: (context, state) {
         final bloc = context.read<OnboardingStep3Bloc>();
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF5FDFF),
 
           // ── AppBar + Progress Bar ────────────────────────────────────────
           appBar: PreferredSize(
@@ -100,7 +96,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                                 color: Colors.black,
                                 size: 20,
                               ),
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => context.go('/onboarding/step2'),
                             ),
                           ),
                           Expanded(
@@ -110,7 +106,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF8E8E8E),
+                                  color: const Color(0x99000F12),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -135,7 +131,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                             Container(
                               width: double.infinity,
                               height: 3,
-                              color: const Color(0xFFE6E6E6),
+                              color: const Color(0xFFCAE8EE),
                             ),
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
@@ -143,7 +139,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                               width: constraints.maxWidth *
                                   state.progress.clamp(0.0, 1.0),
                               height: 3,
-                              color: const Color(0xFFE53935),
+                              color: const Color(0xFF2F7E8F),
                             ),
                           ],
                         );
@@ -167,7 +163,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1A1A),
+                    color: Color(0xFF000F12),
                     height: 1.3,
                   ),
                 ),
@@ -179,7 +175,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF6E6E6E),
+                    color: const Color(0x99000F12),
                     height: 1.5,
                   ),
                 ),
@@ -191,6 +187,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                 _scoreInput(
                   controller: _avgScoreController,
                   hint: state.avgScoreHint,
+                  isInvalid: _isAvgScoreInvalid(state),
                   onChanged: (v) => bloc.add(OnAvgScoreChanged(v)),
                 ),
                 const SizedBox(height: 20),
@@ -201,6 +198,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                 _scoreInput(
                   controller: _targetScoreController,
                   hint: state.targetScoreHint,
+                  isInvalid: _isTargetScoreInvalid(state),
                   onChanged: (v) => bloc.add(OnTargetScoreChanged(v)),
                 ),
                 const SizedBox(height: 28),
@@ -211,7 +209,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A),
+                    color: Color(0xFF000F12),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -220,7 +218,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF6E6E6E),
+                    color: const Color(0x99000F12),
                     height: 1.4,
                   ),
                 ),
@@ -228,8 +226,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
 
                 // ── Factor options ─────────────────────────────────────────
                 ...state.factorOptions.map((factor) {
-                  final isSelected =
-                      state.selectedFactors.contains(factor.id);
+                  final isSelected = state.selectedFactors.contains(factor.id);
                   final atLimit =
                       state.selectedFactors.length >= state.maxFactorSelection;
 
@@ -258,10 +255,15 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                 height: 52,
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => bloc.add(const OnStep3Submit()),
+                  onPressed: state.isValid
+                      ? () => bloc.add(const OnStep3Submit())
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
-                    disabledBackgroundColor: const Color(0xFFE53935),
+                    backgroundColor: const Color(0xFF2F7E8F),
+                    disabledBackgroundColor:
+                        const Color(0xFF2F7E8F).withValues(alpha: 0.45),
+                    disabledForegroundColor:
+                        Colors.white.withValues(alpha: 0.85),
                     foregroundColor: Colors.white,
                     shadowColor: Colors.transparent,
                     elevation: 0,
@@ -286,6 +288,14 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
     );
   }
 
+  bool _isAvgScoreInvalid(OnboardingStep3State state) {
+    return state.errorMessage == 'Please enter your average practice score';
+  }
+
+  bool _isTargetScoreInvalid(OnboardingStep3State state) {
+    return state.errorMessage == 'Please enter your target score';
+  }
+
   // ── Field Label ─────────────────────────────────────────────────────────
   Widget _fieldLabel(String label) {
     return Text(
@@ -293,7 +303,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF4A4A4A),
+        color: const Color(0x99000F12),
       ),
     );
   }
@@ -302,8 +312,12 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
   Widget _scoreInput({
     required TextEditingController controller,
     required String hint,
+    required bool isInvalid,
     required ValueChanged<String> onChanged,
   }) {
+    final borderColor =
+        isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE);
+
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
@@ -311,14 +325,14 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
       style: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF000F12),
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: Color(0xFFA0A0A0),
+          color: const Color(0x66000F12),
         ),
         filled: true,
         fillColor: Colors.white,
@@ -328,15 +342,15 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+          borderSide: BorderSide(color: borderColor, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF2F7E8F), width: 1.5),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+          borderSide: BorderSide(color: borderColor, width: 1),
         ),
       ),
     );
@@ -359,9 +373,8 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFFE53935)
-                : const Color(0xFFE0E0E0),
+            color:
+                isSelected ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -373,21 +386,20 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFFE53935)
-                    : Colors.white,
+                color: isSelected ? const Color(0xFF2F7E8F) : Colors.white,
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFFE53935)
+                      ? const Color(0xFF2F7E8F)
                       : dimmed
-                          ? const Color(0xFFDDDDDD)
-                          : const Color(0xFFBBBBBB),
+                          ? const Color(0xFFCAE8EE)
+                          : const Color(0xFF7FB8C4),
                   width: 1.5,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded, size: 13, color: Colors.white)
+                  ? const Icon(Icons.check_rounded,
+                      size: 13, color: Colors.white)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -400,8 +412,8 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: dimmed
-                      ? const Color(0xFFAAAAAA)
-                      : const Color(0xFF2A2A2A),
+                      ? const Color(0xFF7FB8C4)
+                      : const Color(0xFF000F12),
                 ),
               ),
             ),

@@ -7,13 +7,10 @@ import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
-import '../../features/onboarding/presentation/screens/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/screens/athlete_details_screen.dart';
 import '../../features/onboarding/presentation/screens/background_context_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_complete_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
@@ -22,8 +19,39 @@ import '../../features/session/presentation/screens/post_session_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
-import '../../features/polar/presentation/screens/polar_device_screen.dart';
 import '../services/storage_service.dart';
+import '../../features/score_entry/bloc/score_entry_bloc.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REQUIRED FLOW
+//
+// AUTH
+//   /splash → /welcome → /signup or /login → /otp
+//
+// ONBOARDING (after OTP success)
+//   /onboarding/step1 → /onboarding/step2 → /onboarding/step3
+//   → /onboarding/step4 → /questions → /permissions
+//   → /polar → /heartrate → /baseline → /baseline/result
+//   → /alex-summary → /home
+//
+// NAVIGATION CALLS — use context.go() everywhere (replaces stack, no back-stack leak)
+//
+//   SplashScreen        → context.go('/welcome')
+//   WelcomeScreen       → context.go('/signup') or context.go('/login')
+//   SignUpScreen/Login  → context.go('/otp', extra: phoneOrEmail)
+//   OtpScreen           → context.go('/onboarding/step1')
+//   Step1               → context.go('/onboarding/step2')
+//   Step2               → context.go('/onboarding/step3')
+//   Step3               → context.go('/onboarding/step4')
+//   Step4               → context.go('/questions')
+//   Questions           → context.go('/permissions')
+//   PermissionsScreen   → context.go('/polar')
+//   PolarDeviceScreen   → context.go('/heartrate')
+//   HeartRateScreen     → context.go('/baseline')
+//   BaselineScreen      → context.go('/baseline/result')
+//   BaselineResult      → context.go('/alex-summary')
+//   AlexSummaryScreen   → context.go('/home')
+// ─────────────────────────────────────────────────────────────────────────────
 
 class AppRouter {
   AppRouter._();
@@ -31,60 +59,57 @@ class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+  // Routes that mark onboarding progress — tracked for cold-start resume.
+  static const _onboardingRoutes = {
+    '/onboarding/step1',
+    '/onboarding/step2',
+    '/onboarding/step3',
+    '/onboarding/step4',
+    '/questions',
+    '/permissions',
+    '/polar',
+    '/heartrate',
+    '/baseline',
+    '/baseline/result',
+    '/alex-summary',
+  };
+
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/permissions',
     redirect: (context, state) {
       final path = state.fullPath ?? '';
       final isLoggedIn = StorageService.getAuthToken() != null;
-      final isProfileSetupDone = StorageService.isProfileSetupComplete();
       final isOnboardingDone = StorageService.isOnboardingComplete();
 
-<<<<<<< HEAD
-      final publicPaths = [
-        '/splash',
-        '/login',
-        '/otp',
-        '/permissions',
-        '/permissions/next',
-      ];
+      final publicPaths = ['/splash', '/login', '/otp'];
       final onboardingPaths = [
         '/onboarding/details',
         '/onboarding/background',
         '/onboarding/assessment',
         '/onboarding/complete',
       ];
-=======
-      const publicPaths = ['/splash', '/welcome', '/signup', '/login', '/otp'];
->>>>>>> 063f8990560ca136db22b7f3be4686b33feb3797
 
       if (path == '/splash') return null;
 
       if (!isLoggedIn && !publicPaths.contains(path)) {
-        return '/welcome';
+        return '/login';
       }
 
-      if (isLoggedIn) {
-        if (!isProfileSetupDone) {
-          if (path.startsWith('/onboarding/')) return null;
-          return '/onboarding/step1';
-        }
+      if (isLoggedIn && !isOnboardingDone && !onboardingPaths.contains(path)) {
+        return '/onboarding/details';
+      }
 
-        if (!isOnboardingDone) {
-          if (path == '/onboarding/assessment') return null;
-          return '/onboarding/assessment';
-        }
-
-        if (publicPaths.contains(path) ||
-            path == '/onboarding/step1' ||
-            path == '/onboarding/assessment') {
-          return '/home';
-        }
+      if (isLoggedIn &&
+          isOnboardingDone &&
+          (publicPaths.contains(path) || onboardingPaths.contains(path))) {
+        return '/home';
       }
 
       return null;
     },
     routes: [
+      // ── AUTH ──────────────────────────────────────────────────────────────
       GoRoute(
         path: '/splash',
         builder: (_, __) => const SplashScreen(),
@@ -103,32 +128,8 @@ class AppRouter {
       ),
       GoRoute(
         path: '/otp',
-        builder: (_, state) => OtpScreen(phoneOrEmail: state.extra as String),
-GoRoute(
-  path: '/permissions',
-  parentNavigatorKey: _rootNavigatorKey,
-  builder: (_, __) => const PermissionsScreen(),
-),
-
-GoRoute(
-  path: '/permissions/next',
-  parentNavigatorKey: _rootNavigatorKey,
-  builder: (_, __) => const PermissionsNextScreen(),
-),
-
-GoRoute(
-  path: '/profile/setup',
-  builder: (_, __) => const BasicProfileScreen(),
-),
-
-GoRoute(
-  path: '/onboarding/assessment',
-  builder: (_, __) => const BaselineAssessmentScreen(),
-),
-      
-      GoRoute(
-        path: '/onboarding/step1',
-        builder: (_, __) => const OnboardingStep1Screen(),
+        builder: (_, state) =>
+            OtpScreen(phoneOrEmail: state.extra as String),
       ),
       GoRoute(
         path: '/onboarding/step2',
@@ -142,22 +143,15 @@ GoRoute(
         path: '/onboarding/step4',
         builder: (_, __) => const OnboardingStep4Screen(),
       ),
+
+      // ── BASELINE ──────────────────────────────────────────────────────────
       GoRoute(
-        path: '/onboarding/details',
-        builder: (_, __) => const AthleteDetailsScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/background',
-        builder: (_, __) => const BackgroundContextScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/assessment',
+        path: '/questions',
         builder: (_, __) => const BaselineAssessmentScreen(),
       ),
       GoRoute(
-        path: '/polar',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const PolarDeviceScreen(),
+        path: '/onboarding/complete',
+        builder: (_, __) => const OnboardingCompleteScreen(),
       ),
       GoRoute(
         path: '/session/pre',
@@ -181,6 +175,8 @@ GoRoute(
           );
         },
       ),
+
+      // ── SHELL (bottom nav) ────────────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __, shell) => MainShellScreen(shell: shell),

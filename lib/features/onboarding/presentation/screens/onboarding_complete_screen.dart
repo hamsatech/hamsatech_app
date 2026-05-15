@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
-
-
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/score_ring.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_state.dart';
 
@@ -40,8 +40,10 @@ class _OnboardingCompleteView extends StatelessWidget {
         final emotional = scores['emotionalStability'] ?? 0;
         final decision = scores['decisionStyle'] ?? 0;
         final motivation = scores['motivation'] ?? 0;
-        final overall =
-            focus * 0.30 + emotional * 0.25 + decision * 0.25 + motivation * 0.20;
+        final overall = focus * 0.30 +
+            emotional * 0.25 +
+            decision * 0.25 +
+            motivation * 0.20;
 
         return Scaffold(
           body: SafeArea(
@@ -138,8 +140,7 @@ class _OnboardingCompleteView extends StatelessWidget {
                   DSButton(
                     label: 'Enter My Dashboard',
                     onPressed: () => context.go('/home'),
-                    leadingIcon: const Icon(Icons.dashboard_rounded),
-                    isFullWidth: true,
+                    icon: Icons.dashboard_rounded,
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -167,7 +168,7 @@ class _OnboardingCompleteView extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: score / 100,
                 minHeight: 6,
-                backgroundColor: DSColors.appBorder,
+                backgroundColor: AppColors.border,
                 valueColor:
                     AlwaysStoppedAnimation<Color>(_levelColor(level)),
               ),
@@ -176,7 +177,7 @@ class _OnboardingCompleteView extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             level,
-            style: DSTypography.caption
+            style: AppTextStyles.caption
                 .copyWith(color: _levelColor(level)),
           ),
         ],

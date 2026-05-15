@@ -172,9 +172,7 @@ class _DSOtpInputState extends State<DSOtpInput> {
           Text(
             widget.helperText!,
             style: DSTypography.bodySm.copyWith(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? DSColors.gray500
-                  : DSColors.gray500,
+              color: DSColors.textSecondary,
             ),
           ),
         ],
@@ -219,10 +217,10 @@ class _OtpCellState extends State<_OtpCell> {
 
     if (widget.isDisabled) {
       borderColor = isDark ? DSColors.gray800 : DSColors.gray200;
-      bgColor = isDark ? const Color(0xFF0D1117) : DSColors.gray50;
+      bgColor = isDark ? const Color(0xFF001418) : DSColors.gray50;
     } else if (widget.isError) {
       borderColor = DSColors.error;
-      bgColor = isDark ? const Color(0xFF111827) : DSColors.white;
+      bgColor = isDark ? const Color(0xFF0A1C20) : DSColors.white;
     } else if (isFocused) {
       borderColor = isDark ? DSColors.gray300 : DSColors.gray700;
       bgColor = isDark ? DSColors.gray800 : DSColors.white;
@@ -231,7 +229,7 @@ class _OtpCellState extends State<_OtpCell> {
       bgColor = isDark ? DSColors.gray800 : DSColors.gray50;
     } else {
       borderColor = isDark ? DSColors.gray700 : DSColors.gray200;
-      bgColor = isDark ? const Color(0xFF111827) : DSColors.white;
+      bgColor = isDark ? const Color(0xFF0A1C20) : DSColors.white;
     }
 
     return MouseRegion(
@@ -271,8 +269,8 @@ class _OtpCellState extends State<_OtpCell> {
               cursorWidth: 1.5,
               style: DSTypography.headingMd.copyWith(
                 color: widget.isDisabled
-                    ? (isDark ? DSColors.gray600 : DSColors.gray400)
-                    : (isDark ? DSColors.gray100 : DSColors.gray900),
+                    ? (isDark ? DSColors.textMuted : DSColors.textDisabled)
+                    : (isDark ? DSColors.white : DSColors.textPrimary),
               ),
               decoration: InputDecoration(
                 border: InputBorder.none,
@@ -299,7 +297,7 @@ class _Separator extends StatelessWidget {
       child: Text(
         '·',
         style: DSTypography.headingMd.copyWith(
-          color: isDark ? DSColors.gray500 : DSColors.gray400,
+          color: isDark ? DSColors.textMuted : DSColors.textPlaceholder,
         ),
       ),
     );

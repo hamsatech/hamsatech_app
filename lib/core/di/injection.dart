@@ -1,5 +1,10 @@
 import 'package:get_it/get_it.dart';
 
+import '../../features/athlete/data/datasources/athlete_remote_datasource.dart';
+import '../../features/athlete/data/repositories/athlete_repository_impl.dart';
+import '../../features/athlete/domain/repositories/athlete_repository.dart';
+import '../../features/athlete/presentation/bloc/athlete_bloc.dart';
+
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -20,12 +25,16 @@ import '../../features/reflection/data/repositories/reflection_repository_impl.d
 import '../../features/reflection/domain/repositories/reflection_repository.dart';
 import '../../features/reflection/presentation/bloc/reflection_bloc.dart';
 
-import '../../features/polar/data/services/polar_ble_service.dart';
-import '../../features/polar/presentation/bloc/polar_bloc.dart';
-
 final getIt = GetIt.instance;
 
 void setupDI() {
+  // ── Athlete ──────────────────────────────────────────────────────────────
+  getIt.registerLazySingleton<AthleteRemoteDatasource>(
+      () => AthleteRemoteDatasource());
+  getIt.registerLazySingleton<AthleteRepository>(
+      () => AthleteRepositoryImpl(getIt()));
+  getIt.registerFactory<AthleteBloc>(() => AthleteBloc(getIt()));
+
   // Repositories – singletons so data is shared across BLoC instances
   getIt.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl());
   getIt.registerLazySingleton<OnboardingRepository>(
@@ -43,7 +52,4 @@ void setupDI() {
   getIt.registerFactory<DashboardBloc>(() => DashboardBloc(getIt()));
   getIt.registerFactory<SessionBloc>(() => SessionBloc(getIt()));
   getIt.registerFactory<ReflectionBloc>(() => ReflectionBloc(getIt()));
-
-  getIt.registerLazySingleton<PolarBleService>(() => PolarBleService());
-  getIt.registerLazySingleton<PolarBloc>(() => PolarBloc(getIt()));
 }

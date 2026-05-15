@@ -56,27 +56,23 @@ class _Step1ViewState extends State<_Step1View> {
           prev.age != curr.age ||
           prev.city != curr.city,
       listener: (context, state) {
-        if (_nameController.text != state.name) _nameController.text = state.name;
+        if (_nameController.text != state.name) {
+          _nameController.text = state.name;
+        }
         if (_ageController.text != state.age) _ageController.text = state.age;
-        if (_cityController.text != state.city) _cityController.text = state.city;
+        if (_cityController.text != state.city) {
+          _cityController.text = state.city;
+        }
 
         if (state.submissionSuccess) {
-          GoRouter.of(context).go('/onboarding/step2');
-        } else if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: const Color(0xFFE53935),
-            ),
-          );
+          context.go('/onboarding/step2');
         }
       },
       builder: (context, state) {
         final bloc = context.read<OnboardingStep1Bloc>();
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF5FDFF),
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(60),
             child: Column(
@@ -101,7 +97,7 @@ class _Step1ViewState extends State<_Step1View> {
                                 color: Colors.black,
                                 size: 20,
                               ),
-                              onPressed: () => Navigator.of(context).maybePop(),
+                              onPressed: () => context.go('/questions'),
                             ),
                           ),
                           Expanded(
@@ -111,7 +107,7 @@ class _Step1ViewState extends State<_Step1View> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF666666),
+                                  color: const Color(0x99000F12),
                                 ),
                               ),
                             ),
@@ -131,7 +127,7 @@ class _Step1ViewState extends State<_Step1View> {
                           width: double.infinity,
                           height: 3,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE6E6E6),
+                            color: const Color(0xFFCAE8EE),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -142,7 +138,7 @@ class _Step1ViewState extends State<_Step1View> {
                               state.progress.clamp(0.0, 1.0),
                           height: 3,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE53935),
+                            color: const Color(0xFF2F7E8F),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -172,7 +168,7 @@ class _Step1ViewState extends State<_Step1View> {
                   state.subtitle,
                   style: const TextStyle(
                     fontSize: 15,
-                    color: Color(0xFF777777),
+                    color: const Color(0x99000F12),
                     height: 1.5,
                   ),
                 ),
@@ -182,6 +178,7 @@ class _Step1ViewState extends State<_Step1View> {
                 _InputField(
                   controller: _nameController,
                   hint: state.nameHint,
+                  isInvalid: _isNameInvalid(state),
                   onChanged: (v) => bloc.add(OnNameChanged(v)),
                 ),
                 const SizedBox(height: 18),
@@ -191,6 +188,7 @@ class _Step1ViewState extends State<_Step1View> {
                   controller: _ageController,
                   hint: state.ageHint,
                   keyboardType: TextInputType.number,
+                  isInvalid: _isAgeInvalid(state),
                   onChanged: (v) => bloc.add(OnAgeChanged(v)),
                 ),
                 const SizedBox(height: 18),
@@ -199,6 +197,7 @@ class _Step1ViewState extends State<_Step1View> {
                 _GenderRow(
                   options: state.genderOptions,
                   selected: _genderToString(state.gender),
+                  isInvalid: _isGenderInvalid(state),
                   onSelect: (v) => bloc.add(OnGenderSelected(v)),
                 ),
                 const SizedBox(height: 18),
@@ -207,6 +206,7 @@ class _Step1ViewState extends State<_Step1View> {
                 _InputField(
                   controller: _cityController,
                   hint: state.cityHint,
+                  isInvalid: _isCityInvalid(state),
                   onChanged: (v) => bloc.add(OnCityChanged(v)),
                 ),
               ],
@@ -222,11 +222,15 @@ class _Step1ViewState extends State<_Step1View> {
                 child: ElevatedButton(
                   onPressed: state.isSubmitting
                       ? null
-                      : () => bloc.add(const OnSubmit()),
+                      : state.isValid
+                          ? () => bloc.add(const OnSubmit())
+                          : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
+                    backgroundColor: const Color(0xFF2F7E8F),
                     disabledBackgroundColor:
-                        const Color(0xFFE53935).withValues(alpha: 0.6),
+                        const Color(0xFF2F7E8F).withValues(alpha: 0.45),
+                    disabledForegroundColor:
+                        Colors.white.withValues(alpha: 0.85),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -268,6 +272,26 @@ class _Step1ViewState extends State<_Step1View> {
         return '';
     }
   }
+
+  bool _isNameInvalid(OnboardingStep1State state) {
+    final message = state.errorMessage;
+    return message == 'Please enter your full name' ||
+        message == 'Name is too short';
+  }
+
+  bool _isAgeInvalid(OnboardingStep1State state) {
+    final message = state.errorMessage;
+    return message == 'Please enter a valid age' ||
+        message == 'Please enter a realistic age';
+  }
+
+  bool _isGenderInvalid(OnboardingStep1State state) {
+    return state.errorMessage == 'Please select a gender';
+  }
+
+  bool _isCityInvalid(OnboardingStep1State state) {
+    return state.errorMessage == 'Please enter your city';
+  }
 }
 
 // ── Shared sub-widgets ────────────────────────────────────────────────────────
@@ -283,7 +307,7 @@ class _FieldLabel extends StatelessWidget {
       style: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF555555),
+        color: const Color(0x99000F12),
       ),
     );
   }
@@ -294,42 +318,49 @@ class _InputField extends StatelessWidget {
     required this.controller,
     required this.hint,
     required this.onChanged,
+    required this.isInvalid,
     this.keyboardType = TextInputType.text,
   });
 
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String> onChanged;
+  final bool isInvalid;
   final TextInputType keyboardType;
 
   @override
   Widget build(BuildContext context) {
+    final borderColor =
+        isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFE0E0E0);
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       onChanged: onChanged,
       style: const TextStyle(
-          fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF111111)),
+          fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF000F12)),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: Color(0xFFBBBBBB)),
+            color: const Color(0x66000F12)),
         filled: true,
         fillColor: Colors.white,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide:
-              const BorderSide(color: Color(0xFFE53935), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF2F7E8F), width: 1.5),
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: borderColor),
+        ),
       ),
     );
   }
@@ -339,11 +370,13 @@ class _GenderRow extends StatelessWidget {
   const _GenderRow({
     required this.options,
     required this.selected,
+    required this.isInvalid,
     required this.onSelect,
   });
 
   final List<String> options;
   final String selected;
+  final bool isInvalid;
   final ValueChanged<String> onSelect;
 
   @override
@@ -367,14 +400,14 @@ class _GenderRow extends StatelessWidget {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFE53935)
-                        : Colors.white,
+                    color: isSelected ? const Color(0xFF2F7E8F) : Colors.white,
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFFE53935)
-                          : const Color(0xFFBBBBBB),
+                          ? const Color(0xFF2F7E8F)
+                          : isInvalid
+                              ? const Color(0xFF2F7E8F)
+                              : const Color(0xFF7FB8C4),
                       width: 1.5,
                     ),
                   ),
@@ -386,7 +419,7 @@ class _GenderRow extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(label,
                     style: const TextStyle(
-                        fontSize: 14, color: Color(0xFF333333))),
+                        fontSize: 14, color: Color(0xFF000F12))),
               ],
             ),
           ),

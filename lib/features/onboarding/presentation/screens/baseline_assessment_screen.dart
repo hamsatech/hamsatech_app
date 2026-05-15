@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -43,8 +43,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
     return BlocConsumer<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.complete) {
-          StorageService.setOnboardingComplete(true);
-          context.go('/home');
+          context.go('/onboarding/complete');
         } else if (state.status == OnboardingStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -57,7 +56,6 @@ class _AssessmentViewState extends State<_AssessmentView> {
       builder: (context, state) {
         if (state.questions.isEmpty) {
           return const Scaffold(
-            backgroundColor: Colors.white,
             body: Center(child: CircularProgressIndicator()),
           );
         }
@@ -76,51 +74,34 @@ class _AssessmentViewState extends State<_AssessmentView> {
         }
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              onPressed: () {
+                if (state.currentQuestionIndex > 0) {
+                  context
+                      .read<OnboardingBloc>()
+                      .add(const OnboardingPreviousQuestion());
+                } else {
+                  context.pop();
+                }
+              },
+            ),
+            title: Text(
+              'Question ${state.currentQuestionIndex + 1} of ${state.questions.length}',
+              style: AppTextStyles.labelLarge
+                  .copyWith(color: AppColors.textSecondary),
+            ),
+          ),
           body: SafeArea(
             child: Column(
               children: [
-                // ── Header ──────────────────────────────────────────────
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Questions',
-                        style: DSTypography.bodyMd.copyWith(
-                          color: const Color(0xFF6B7280),
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: const Color(0xFFD1D5DB), width: 1),
-                        ),
-                        child: Text(
-                          '$current/$total',
-                          style: DSTypography.bodySm.copyWith(
-                            color: const Color(0xFF374151),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ── Progress bar ────────────────────────────────────────
+                // Progress bar
                 LinearProgressIndicator(
                   value: state.assessmentProgress,
-                  backgroundColor: const Color(0xFFE4E4E7),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                      DSColors.terracotta),
+                  backgroundColor: AppColors.border,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   minHeight: 3,
                 ),
 
@@ -134,11 +115,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
                         // Question text
                         Text(
                           question.question,
-                          style: DSTypography.onboardingCaption.copyWith(
-                            color: const Color(0xFF0D1F2D),
-                            fontWeight: FontWeight.w700,
-                            height: 1.35,
-                          ),
+                          style: AppTextStyles.headingMedium,
                         ),
                         const SizedBox(height: 24),
 
@@ -158,118 +135,33 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                 ),
                           );
                         }),
-
-                        const SizedBox(height: 28),
-
-                        // Explain your answer
-                        Text(
-                          'Explain your answer',
-                          style: DSTypography.labelMd.copyWith(
-                            color: DSColors.terracotta,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _explainController,
-                          maxLines: 4,
-                          style: DSTypography.bodyMd.copyWith(
-                            color: const Color(0xFF0D1F2D),
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Write your message here...',
-                            hintStyle: DSTypography.bodyMd.copyWith(
-                              color: const Color(0xFF9CA3AF),
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.all(14),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                  color: DSColors.terracotta.withValues(alpha: 0.3),
-                                  width: 1),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                  color: DSColors.terracotta, width: 1),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
                 ),
-
-                // ── Bottom navigation ───────────────────────────────────
-                const Divider(height: 1, color: Color(0xFFE4E4E7)),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          if (state.currentQuestionIndex > 0) {
-                            context
-                                .read<OnboardingBloc>()
-                                .add(const OnboardingPreviousQuestion());
-                          } else {
-                            context.pop();
-                          }
-                        },
-                        child: SizedBox(
-                          width: 64,
-                          child: Text(
-                            'Back',
-                            textAlign: TextAlign.center,
-                            style: DSTypography.labelMd.copyWith(
-                              color: DSColors.terracotta,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: state.isLastQuestion
+                      ? AppButton(
+                          label: 'Complete Assessment',
+                          onPressed: selectedIndex != null
+                              ? () => context.read<OnboardingBloc>().add(
+                                    const OnboardingAssessmentCompleted(),
+                                  )
+                              : null,
+                          isLoading: state.status == OnboardingStatus.loading,
+                          icon: Icons.check_rounded,
+                        )
+                      : AppButton(
+                          label: 'Next Question',
+                          onPressed: selectedIndex != null
+                              ? () => context
+                                  .read<OnboardingBloc>()
+                                  .add(const OnboardingNextQuestion())
+                              : null,
+                          icon: Icons.arrow_forward_rounded,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: selectedIndex != null ? 1.0 : 0.45,
-                          child: state.isLastQuestion
-                              ? DSPrimaryButton(
-                                  label: 'Complete',
-                                  color: DSColors.terracotta,
-                                  isLoading:
-                                      state.status == OnboardingStatus.loading,
-                                  onPressed: selectedIndex != null
-                                      ? () => context
-                                          .read<OnboardingBloc>()
-                                          .add(const OnboardingAssessmentCompleted())
-                                      : () {},
-                                  textStyle: DSTypography.labelMd.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                )
-                              : DSPrimaryButton(
-                                  label: 'Next',
-                                  color: DSColors.terracotta,
-                                  onPressed: selectedIndex != null
-                                      ? () => context
-                                          .read<OnboardingBloc>()
-                                          .add(const OnboardingNextQuestion())
-                                      : () {},
-                                  textStyle: DSTypography.labelMd.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -296,56 +188,58 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(4),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    text,
-                    style: DSTypography.bodyMd.copyWith(
-                      color: isSelected
-                          ? const Color(0xFF0D1F2D)
-                          : const Color(0xFF6B7280),
-                      fontWeight: isSelected
-                          ? FontWeight.w500
-                          : FontWeight.w400,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? DSColors.terracotta
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: isSelected
-                          ? DSColors.terracotta
-                          : const Color(0xFFD1D5DB),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check_rounded,
-                          size: 15, color: Colors.white)
-                      : null,
-                ),
-              ],
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.12)
+              : AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 2 : 1,
           ),
         ),
-        const Divider(height: 1, color: Color(0xFFF3F4F6)),
-      ],
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color:
+                    isSelected ? AppColors.primary : Colors.transparent,
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textMuted,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check_rounded,
+                      size: 12, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: isSelected
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

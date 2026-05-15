@@ -79,8 +79,7 @@ class _OtpViewState extends State<_OtpView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          final isProfileDone = StorageService.isOnboardingComplete();
-          context.go(isProfileDone ? '/home' : '/profile/setup');
+          context.go('/onboarding/details');
         } else if (state is AuthFailure) {
           setState(() {
             _otp = '';
@@ -93,20 +92,10 @@ class _OtpViewState extends State<_OtpView> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          scrolledUnderElevation: 0,
           leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
             onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Color(0xFF0D1F2D)),
-          ),
-          title: Text(
-            OtpVerificationViewModel.screenTitle,
-            style: DSTypography.headingMd
-                .copyWith(color: const Color(0xFF0D1F2D)),
           ),
           centerTitle: true,
         ),
@@ -120,86 +109,27 @@ class _OtpViewState extends State<_OtpView> {
                 const _EnvelopeIllustration(),
                 const SizedBox(height: 32),
                 Text(
-                  OtpVerificationViewModel.heading,
-                  textAlign: TextAlign.left,
-                  style: DSTypography.onboardingCaption
-                      .copyWith(color: const Color(0xFF0D1F2D), height: 1.3),
+                  'Enter the 4-digit code sent to\n${widget.phoneOrEmail}',
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 24),
-                OtpTextField(
-                  numberOfFields: OtpVerificationViewModel.otpLength,
-                  showFieldAsBox: true,
-                  fieldWidth: 44,
-                  borderRadius: BorderRadius.circular(6),
-                  borderWidth: 1.0,
-                  borderColor:
-                      isError ? DSColors.error : DSColors.gray200,
-                  enabledBorderColor:
-                      isError ? DSColors.error : DSColors.gray200,
-                  focusedBorderColor:
-                      isError ? DSColors.error : DSColors.gray700,
-                  disabledBorderColor: DSColors.gray200,
-                  filled: true,
-                  fillColor: Colors.white,
-                  textStyle: DSTypography.headingMd
-                      .copyWith(color: DSColors.gray900),
-                  cursorColor: DSColors.brand,
-                  // phone keyboard commits each char immediately — avoids
-                  // Android IME composing-text artefacts that appear as symbols
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  contentPadding: EdgeInsets.zero,
-                  autoFocus: false,
-                  clearText: _clearText,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  handleControllers: (controllers) {
-                    _otpControllers = controllers;
-                  },
-                  onCodeChanged: _onCodeChanged,
-                  onSubmit: _onOtpCompleted,
+                const SizedBox(height: 48),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(4, (i) => _OtpBox(
+                    controller: _controllers[i],
+                    focusNode: _focusNodes[i],
+                    autofocus: i == 0,
+                    onChanged: (v) => _onDigitEntered(i, v),
+                    onKeyEvent: (e) => _onKeyEvent(i, e),
+                  )),
                 ),
-                if (isError) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded,
-                          size: 12, color: DSColors.error),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text(
-                          _errorText!,
-                          style: DSTypography.bodySm
-                              .copyWith(color: DSColors.error),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 16),
-                RichText(
-                  text: TextSpan(
-                    style: DSTypography.bodySm
-                        .copyWith(color: const Color(0xFF6B7280)),
-                    children: [
-                      TextSpan(
-                        text: '${OtpVerificationViewModel.sentToPrefix}'
-                            '$displayPhone. ',
-                      ),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: GestureDetector(
-                          onTap: () => context.pop(),
-                          child: Text(
-                            OtpVerificationViewModel.editLabel,
-                            style: DSTypography.bodySm.copyWith(
-                              color: DSColors.terracotta,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 48),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) => AppButton(
+                    label: 'Verify & Continue',
+                    onPressed: () => _submit(context),
+                    isLoading: state is AuthVerifying,
                   ),
                 ),
                 const SizedBox(height: 20),

@@ -23,15 +23,15 @@ class SessionModel extends SessionEntity {
         orElse: () => SessionStatus.notStarted,
       ),
       preSession: PreSessionData(
-        energy: (preJson['energy'] as num).toInt(),
-        focus: (preJson['focus'] as num).toInt(),
-        stress: (preJson['stress'] as num).toInt(),
-        confidence: (preJson['confidence'] as num).toInt(),
+        energy: (preJson['energy'] as num?)?.toInt() ?? 5,
+        focus: (preJson['focus'] as num?)?.toInt() ?? 5,
+        stress: (preJson['stress'] as num?)?.toInt() ?? 5,
+        confidence: (preJson['confidence'] as num?)?.toInt() ?? 5,
       ),
       postSession: postJson == null
           ? null
           : PostSessionData(
-              overallRating: (postJson['overallRating'] as num).toInt(),
+              overallRating: (postJson['overallRating'] as num?)?.toInt() ?? 3,
               wentWell: postJson['wentWell'] as String,
               wentWrong: postJson['wentWrong'] as String,
               mentalNotes: postJson['mentalNotes'] as String,

@@ -7,6 +7,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   DashboardBloc(this._repository) : super(const DashboardInitial()) {
     on<DashboardLoadRequested>(_onLoad);
     on<DashboardRefreshRequested>(_onRefresh);
+    on<DashboardCoachFeedbackMarkRead>(_onMarkFeedbackRead);
   }
 
   final DashboardRepository _repository;
@@ -33,6 +34,20 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       emit(DashboardLoaded(data));
     } catch (e) {
       emit(DashboardError(e.toString()));
+    }
+  }
+
+  void _onMarkFeedbackRead(
+    DashboardCoachFeedbackMarkRead event,
+    Emitter<DashboardState> emit,
+  ) {
+    final current = state;
+    if (current is DashboardLoaded && current.data.coachFeedback != null) {
+      emit(DashboardLoaded(
+        current.data.copyWith(
+          coachFeedback: current.data.coachFeedback!.copyWith(isRead: true),
+        ),
+      ));
     }
   }
 }

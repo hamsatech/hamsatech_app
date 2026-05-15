@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/athlete_profile_entity.dart';
 import '../../domain/repositories/onboarding_repository.dart';
 import 'onboarding_event.dart';
@@ -59,22 +60,45 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     ));
   }
 
-  void _onAnswerSelected(
-    OnboardingAnswerSelected event,
+  void _onAssessmentStarted(
+    OnboardingAssessmentStarted event,
     Emitter<OnboardingState> emit,
   ) {
+    // Within the same session the bloc already holds questions — don't reset.
+    if (state.questions.isNotEmpty) return;
+    final questions = _repository.getBaselineQuestions();
+    // Restore saved progress from a previous cold-start session if present.
+    final saved = StorageService.getQuestionnaireProgress();
+    final savedIndex = saved != null ? saved['index'] as int : 0;
+    final savedAnswers =
+        saved != null ? saved['answers'] as Map<int, int> : <int, int>{};
+    emit(state.copyWith(
+      questions: questions,
+      step: OnboardingStep.assessment,
+      currentQuestionIndex: savedIndex.clamp(0, questions.length - 1),
+      answers: savedAnswers,
+    ));
+  }
+
+  Future<void> _onAnswerSelected(
+    OnboardingAnswerSelected event,
+    Emitter<OnboardingState> emit,
+  ) async {
     final updated = Map<int, int>.from(state.answers)
       ..[event.questionId] = event.optionIndex;
     emit(state.copyWith(answers: updated));
+    await StorageService.saveQuestionnaireProgress(
+        state.currentQuestionIndex, updated);
   }
 
-  void _onNextQuestion(
+  Future<void> _onNextQuestion(
     OnboardingNextQuestion event,
     Emitter<OnboardingState> emit,
-  ) {
+  ) async {
     if (!state.isLastQuestion) {
-      emit(state.copyWith(
-          currentQuestionIndex: state.currentQuestionIndex + 1));
+      final newIndex = state.currentQuestionIndex + 1;
+      emit(state.copyWith(currentQuestionIndex: newIndex));
+      await StorageService.saveQuestionnaireProgress(newIndex, state.answers);
     }
   }
 
@@ -105,6 +129,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         baselineScores: scores,
       );
       await _repository.saveAthleteProfile(profile);
+      await StorageService.clearQuestionnaireProgress();
       emit(state.copyWith(
         baselineScores: scores,
         step: OnboardingStep.complete,

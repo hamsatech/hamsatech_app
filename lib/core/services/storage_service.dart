@@ -18,8 +18,6 @@ class StorageService {
   static Future<void> clearAuth() async {
     await _prefs.remove('auth_token');
     await _prefs.remove('user_profile');
-    await _prefs.remove('profile_setup_complete');
-    await _prefs.remove('onboarding_complete');
   }
 
   // ── User profile ──────────────────────────────────────────────────────────
@@ -47,6 +45,39 @@ class StorageService {
   static bool isOnboardingComplete() =>
       _prefs.getBool('onboarding_complete') ?? false;
 
+  // Route of the last onboarding screen the user reached (for resume on cold start).
+  static Future<void> saveOnboardingStep(String route) =>
+      _prefs.setString('onboarding_step', route);
+
+  static String getOnboardingStep() =>
+      _prefs.getString('onboarding_step') ?? '';
+
+  // ── Questionnaire progress ────────────────────────────────────────────────
+
+  static Future<void> saveQuestionnaireProgress(
+      int questionIndex, Map<int, int> answers) {
+    return _prefs.setString(
+      'questionnaire_progress',
+      jsonEncode({
+        'index': questionIndex,
+        'answers': answers.map((k, v) => MapEntry(k.toString(), v)),
+      }),
+    );
+  }
+
+  // Returns {'index': int, 'answers': Map<int,int>} or null.
+  static Map<String, dynamic>? getQuestionnaireProgress() {
+    final str = _prefs.getString('questionnaire_progress');
+    if (str == null) return null;
+    final data = jsonDecode(str) as Map<String, dynamic>;
+    final answers = (data['answers'] as Map<String, dynamic>)
+        .map((k, v) => MapEntry(int.parse(k), v as int));
+    return {'index': data['index'] as int, 'answers': answers};
+  }
+
+  static Future<void> clearQuestionnaireProgress() =>
+      _prefs.remove('questionnaire_progress');
+
   // ── Athlete profile ───────────────────────────────────────────────────────
 
   static Future<void> saveAthleteProfile(Map<String, dynamic> profile) =>
@@ -67,7 +98,7 @@ class StorageService {
     final str = _prefs.getString('baseline_scores');
     if (str == null) return null;
     final decoded = jsonDecode(str) as Map<String, dynamic>;
-    return decoded.map((k, v) => MapEntry(k, (v as num).toDouble()));
+    return decoded.map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0.0));
   }
 
   // ── Sessions ──────────────────────────────────────────────────────────────
@@ -105,6 +136,40 @@ class StorageService {
     final date = DateTime.parse(data['date'] as String);
     final isToday = DateTimeHelper.isToday(date);
     return isToday ? data : null;
+  }
+
+  // ── Session setup ─────────────────────────────────────────────────────────
+
+  static Future<void> saveSessionSetup(Map<String, dynamic> setup) =>
+      _prefs.setString('session_setup', jsonEncode(setup));
+
+  static Map<String, dynamic>? getSessionSetup() {
+    final str = _prefs.getString('session_setup');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
+
+  // ── Pre-session ritual ────────────────────────────────────────────────────
+
+  static Future<void> saveRitualResult(Map<String, dynamic> result) =>
+      _prefs.setString('last_ritual_result', jsonEncode(result));
+
+  static Map<String, dynamic>? getLastRitualResult() {
+    final str = _prefs.getString('last_ritual_result');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
+
+  // ── Score summary ─────────────────────────────────────────────────────────
+
+  static Future<void> saveScoreSummary(
+          List<Map<String, dynamic>> summary) =>
+      _prefs.setString('score_summary', jsonEncode(summary));
+
+  static List<Map<String, dynamic>>? getScoreSummary() {
+    final str = _prefs.getString('score_summary');
+    if (str == null) return null;
+    return (jsonDecode(str) as List).cast<Map<String, dynamic>>();
   }
 
   static Future<void> clearAll() => _prefs.clear();

@@ -6,7 +6,7 @@ class PhoneVerificationViewModel {
   static const String screenTitle = 'Mobile number verification';
   static const String heading = 'Enter your phone number';
   static const String helperText =
-      'HamsaTech will send you a text with a verification code. '
+      'ASTRA will send you a text with a verification code. '
       'Message and data rates may apply.';
   static const String changeNumberText = 'What if my number changes?';
   static const String continueLabel = 'Continue';

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
-
-
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -79,8 +79,7 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.backgroundContext) {
-          context.push('/onboarding/background',
-              extra: context.read<OnboardingBloc>());
+          context.go('/onboarding/background');
         }
       },
       child: Scaffold(
@@ -95,7 +94,7 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                   const SizedBox(height: 16),
                   _StepIndicator(current: 1, total: 3),
                   const SizedBox(height: 32),
-                  Text('Tell us about yourself', style: DSTypography.displayMedium),
+                  Text('Tell us about yourself', style: AppTextStyles.displayMedium),
                   const SizedBox(height: 8),
                   Text(
                     'We\'ll use this to personalise your training insights',
@@ -106,14 +105,8 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                   DSTextInput(
                     controller: _nameController,
                     label: 'Full Name',
-                    placeholder: 'Enter your full name',
-                    prefixIcon: Padding(
-
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-
-                      child: Icon(Icons.person_outline_rounded, size: 20, color: DSColors.textMuted),
-
-                    ),
+                    hint: 'Enter your full name',
+                    prefixIcon: Icons.person_outline_rounded,
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
@@ -121,14 +114,8 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                   DSTextInput(
                     controller: _ageController,
                     label: 'Age',
-                    placeholder: 'Enter your age',
-                    prefixIcon: Padding(
-
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-
-                      child: Icon(Icons.cake_outlined, size: 20, color: DSColors.textMuted),
-
-                    ),
+                    hint: 'Enter your age',
+                    prefixIcon: Icons.cake_outlined,
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
@@ -151,13 +138,10 @@ class _AthleteDetailsViewState extends State<_AthleteDetailsView> {
                     label: 'Experience Level',
                     value: _experienceLevel,
                     items: _experienceLevels,
-                    onChanged: (v) =>
-                        setState(() => _experienceLevel = v!),
+                    onChanged: (v) => setState(() => _experienceLevel = v!),
                   ),
                   const SizedBox(height: 40),
-                  // Example navigation to the newly added route:
-                  // context.push('/onboarding/step1');
-                  DSButton(
+                  AppButton(
                     label: 'Continue',
                     onPressed: () => _submit(context),
                     leadingIcon: const Icon(Icons.arrow_forward_rounded),
@@ -193,8 +177,8 @@ class _DropdownField extends StatelessWidget {
       key: ValueKey(value),
       initialValue: value,
       decoration: InputDecoration(labelText: label),
-      dropdownColor: DSColors.appCard,
-      style: DSTypography.bodyMedium,
+      dropdownColor: AppColors.card,
+      style: AppTextStyles.bodyMedium,
       items: items
           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
           .toList(),
