@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/services/storage_service.dart';
 import '../bloc/session_setup_bloc.dart';
 import '../bloc/session_setup_event.dart';
 import '../bloc/session_setup_state.dart';
@@ -34,7 +35,11 @@ class _SessionSetupView extends StatelessWidget {
     return BlocConsumer<SessionSetupBloc, SessionSetupState>(
       listener: (context, state) {
         if (state is SessionSetupSuccess) {
-          context.push('/ritual/breathing');
+          if (StorageService.isPolarEnabled()) {
+            context.push('/session/live');
+          } else {
+            context.push('/session/scores');
+          }
         } else if (state is SessionSetupError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

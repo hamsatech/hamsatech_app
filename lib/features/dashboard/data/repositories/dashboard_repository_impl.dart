@@ -8,10 +8,10 @@ class DashboardRepositoryImpl implements DashboardRepository {
   Future<DashboardDataEntity> getDashboardData() async {
     final profileJson = StorageService.getAthleteProfile();
     final userProfile = StorageService.getUserProfile();
-    final rawName = profileJson?['name'] as String? ??
-        userProfile?['name'] as String? ??
-        '';
-    final athleteName = rawName.trim().isEmpty ? 'Athlete' : rawName.trim();
+    final nameFromProfile = (profileJson?['name'] as String? ?? '').trim();
+    final nameFromUser = (userProfile?['name'] as String? ?? '').trim();
+    final rawName = nameFromProfile.isNotEmpty ? nameFromProfile : nameFromUser;
+    final athleteName = rawName.isEmpty ? 'Athlete' : rawName;
     final baselineScores = StorageService.getBaselineScores() ?? {};
     final checkIn = StorageService.getTodayCheckIn();
     final sessions = StorageService.getSessions();
@@ -27,7 +27,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final weeklyStats = _buildWeeklyStats(sessions);
     final coachFeedback = _buildCoachFeedback(lastSession);
     final streakDays = _calculateStreak(sessions);
-    final isPolarConnected = StorageService.isOnboardingComplete();
+    final isPolarConnected = StorageService.isPolarEnabled();
     final todayCheckinCompleted = checkIn != null;
 
     return DashboardDataEntity(

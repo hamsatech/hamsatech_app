@@ -215,26 +215,30 @@ class _SlideCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: slide.imageNetworkUrl != null
-            ? Image.network(
-                slide.imageNetworkUrl!,
-                fit: BoxFit.cover,
-                loadingBuilder: (_, child, progress) => progress == null
-                    ? child
-                    : _Placeholder(colors: colors, icon: icon),
-                errorBuilder: (_, __, ___) =>
-                    _Placeholder(colors: colors, icon: icon),
-              )
-            : slide.imageAssetPath != null
-                ? Image.asset(
-                    slide.imageAssetPath!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        _Placeholder(colors: colors, icon: icon),
-                  )
-                : _Placeholder(colors: colors, icon: icon),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: slide.imageAssetPath != null
+                  ? Image.asset(
+                      slide.imageAssetPath!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          _Placeholder(colors: colors, icon: icon),
+                    )
+                  : _Placeholder(colors: colors, icon: icon),
+            ),
+          ),
+          if (slide.comingSoon)
+            const Positioned(
+              top: 16,
+              right: 16,
+              child: _ComingSoonBadge(),
+            ),
+        ],
       ),
     );
   }
@@ -290,6 +294,30 @@ class _Placeholder extends StatelessWidget {
   }
 }
 
+// ── Coming Soon Badge ─────────────────────────────────────────────────────────
+
+class _ComingSoonBadge extends StatelessWidget {
+  const _ComingSoonBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2F7E8F),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'Coming Soon',
+        style: DSTypography.bodySm.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 // ── Caption ───────────────────────────────────────────────────────────────────
 
 class _Caption extends StatelessWidget {
@@ -316,10 +344,23 @@ class _Caption extends StatelessWidget {
           : Padding(
               key: ValueKey(slide!.id),
               padding: const EdgeInsets.symmetric(horizontal: 36),
-              child: Text(
-                slide!.caption,
-                textAlign: TextAlign.center,
-                style: DSTypography.onboardingCaption,
+              child: Column(
+                children: [
+                  Text(
+                    slide!.title,
+                    textAlign: TextAlign.center,
+                    style: DSTypography.onboardingCaption,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    slide!.description,
+                    textAlign: TextAlign.center,
+                    style: DSTypography.bodyMd.copyWith(
+                      color: const Color(0x99000F12),
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
     );

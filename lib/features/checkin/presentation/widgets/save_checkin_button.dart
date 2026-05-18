@@ -45,7 +45,7 @@ class SaveCheckinButton extends StatelessWidget {
                     ),
                   )
                 : Text(
-                    'Save Check-in',
+                    'Save Check-in and Continue',
                     style: DSTypography.headingMd.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,

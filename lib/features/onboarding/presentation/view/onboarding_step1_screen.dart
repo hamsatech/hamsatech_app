@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/di/injection.dart';
+import '../bloc/onboarding_bloc.dart';
+import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_step1_bloc.dart';
 import '../bloc/onboarding_step1_event.dart';
 import '../bloc/onboarding_step1_state.dart';
@@ -68,6 +71,12 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
         }
 
         if (state.submissionSuccess) {
+          getIt<OnboardingBloc>().add(OnboardingAthleteDetailsSubmitted(
+            name: state.name,
+            age: int.tryParse(state.age) ?? 0,
+            sportDomain: '',
+            experienceLevel: '',
+          ));
           context.go('/onboarding/step2');
         }
       },

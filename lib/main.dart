@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
@@ -8,6 +9,7 @@ import 'core/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
   await StorageService.init();
   setupDI();
   SystemChrome.setPreferredOrientations([

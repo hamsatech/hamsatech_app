@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/services/polar_ble_service.dart';
 import '../../domain/models/hr_reading.dart';
@@ -18,6 +19,7 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     on<PolarDeviceDisconnectedEvent>(_onDeviceDisconnected);
     on<PolarHrReceivedEvent>(_onHrReceived);
     on<PolarHrErrorEvent>(_onHrError);
+    on<PolarDemoConnectRequested>(_onDemoConnect);
 
     _deviceSubscription = _service.deviceEvents.listen((event) {
       switch (event.status) {
@@ -40,6 +42,7 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
   final PolarBleService _service;
   StreamSubscription<PolarDeviceEvent>? _deviceSubscription;
   StreamSubscription<HrReading>? _hrSubscription;
+  Timer? _demoHrTimer;
 
   Future<void> _onScanStarted(
     PolarScanStarted event,
@@ -120,6 +123,8 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
   ) async {
     final deviceId = state.connectedDeviceId;
     if (deviceId == null) return;
+    _demoHrTimer?.cancel();
+    _demoHrTimer = null;
     await _hrSubscription?.cancel();
     _hrSubscription = null;
     try {
@@ -211,8 +216,32 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     ));
   }
 
+  Future<void> _onDemoConnect(
+    PolarDemoConnectRequested event,
+    Emitter<PolarState> emit,
+  ) async {
+    _demoHrTimer?.cancel();
+    emit(state.copyWith(
+      connectionStatus: PolarConnectionStatus.connected,
+      connectedDeviceId: 'demo-polar-h10',
+      connectedDeviceName: 'Polar H10 (Demo)',
+      isStreaming: true,
+      errorMessage: null,
+    ));
+    final random = math.Random();
+    _demoHrTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      add(PolarHrReceivedEvent(HrReading(
+        bpm: 65 + random.nextInt(16),
+        rrIntervals: const [],
+        sensorContact: true,
+        timestamp: DateTime.now(),
+      )));
+    });
+  }
+
   @override
   Future<void> close() {
+    _demoHrTimer?.cancel();
     _deviceSubscription?.cancel();
     _hrSubscription?.cancel();
     _service.dispose();

@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/session_memory.dart';
 import '../../domain/entities/session_setup_entity.dart';
 import '../../domain/repositories/session_setup_repository.dart';
 import 'session_setup_event.dart';
@@ -90,6 +93,23 @@ class SessionSetupBloc extends Bloc<SessionSetupEvent, SessionSetupState> {
 
     emit(editing.copyWith(isSubmitting: true));
     try {
+      // ── Supabase: create session ──────────────────────────────────────────
+      try {
+        final response = await ApiService.instance.createSession(
+          athleteId: 'ATH001',
+          sessionType: _toApiSessionType(editing.sessionType),
+          startTime: DateTime.now().toUtc().toIso8601String(),
+        );
+        debugPrint('[SESSION CREATED]');
+        debugPrint('[SESSION RESPONSE] ${response.data}');
+        SessionMemory.sessionId = _extractSessionId(response.data);
+        debugPrint('[SESSION ID] ${SessionMemory.sessionId}');
+      } catch (apiError) {
+        debugPrint('[SESSION API ERROR] $apiError');
+        // API failure does not block the local flow.
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       await _repository.saveSetup(SessionSetupEntity(
         rangeType: editing.rangeType,
         sessionType: editing.sessionType,
@@ -100,5 +120,24 @@ class SessionSetupBloc extends Bloc<SessionSetupEvent, SessionSetupState> {
     } catch (e) {
       emit(SessionSetupError(e.toString()));
     }
+  }
+
+  /// Maps the local [SessionType] enum to the Supabase session_type string.
+  String _toApiSessionType(SessionType? type) => switch (type) {
+        SessionType.scoring => 'scoring',
+        SessionType.grouping => 'grouping',
+        SessionType.dryFire => 'dry_fire',
+        null => 'training',
+      };
+
+  /// Extracts the session id from a Supabase `return=representation` response.
+  /// Supabase returns a JSON array on INSERT; falls back to Map for RPCs.
+  String? _extractSessionId(dynamic data) {
+    if (data is List && data.isNotEmpty) {
+      final row = data.first;
+      if (row is Map) return (row['id'] ?? row['session_id'])?.toString();
+    }
+    if (data is Map) return (data['id'] ?? data['session_id'])?.toString();
+    return null;
   }
 }

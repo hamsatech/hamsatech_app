@@ -16,7 +16,7 @@ class FinalScoresSummaryScreen extends StatelessWidget {
     return BlocConsumer<ScoreEntryBloc, ScoreEntryState>(
       listener: (context, state) {
         if (state is ScoreEntrySavedState) {
-          context.go('/session/summary');
+          context.go('/session/reflection');
         }
       },
       builder: (context, state) {
@@ -88,7 +88,7 @@ class _SummaryView extends StatelessWidget {
                   DSSpacing.xl, DSSpacing.lg, DSSpacing.xl, DSSpacing.xxl),
               child: DSPrimaryButton(
                 label: 'Looks correct - Continue  ✓',
-                color: DSColors.success,
+                color: const Color(0xFF2F7E8F),
                 onPressed: () => context
                     .read<ScoreEntryBloc>()
                     .add(const ScoreEntryFinalConfirmed()),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/api_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/astra_logo.dart';
 
@@ -55,6 +56,13 @@ class _SplashScreenState extends State<SplashScreen>
 
     _ctrl.forward();
     _navigate();
+
+    // TODO: remove after confirming Supabase connection
+    ApiService.instance.getAthletes().then((res) {
+      debugPrint('[API TEST] athletes response: ${res.data}');
+    }).catchError((Object e) {
+      debugPrint('[API TEST] error: $e');
+    });
   }
 
   Future<void> _navigate() async {
@@ -133,7 +141,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: const Column(
                     children: [
                       Text(
-                        'MENTAL PERFORMANCE AI',
+                        'YOUR PERSONAL INTELLIGENCE PLATFORM',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 10,

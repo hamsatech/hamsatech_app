@@ -76,3 +76,7 @@ class PolarHrErrorEvent extends PolarEvent {
   @override
   List<Object?> get props => [message];
 }
+
+class PolarDemoConnectRequested extends PolarEvent {
+  const PolarDemoConnectRequested();
+}

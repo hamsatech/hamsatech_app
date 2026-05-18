@@ -37,3 +37,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+    - assets/images/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+    - family: PT Serif
+      fonts:
+        - asset: assets/fonts/PTSerif-Regular.ttf
+          weight: 400

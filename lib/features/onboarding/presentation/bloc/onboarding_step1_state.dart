@@ -41,8 +41,8 @@ class OnboardingStep1State extends Equatable {
     this.stepTitle = 'STEP 1 OF 4',
     this.progress = 0.2,
 
-    this.heading = "Let's get to know you",
-    this.subtitle = 'Tell us about your current discipline and experience to personalize your training dashboard.',
+    this.heading = 'Welcome to Astra Performance.',
+    this.subtitle = 'Let\'s build your baseline—connect your sensor and complete a quick assessment so we can show you what\'s driving your results.',
 
     this.nameLabel = 'Full Name',
     this.nameHint = 'e.g. Jane Doe',

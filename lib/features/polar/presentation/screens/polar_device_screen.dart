@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/services/storage_service.dart';
 import '../bloc/polar_bloc.dart';
 import '../bloc/polar_event.dart';
 import '../bloc/polar_state.dart';
@@ -489,7 +490,7 @@ class _DeviceList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.discoveredDevices.isEmpty && !state.isConnected) {
-      if (showFallback) return const SizedBox.shrink();
+      if (showFallback) return const _DemoDeviceCard();
       return const _EmptySearchState();
     }
 
@@ -500,6 +501,95 @@ class _DeviceList extends StatelessWidget {
                 child: _DeviceCard(device: device, state: state),
               ))
           .toList(),
+    );
+  }
+}
+
+class _DemoDeviceCard extends StatefulWidget {
+  const _DemoDeviceCard();
+
+  @override
+  State<_DemoDeviceCard> createState() => _DemoDeviceCardState();
+}
+
+class _DemoDeviceCardState extends State<_DemoDeviceCard> {
+  bool _connecting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: _connecting ? _kConnectingBg : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _connecting ? const Color(0xFFBFDBFE) : _kBorderColor,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: _connecting ? _kConnectingBg : const Color(0xFFEAF7FA),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.bluetooth_rounded,
+              size: 18,
+              color: _connecting ? _kConnectingText : _kSearchIconBg,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Polar H10 (Demo)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _kTextPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _connecting ? 'Connecting...' : 'H10',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        _connecting ? _kConnectingText : _kTextSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (_connecting)
+            const Text(
+              'Connecting',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: _kConnectingText,
+              ),
+            )
+          else
+            _ConnectButton(
+              onTap: () async {
+                setState(() => _connecting = true);
+                final bloc = context.read<PolarBloc>();
+                await StorageService.setPolarConnectionMode('demo');
+                if (!mounted) return;
+                bloc.add(const PolarDemoConnectRequested());
+              },
+            ),
+        ],
+      ),
     );
   }
 }
@@ -881,7 +971,14 @@ class _DoneButton extends StatelessWidget {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: () => context.go('/heartrate'),
+          onPressed: () async {
+            await StorageService.setPolarEnabled(true);
+            await StorageService.setOnboardingComplete(true);
+            if (StorageService.getPolarConnectionMode() != 'demo') {
+              await StorageService.setPolarConnectionMode('connected');
+            }
+            if (context.mounted) context.go('/heartrate');
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: _kDoneBtnBg,
             foregroundColor: Colors.white,
@@ -912,7 +1009,11 @@ class _ContinueWithoutDeviceButton extends StatelessWidget {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: () => context.go('/heartrate'),
+          onPressed: () async {
+            await StorageService.setPolarEnabled(false);
+            await StorageService.setOnboardingComplete(true);
+            if (context.mounted) context.go('/home');
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: _kDoneBtnBg,
             foregroundColor: Colors.white,

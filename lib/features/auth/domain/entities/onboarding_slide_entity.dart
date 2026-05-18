@@ -3,23 +3,23 @@ import 'package:equatable/equatable.dart';
 class OnboardingSlideEntity extends Equatable {
   const OnboardingSlideEntity({
     required this.id,
-    required this.caption,
+    required this.title,
+    required this.description,
+    this.comingSoon = false,
     this.imageAssetPath,
-    this.imageNetworkUrl,
   });
 
   final String id;
-  final String caption;
+  final String title;
+  final String description;
+  final bool comingSoon;
 
-  /// Local asset path (e.g. 'assets/images/slide_1.jpg').
+  /// Local asset path (e.g. 'assets/images/slide_1.png').
   /// When null the slide renders a branded placeholder.
   final String? imageAssetPath;
 
-  /// Remote image URL; takes precedence over [imageAssetPath] when both provided.
-  final String? imageNetworkUrl;
-
-  bool get hasImage => imageAssetPath != null || imageNetworkUrl != null;
+  bool get hasImage => imageAssetPath != null;
 
   @override
-  List<Object?> get props => [id, caption, imageAssetPath, imageNetworkUrl];
+  List<Object?> get props => [id, title, description, comingSoon, imageAssetPath];
 }

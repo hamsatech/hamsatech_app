@@ -3,12 +3,38 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../../core/services/storage_service.dart';
 import '../bloc/permissions_bloc.dart';
 import '../bloc/permissions_event.dart';
 import '../bloc/permissions_state.dart';
 
-class PermissionsView extends StatelessWidget {
+class PermissionsView extends StatefulWidget {
   const PermissionsView({super.key});
+
+  @override
+  State<PermissionsView> createState() => _PermissionsViewState();
+}
+
+class _PermissionsViewState extends State<PermissionsView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (StorageService.wasAssessmentJustSkipped()) {
+        await StorageService.clearAssessmentSkippedFlag();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Assessment progress saved'),
+            backgroundColor: Color(0xFF2F7E8F),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -430,10 +456,10 @@ class _BottomCta extends StatelessWidget {
             label: 'I don\'t have a polar yet',
             variant: DSButtonVariant.linkSecondary,
 
-            onPressed: () {
-              context
-                  .read<PermissionsBloc>()
-                  .add(const OnContinuePressed());
+            onPressed: () async {
+              await StorageService.setPolarEnabled(false);
+              await StorageService.setOnboardingComplete(true);
+              if (context.mounted) context.go('/home');
             },
           ),
         ],

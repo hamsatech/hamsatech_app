@@ -104,6 +104,15 @@ class _SignUpView extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 12),
+                Text(
+                  SignUpViewModel.welcomeSubtitle,
+                  style: DSTypography.bodyMedium.copyWith(
+                    color: const Color(0x99000F12),
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 40),
                 BlocBuilder<SignUpBloc, SignUpState>(
                   buildWhen: (prev, curr) => curr.status != prev.status,

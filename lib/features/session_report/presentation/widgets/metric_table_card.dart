@@ -92,11 +92,17 @@ Color _metricColor(MetricColor c) => switch (c) {
       MetricColor.neutral => DSColors.gray400,
     };
 
-MetricTableCard buildPhysiologyCard(
-    {required PhysiologyMetricsEntity physiology}) {
+MetricTableCard buildPhysiologyCard({
+  required PhysiologyMetricsEntity physiology,
+  bool showHrRows = true,
+}) {
   return MetricTableCard(rows: [
-    MetricTableRow(label: 'Avg Heart Rate', value: '${physiology.avgHr} bpm'),
-    MetricTableRow(label: 'Peak Heart Rate', value: '${physiology.peakHr} bpm'),
+    if (showHrRows) ...[
+      MetricTableRow(
+          label: 'Avg Heart Rate', value: '${physiology.avgHr} bpm'),
+      MetricTableRow(
+          label: 'Peak Heart Rate', value: '${physiology.peakHr} bpm'),
+    ],
     MetricTableRow(
       label: 'Fatigue',
       value: physiology.fatigueLabel,

@@ -9,8 +9,8 @@ class MainShellScreen extends StatelessWidget {
 
   static const _tabs = [
     _TabItem(icon: Icons.home_rounded, label: 'Home', path: '/home'),
-    _TabItem(icon: Icons.gps_fixed_rounded, label: 'Train', path: '/sessions'),
-    _TabItem(icon: Icons.chat_bubble_outline_rounded, label: 'Coach', path: '/journal'),
+    _TabItem(icon: Icons.gps_fixed_rounded, label: 'Sessions', path: '/sessions'),
+    _TabItem(icon: Icons.insights_rounded, label: 'Insight', path: '/insight'),
     _TabItem(icon: Icons.person_rounded, label: 'Profile', path: '/profile'),
   ];
 

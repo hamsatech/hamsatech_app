@@ -7,13 +7,9 @@ class RecommendationCard extends StatelessWidget {
   const RecommendationCard({
     super.key,
     required this.items,
-    required this.onBreathingTap,
   });
 
   final List<RecommendationItemEntity> items;
-  final VoidCallback onBreathingTap;
-
-  static const _teal = Color(0xFF2F7E8F);
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +27,6 @@ class RecommendationCard extends StatelessWidget {
             _CheckItem(item: item),
             const SizedBox(height: DSSpacing.sm),
           ],
-          const SizedBox(height: DSSpacing.xs),
-          DSPrimaryButton(
-            label: 'Start Breathing Now',
-            color: _teal,
-            onPressed: onBreathingTap,
-          ),
         ],
       ),
     );

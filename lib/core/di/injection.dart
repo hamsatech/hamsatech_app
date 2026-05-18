@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../network/api_client.dart';
+
 import '../../features/athlete/data/datasources/athlete_remote_datasource.dart';
 import '../../features/athlete/data/repositories/athlete_repository_impl.dart';
 import '../../features/athlete/domain/repositories/athlete_repository.dart';
@@ -59,6 +61,9 @@ import '../../features/polar/presentation/bloc/polar_bloc.dart';
 final getIt = GetIt.instance;
 
 void setupDI() {
+  // ── Network ───────────────────────────────────────────────────────────────
+  getIt.registerLazySingleton<ApiClient>(() => ApiClient());
+
   // ── Athlete ──────────────────────────────────────────────────────────────
   getIt.registerLazySingleton<AthleteRemoteDatasource>(
       () => AthleteRemoteDatasource());

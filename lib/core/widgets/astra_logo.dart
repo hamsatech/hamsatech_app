@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // ── Colour constants (brand palette) ─────────────────────────────────────────
 const _kCyanHigh  = Color(0xFFBEF8FF); // top-edge highlight
@@ -210,7 +209,8 @@ class _AstraWordmark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       'ASTRA',
-      style: GoogleFonts.inter(
+      style: TextStyle(
+        fontFamily: 'Inter',
         fontSize: size * 0.32,
         fontWeight: FontWeight.w700,
         color: color,
@@ -305,7 +305,8 @@ class AstraLogoCompact extends StatelessWidget {
         SizedBox(width: symbolSize * 0.3),
         Text(
           'ASTRA',
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: 'Inter',
             fontSize: symbolSize * 0.58,
             fontWeight: FontWeight.w700,
             color: textColor,

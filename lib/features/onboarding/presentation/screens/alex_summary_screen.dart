@@ -144,12 +144,6 @@ class _SummaryCard extends StatelessWidget {
           _SummaryRow(label: 'Goal', value: summary.goal),
           const _Divider(),
           _SummaryRow(label: 'Resting HR', value: summary.restingHr),
-          const _Divider(),
-          _SummaryRow(
-            label: 'Coach',
-            value: summary.coachStatus,
-            valueColor: DSColors.error,
-          ),
         ],
       ),
     );
@@ -157,15 +151,10 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-    this.valueColor = DSColors.gray900,
-  });
+  const _SummaryRow({required this.label, required this.value});
 
   final String label;
   final String value;
-  final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +177,7 @@ class _SummaryRow extends StatelessWidget {
           Text(
             value,
             style: DSTypography.headingLg.copyWith(
-              color: valueColor,
+              color: DSColors.gray900,
               fontWeight: FontWeight.w600,
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/services/storage_service.dart';
 import '../../../../features/polar/presentation/bloc/polar_bloc.dart';
 import '../../../../features/polar/presentation/bloc/polar_state.dart';
 
@@ -22,6 +23,48 @@ class HrAnalyticsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<PolarBloc, PolarState>(
       builder: (context, polarState) {
+        // When user explicitly skipped Polar and no device is active, show
+        // the "not connected" placeholder rather than simulated data.
+        final polarSkipped = !StorageService.isPolarEnabled();
+        if (polarSkipped && !polarState.isConnected) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF7FA),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCAE8EE),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.favorite_border_rounded,
+                    color: Color(0xFF2F7E8F),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Polar not connected yet',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2F7E8F),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         // Prefer real Polar data; fall back to bloc-driven simulation.
         final polarHr = polarState.latestReading?.bpm;
         final currentHr = polarHr ?? simulatedHr;

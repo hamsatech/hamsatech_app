@@ -15,11 +15,9 @@ import '../../features/onboarding/presentation/screens/baseline_assessment_scree
 import '../../features/onboarding/presentation/screens/baseline_result_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
-import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session/presentation/screens/pre_session_screen.dart';
 import '../../features/session/presentation/screens/active_session_screen.dart';
 import '../../features/session/presentation/screens/post_session_screen.dart';
-import '../../features/reflection/presentation/screens/reflection_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
@@ -27,23 +25,22 @@ import '../../features/checkin/presentation/screens/daily_checkin_screen.dart';
 import '../../features/session_setup/presentation/screens/session_setup_screen.dart';
 import '../../features/polar/presentation/screens/heartrate_screen.dart';
 import '../../features/polar/presentation/screens/polar_device_screen.dart';
-import '../../features/pre_session_ritual/presentation/screens/breathing_screen.dart';
-import '../../features/pre_session_ritual/presentation/screens/body_scan_screen.dart';
-import '../../features/pre_session_ritual/presentation/screens/intention_screen.dart';
-import '../../features/pre_session_ritual/presentation/screens/visualization_screen.dart';
 import '../../features/live_training/presentation/screens/live_session_screen.dart';
 import '../../features/live_training/presentation/screens/reflect_screen.dart';
 import '../../features/score_entry/presentation/screens/score_entry_screen.dart';
 import '../../features/score_entry/presentation/screens/series_complete_screen.dart';
 import '../../features/score_entry/presentation/screens/final_scores_summary_screen.dart';
 import '../../features/session_summary/presentation/screens/session_summary_screen.dart';
+import '../../features/session_summary/presentation/screens/shooting_analytics_screen.dart';
 import '../../features/session_summary/bloc/session_summary_bloc.dart';
 import '../../features/session_report/presentation/screens/session_report_screen.dart';
+import '../../features/session_report/presentation/screens/session_reflection_screen.dart';
 import '../../features/session_report/bloc/session_report_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../di/injection.dart';
 import '../services/storage_service.dart';
 import '../../features/score_entry/bloc/score_entry_bloc.dart';
+import '../../features/saarthi/presentation/screens/saarthi_chat_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REQUIRED FLOW
@@ -191,26 +188,6 @@ class AppRouter {
         builder: (_, __) => const SessionSetupScreen(),
       ),
       GoRoute(
-        path: '/ritual/breathing',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const BreathingScreen(),
-      ),
-      GoRoute(
-        path: '/ritual/body-scan',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const BodyScanScreen(),
-      ),
-      GoRoute(
-        path: '/ritual/intention',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const IntentionScreen(),
-      ),
-      GoRoute(
-        path: '/ritual/visualization',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const VisualizationScreen(),
-      ),
-      GoRoute(
         path: '/session/live',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const LiveSessionScreen(),
@@ -253,12 +230,30 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: '/session/analytics',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => BlocProvider(
+          create: (_) => getIt<SessionSummaryBloc>(),
+          child: const ShootingAnalyticsScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/session/report',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => BlocProvider(
           create: (_) => getIt<SessionReportBloc>(),
           child: const SessionReportScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/session/reflection',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const SessionReflectionScreen(),
+      ),
+      GoRoute(
+        path: '/saarthi',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const SaarthiChatScreen(),
       ),
       GoRoute(
         path: '/session/pre',
@@ -301,15 +296,21 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/sessions',
-                builder: (_, __) => const SessionsListScreen(),
+                builder: (_, __) => BlocProvider(
+                  create: (_) => getIt<SessionSummaryBloc>(),
+                  child: const SessionSummaryScreen(),
+                ),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/journal',
-                builder: (_, __) => const ReflectionScreen(),
+                path: '/insight',
+                builder: (_, __) => BlocProvider(
+                  create: (_) => getIt<SessionReportBloc>(),
+                  child: const SessionReportScreen(),
+                ),
               ),
             ],
           ),

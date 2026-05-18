@@ -56,6 +56,22 @@ class StorageService {
   static String getOnboardingStep() =>
       _prefs.getString('onboarding_step') ?? '';
 
+  // ── Polar mode ────────────────────────────────────────────────────────────
+
+  static Future<void> setPolarEnabled(bool value) =>
+      _prefs.setBool('polar_enabled', value);
+
+  // Returns true when the user completed Polar setup, false when explicitly
+  // skipped ("I don't have Polar yet" / "Continue without Polar").
+  static bool isPolarEnabled() => _prefs.getBool('polar_enabled') ?? false;
+
+  // 'connected' = real Polar device; 'demo' = simulated demo device; '' = not set.
+  static Future<void> setPolarConnectionMode(String mode) =>
+      _prefs.setString('polar_connection_mode', mode);
+
+  static String getPolarConnectionMode() =>
+      _prefs.getString('polar_connection_mode') ?? '';
+
   // ── Questionnaire progress ────────────────────────────────────────────────
 
   static Future<void> saveQuestionnaireProgress(
@@ -81,6 +97,24 @@ class StorageService {
 
   static Future<void> clearQuestionnaireProgress() =>
       _prefs.remove('questionnaire_progress');
+
+  static bool hasIncompleteAssessment() => getQuestionnaireProgress() != null;
+
+  static int getAssessmentRemainingCount(int totalQuestions) {
+    final progress = getQuestionnaireProgress();
+    if (progress == null) return 0;
+    final answers = progress['answers'] as Map<int, int>;
+    return totalQuestions - answers.length;
+  }
+
+  static Future<void> saveAssessmentSkippedFlag() =>
+      _prefs.setBool('assessment_skipped_flag', true);
+
+  static bool wasAssessmentJustSkipped() =>
+      _prefs.getBool('assessment_skipped_flag') ?? false;
+
+  static Future<void> clearAssessmentSkippedFlag() =>
+      _prefs.remove('assessment_skipped_flag');
 
   // ── Athlete profile ───────────────────────────────────────────────────────
 

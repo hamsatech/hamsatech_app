@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_report_entity.dart';
 
 class HrChartCard extends StatelessWidget {
@@ -18,9 +19,45 @@ class HrChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!StorageService.isPolarEnabled()) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        decoration: BoxDecoration(
+          color: DSColors.white,
+          border: Border.all(color: DSColors.gray200),
+          borderRadius: DSRadius.borderMd,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF7FA),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.favorite_border_rounded,
+                color: Color(0xFF2F7E8F),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Polar not connected yet',
+              style: DSTypography.bodyMd.copyWith(
+                color: const Color(0xFF2F7E8F),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (points.isEmpty) {
       return Container(
-        height: 180,
+        height: 120,
         decoration: BoxDecoration(
           color: DSColors.white,
           border: Border.all(color: DSColors.gray200),
@@ -28,7 +65,7 @@ class HrChartCard extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            'No HR data',
+            'No HR data recorded',
             style: DSTypography.bodySm.copyWith(color: DSColors.textMuted),
           ),
         ),
