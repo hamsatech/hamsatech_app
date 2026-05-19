@@ -14,7 +14,7 @@ class MockLoginRepository implements ILoginRepository {
           title: 'Performance',
           description:
               'Track mental performance, recovery and readiness to unlock your full potential in competition.',
-          imageAssetPath: 'assets/images/slide_1.png',
+          imageAssetPath: 'assets/onboarding/performance.jpg',
         ),
         OnboardingSlideEntity(
           id: 'slide_2',
@@ -22,7 +22,7 @@ class MockLoginRepository implements ILoginRepository {
           description:
               'Understand how stress and emotional patterns shape your most important connections.',
           comingSoon: true,
-          imageAssetPath: 'assets/images/slide_2.png',
+          imageAssetPath: 'assets/onboarding/wellness.jpg',
         ),
         OnboardingSlideEntity(
           id: 'slide_3',
@@ -30,7 +30,7 @@ class MockLoginRepository implements ILoginRepository {
           description:
               'Balance performance demands across every dimension of your life.',
           comingSoon: true,
-          imageAssetPath: 'assets/images/slide_3.png',
+          imageAssetPath: 'assets/onboarding/balance.jpg',
         ),
       ];
 

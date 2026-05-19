@@ -219,16 +219,18 @@ class _SlideCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: SizedBox(
+            child: Container(
               width: double.infinity,
               height: double.infinity,
-              child: slide.imageAssetPath != null
-                  ? Image.asset(
-                      slide.imageAssetPath!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _Placeholder(colors: colors, icon: icon),
-                    )
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: colors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: slide.hasImage
+                  ? _SlideIllustration(imagePath: slide.imageAssetPath!)
                   : _Placeholder(colors: colors, icon: icon),
             ),
           ),
@@ -243,6 +245,53 @@ class _SlideCard extends StatelessWidget {
     );
   }
 }
+
+// ── Slide illustration ────────────────────────────────────────────────────────
+
+class _SlideIllustration extends StatelessWidget {
+  const _SlideIllustration({required this.imagePath});
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.30),
+                  blurRadius: 24,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Placeholder (no image) ────────────────────────────────────────────────────
 
 class _Placeholder extends StatelessWidget {
   const _Placeholder({required this.colors, required this.icon});

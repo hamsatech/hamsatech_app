@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../dashboard/presentation/bloc/dashboard_bloc.dart';
+import '../../../dashboard/presentation/bloc/dashboard_event.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -48,6 +50,18 @@ class _AssessmentViewState extends State<_AssessmentView> {
       builder: (_) => _SkipBottomSheet(
         onContinueLater: () async {
           Navigator.of(context).pop();
+          final state = context.read<OnboardingBloc>().state;
+          final currentQuestion = state.currentQuestion;
+          final hasAnsweredCurrent = currentQuestion != null &&
+              state.answers.containsKey(currentQuestion.id);
+          final lastIndex = state.questions.length - 1;
+          final resumeIndex = hasAnsweredCurrent
+              ? (state.currentQuestionIndex + 1).clamp(0, lastIndex)
+              : state.currentQuestionIndex.clamp(0, lastIndex);
+          await StorageService.saveQuestionnaireProgress(
+            resumeIndex,
+            state.answers,
+          );
           await StorageService.saveAssessmentSkippedFlag();
           if (context.mounted) context.go('/permissions');
         },
@@ -61,7 +75,12 @@ class _AssessmentViewState extends State<_AssessmentView> {
     return BlocConsumer<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.complete) {
-          context.go('/permissions');
+          if (StorageService.isOnboardingComplete()) {
+            getIt<DashboardBloc>().add(const DashboardRefreshRequested());
+            context.go('/home');
+          } else {
+            context.go('/permissions');
+          }
         } else if (state.status == OnboardingStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -267,7 +286,8 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                       onPressed: selectedIndex != null
                                           ? () => context
                                               .read<OnboardingBloc>()
-                                              .add(const OnboardingAssessmentCompleted())
+                                              .add(
+                                                  const OnboardingAssessmentCompleted())
                                           : () {},
                                       textStyle: DSTypography.labelMd.copyWith(
                                         color: Colors.white,
@@ -280,7 +300,8 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                       onPressed: selectedIndex != null
                                           ? () => context
                                               .read<OnboardingBloc>()
-                                              .add(const OnboardingNextQuestion())
+                                              .add(
+                                                  const OnboardingNextQuestion())
                                           : () {},
                                       textStyle: DSTypography.labelMd.copyWith(
                                         color: Colors.white,

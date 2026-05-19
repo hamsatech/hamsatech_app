@@ -32,12 +32,25 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logos/astra_launcher.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#061E26"
+  adaptive_icon_foreground: "assets/logos/astra_launcher_fg.png"
+  web:
+    generate: false
 
 flutter:
   uses-material-design: true
   assets:
     - assets/icons/
     - assets/images/
+    - assets/logos/
+    - assets/onboarding/
   fonts:
     - family: Inter
       fonts:

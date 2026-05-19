@@ -16,9 +16,21 @@ class MainShellScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: shell,
-      bottomNavigationBar: _BottomNav(shell: shell, tabs: _tabs),
+    return PopScope(
+      // Allow the system back gesture/button to bubble up only when already
+      // on the home tab — at that point there is nothing to go back to and
+      // the platform handles it (minimises the app).
+      canPop: shell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          // Back pressed on a non-home tab → return to home tab.
+          shell.goBranch(0);
+        }
+      },
+      child: Scaffold(
+        body: shell,
+        bottomNavigationBar: _BottomNav(shell: shell, tabs: _tabs),
+      ),
     );
   }
 }

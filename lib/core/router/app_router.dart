@@ -102,6 +102,7 @@ class AppRouter {
       if (_onboardingRoutes.contains(loc)) {
         StorageService.saveOnboardingStep(loc); // fire-and-forget
       }
+      StorageService.saveLastRoute(loc); // noop for non-shell routes
       return null;
     },
     routes: [
@@ -281,7 +282,19 @@ class AppRouter {
       // ── SHELL (bottom nav) ────────────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __, shell) => MainShellScreen(shell: shell),
+        pageBuilder: (_, state, shell) => CustomTransitionPage(
+          key: state.pageKey,
+          child: MainShellScreen(shell: shell),
+          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+            opacity: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOut,
+            ),
+            child: child,
+          ),
+          transitionDuration: const Duration(milliseconds: 380),
+          reverseTransitionDuration: const Duration(milliseconds: 200),
+        ),
         branches: [
           StatefulShellBranch(
             navigatorKey: _shellNavigatorKey,

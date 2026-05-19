@@ -5,7 +5,8 @@ import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../../features/saarthi/presentation/screens/saarthi_chat_screen.dart';
+import '../../../../core/widgets/astra_logo.dart';
+import '../../../../core/widgets/saarthi_avatar.dart';
 import '../../domain/entities/dashboard_data_entity.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
@@ -114,6 +115,10 @@ class _DashboardContent extends StatelessWidget {
         const SizedBox(height: DSSpacing.lg),
         _HomeHeader(data: data),
         const SizedBox(height: 16),
+        if (!data.isPolarConnected) ...[
+          _PolarConnectCard(onTap: () => context.push('/polar')),
+          const SizedBox(height: 16),
+        ],
         const _AssessmentReminderCard(),
         _MetricsGrid(data: data),
         const SizedBox(height: 16),
@@ -145,15 +150,11 @@ class _HomeHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Astra Performance',
-                    style: DSTypography.caption.copyWith(
-                      color: DSColors.brand,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
+                  const AstraLogoCompact(
+                    symbolSize: 22,
+                    textColor: Color(0xFF2F7E8F),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     'Athlete Home',
                     style: DSTypography.headingXl.copyWith(
@@ -191,8 +192,8 @@ class _HomeHeader extends StatelessWidget {
                 if (data.streakDays != null && data.streakDays! > 0) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: DSColors.brand.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
@@ -222,13 +223,12 @@ class _HomeHeader extends StatelessWidget {
         if (data.isPolarConnected) ...[
           const SizedBox(height: 10),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: DSColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: DSColors.success.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: DSColors.success.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -258,6 +258,98 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
+// ─── Polar empty state ───────────────────────────────────────────────────────
+
+class _PolarConnectCard extends StatelessWidget {
+  const _PolarConnectCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF2F7E8F).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFD5EEF3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.favorite_border_rounded,
+                  color: Color(0xFF2F7E8F),
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Polar not connected',
+                      style: DSTypography.labelMd.copyWith(
+                        color: DSColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Connect Polar to unlock BPM, HRV, and physiology insights.',
+                      style: DSTypography.bodySm.copyWith(
+                        color: DSColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: onTap,
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF2F7E8F),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Connect Polar Device',
+                style: DSTypography.labelSm.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─── Metrics grid ─────────────────────────────────────────────────────────────
 
 class _MetricsGrid extends StatelessWidget {
@@ -282,8 +374,11 @@ class _MetricsGrid extends StatelessWidget {
     };
 
     final recoveryScore = r.energyLevel.round().clamp(0, 100);
-    final recoveryStatus =
-        recoveryScore > 66 ? 'good' : recoveryScore > 33 ? 'acceptable' : 'low';
+    final recoveryStatus = recoveryScore > 66
+        ? 'good'
+        : recoveryScore > 33
+            ? 'acceptable'
+            : 'low';
     final recoveryColor = recoveryScore > 66
         ? DSColors.success
         : recoveryScore > 33
@@ -291,8 +386,11 @@ class _MetricsGrid extends StatelessWidget {
             : DSColors.error;
 
     final stressScore = r.stressLevel.round().clamp(0, 100);
-    final stressStatus =
-        stressScore < 33 ? 'low' : stressScore < 66 ? 'moderate' : 'elevated';
+    final stressStatus = stressScore < 33
+        ? 'low'
+        : stressScore < 66
+            ? 'moderate'
+            : 'elevated';
     final stressColor = stressScore < 33
         ? DSColors.success
         : stressScore < 66
@@ -616,10 +714,31 @@ class _AssessmentReminderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = StorageService.getQuestionnaireProgress();
-    if (progress == null) return const SizedBox.shrink();
+    if (progress == null) {
+      debugPrint(
+        '[HomeAssessmentReminder] currentQuestionIndex=null '
+        'questionsCompleted=false answeredQuestions=0 reminderVisible=false',
+      );
+      return const SizedBox.shrink();
+    }
 
+    final currentQuestionIndex = progress['index'] as int? ?? 0;
     final answers = progress['answers'] as Map<int, int>;
-    final remaining = _totalQuestions - answers.length;
+    final questionsCompleted = answers.length >= _totalQuestions;
+    final shouldShowReminder =
+        !questionsCompleted && currentQuestionIndex < _totalQuestions;
+
+    debugPrint(
+      '[HomeAssessmentReminder] currentQuestionIndex=$currentQuestionIndex '
+      'questionsCompleted=$questionsCompleted '
+      'answeredQuestions=${answers.length} '
+      'reminderVisible=$shouldShowReminder',
+    );
+
+    if (!shouldShowReminder) return const SizedBox.shrink();
+
+    final remaining =
+        (_totalQuestions - answers.length).clamp(1, _totalQuestions).toInt();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -698,33 +817,46 @@ class _AssessmentReminderCard extends StatelessWidget {
 
 // ─── Saarthi floating button ──────────────────────────────────────────────────
 
-class _SaarthiFloatingButton extends StatelessWidget {
+class _SaarthiFloatingButton extends StatefulWidget {
   const _SaarthiFloatingButton({required this.onTap});
-
   final VoidCallback onTap;
+
+  @override
+  State<_SaarthiFloatingButton> createState() => _SaarthiFloatingButtonState();
+}
+
+class _SaarthiFloatingButtonState extends State<_SaarthiFloatingButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.07).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 68,
-        height: 68,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF2F7E8F).withValues(alpha: 0.35),
-              blurRadius: 18,
-              spreadRadius: 2,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _pulseAnim,
+        builder: (_, child) => Transform.scale(
+          scale: _pulseAnim.value,
+          child: child,
         ),
         child: const SaarthiAvatar(size: 68),
       ),

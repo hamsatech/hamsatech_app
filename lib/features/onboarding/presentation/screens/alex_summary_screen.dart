@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/services/storage_service.dart';
-
+import '../../../dashboard/presentation/bloc/dashboard_bloc.dart';
+import '../../../dashboard/presentation/bloc/dashboard_event.dart';
 import '../../domain/entities/alex_summary_entity.dart';
 import '../bloc/alex_summary_bloc.dart';
 import '../bloc/alex_summary_event.dart';
@@ -237,7 +239,7 @@ class _Footer extends StatelessWidget {
             color: DSColors.terracotta,
             onPressed: () async {
               await StorageService.setOnboardingComplete(true);
-              await StorageService.clearQuestionnaireProgress();
+              getIt<DashboardBloc>().add(const DashboardRefreshRequested());
               if (context.mounted) context.go('/home');
             },
           ),

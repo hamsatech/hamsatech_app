@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
@@ -22,7 +23,22 @@ class StorageService {
     await _prefs.remove('onboarding_complete');
     await _prefs.remove('onboarding_step');
     await _prefs.remove('questionnaire_progress');
+    await _prefs.remove('last_route');
   }
+
+  // ── Last active route ─────────────────────────────────────────────────────
+
+  // Only persist stable shell-tab destinations — deep/modal routes are
+  // intentionally excluded because they require extra navigation state.
+  static const _restorable = {'/home', '/sessions', '/insight', '/profile'};
+
+  static Future<void> saveLastRoute(String route) {
+    if (!_restorable.contains(route)) return Future.value();
+    return _prefs.setString('last_route', route);
+  }
+
+  static String getLastRoute() =>
+      _prefs.getString('last_route') ?? '/home';
 
   // ── User profile ──────────────────────────────────────────────────────────
 
@@ -76,6 +92,7 @@ class StorageService {
 
   static Future<void> saveQuestionnaireProgress(
       int questionIndex, Map<int, int> answers) {
+    debugPrint('[Assessment] SAVE: index=$questionIndex, answered=${answers.length}');
     return _prefs.setString(
       'questionnaire_progress',
       jsonEncode({
@@ -88,6 +105,7 @@ class StorageService {
   // Returns {'index': int, 'answers': Map<int,int>} or null.
   static Map<String, dynamic>? getQuestionnaireProgress() {
     final str = _prefs.getString('questionnaire_progress');
+    debugPrint('[Assessment] READ: ${str == null ? "null (no progress)" : "found, raw=${str.length}chars"}');
     if (str == null) return null;
     final data = jsonDecode(str) as Map<String, dynamic>;
     final answers = (data['answers'] as Map<String, dynamic>)
@@ -95,8 +113,10 @@ class StorageService {
     return {'index': data['index'] as int, 'answers': answers};
   }
 
-  static Future<void> clearQuestionnaireProgress() =>
-      _prefs.remove('questionnaire_progress');
+  static Future<void> clearQuestionnaireProgress() {
+    debugPrint('[Assessment] CLEAR called\n${StackTrace.current}');
+    return _prefs.remove('questionnaire_progress');
+  }
 
   static bool hasIncompleteAssessment() => getQuestionnaireProgress() != null;
 

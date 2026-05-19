@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/athlete_profile_entity.dart';
@@ -6,9 +7,10 @@ import 'onboarding_event.dart';
 import 'onboarding_state.dart';
 
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
-  OnboardingBloc(this._repository) : super(OnboardingState(
-        questions: [],
-      )) {
+  OnboardingBloc(this._repository)
+      : super(OnboardingState(
+          questions: [],
+        )) {
     on<OnboardingAthleteDetailsSubmitted>(_onAthleteDetails);
     on<OnboardingBackgroundContextSubmitted>(_onBackgroundContext);
     on<OnboardingAssessmentStarted>(_onAssessmentStarted);
@@ -51,18 +53,25 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     OnboardingAssessmentStarted event,
     Emitter<OnboardingState> emit,
   ) {
-    // Within the same session the bloc already holds questions — don't reset.
-    if (state.questions.isNotEmpty) return;
-    final questions = _repository.getBaselineQuestions();
     // Restore saved progress from a previous cold-start session if present.
     final saved = StorageService.getQuestionnaireProgress();
+    debugPrint('[Assessment] AssessmentStarted: saved=${saved != null}, questionsInState=${state.questions.length}');
+    // Within the same session the bloc may already hold questions, but saved
+    // progress is authoritative after "Skip for now".
+    if (state.questions.isNotEmpty && saved == null) return;
+    final questions = state.questions.isNotEmpty
+        ? state.questions
+        : _repository.getBaselineQuestions();
     final savedIndex = saved != null ? saved['index'] as int : 0;
     final savedAnswers =
         saved != null ? saved['answers'] as Map<int, int> : <int, int>{};
+    final resumeIndex =
+        savedAnswers.length > savedIndex ? savedAnswers.length : savedIndex;
+    debugPrint('[Assessment] Resuming at index=$resumeIndex, answered=${savedAnswers.length}');
     emit(state.copyWith(
       questions: questions,
       step: OnboardingStep.assessment,
-      currentQuestionIndex: savedIndex.clamp(0, questions.length - 1),
+      currentQuestionIndex: resumeIndex.clamp(0, questions.length - 1),
       answers: savedAnswers,
     ));
   }
@@ -94,8 +103,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     Emitter<OnboardingState> emit,
   ) {
     if (state.currentQuestionIndex > 0) {
-      emit(state.copyWith(
-          currentQuestionIndex: state.currentQuestionIndex - 1));
+      emit(
+          state.copyWith(currentQuestionIndex: state.currentQuestionIndex - 1));
     }
   }
 
@@ -103,6 +112,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     OnboardingAssessmentCompleted event,
     Emitter<OnboardingState> emit,
   ) async {
+    debugPrint('[Assessment] AssessmentCompleted: answered=${state.answers.length}');
     emit(state.copyWith(status: OnboardingStatus.loading));
     try {
       final scores = _repository.calculateScores(state.answers);

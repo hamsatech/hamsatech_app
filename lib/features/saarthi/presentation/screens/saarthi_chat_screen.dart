@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/saarthi_avatar.dart';
+import '../../../../core/widgets/saarthi_welcome_card.dart';
+
 // ── Data model ────────────────────────────────────────────────────────────────
 
 class _ChatMessage {
@@ -187,29 +190,10 @@ class _SaarthiChatScreenState extends State<SaarthiChatScreen>
 
   Widget _buildWelcome() {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       children: [
-        const Center(child: SaarthiAvatar(size: 80)),
-        const SizedBox(height: 20),
-        Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 320),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: DSColors.appCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: DSColors.appBorder),
-            ),
-            child: Text(
-              "Hello! I'm Saarthi, your personal AI shooting guide. How can I help with your training today?",
-              style: DSTypography.bodyMedium.copyWith(
-                color: DSColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-        const SizedBox(height: 28),
+        const SaarthiWelcomeCard(),
+        const SizedBox(height: 24),
         Text(
           'Quick actions',
           style: DSTypography.labelMd.copyWith(color: DSColors.textSecondary),
@@ -646,31 +630,3 @@ class _BottomInput extends StatelessWidget {
   }
 }
 
-// ── Saarthi avatar placeholder ────────────────────────────────────────────────
-// Replace the gradient+icon with Image.asset() when final artwork is ready.
-
-class SaarthiAvatar extends StatelessWidget {
-  const SaarthiAvatar({super.key, this.size = 40});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF5BADBC), Color(0xFF1D6070)],
-        ),
-      ),
-      child: Icon(
-        Icons.smart_toy_rounded,
-        color: Colors.white,
-        size: size * 0.50,
-      ),
-    );
-  }
-}

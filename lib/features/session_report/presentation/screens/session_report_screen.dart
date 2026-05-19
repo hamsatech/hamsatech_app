@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../core/services/storage_service.dart';
 import '../../bloc/session_report_bloc.dart';
 import '../../bloc/session_report_event.dart';
 import '../../bloc/session_report_state.dart';
@@ -54,7 +55,8 @@ class _SessionReportScreenState extends State<SessionReportScreen> {
             ),
           ),
           body: switch (state) {
-            SessionReportLoading() || SessionReportInitial() =>
+            SessionReportLoading() ||
+            SessionReportInitial() =>
               const Center(child: CircularProgressIndicator(color: _kTeal)),
             SessionReportError(:final message) => Center(
                 child: Text(
@@ -87,6 +89,8 @@ class _InsightsDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPolarConnected = StorageService.isPolarEnabled();
+
     return Column(
       children: [
         Expanded(
@@ -100,11 +104,16 @@ class _InsightsDashboard extends StatelessWidget {
                 const SizedBox(height: DSSpacing.xxl),
                 const _PsychologyGrid(),
                 const SizedBox(height: DSSpacing.lg),
-                _PhysiologyCard(data: data),
+                if (isPolarConnected)
+                  _PhysiologyCard(data: data)
+                else
+                  const _PolarInsightsEmptyState(),
                 const SizedBox(height: DSSpacing.lg),
                 _PerformanceRecommendationCard(data: data),
-                const SizedBox(height: DSSpacing.lg),
-                _ScoreHrTrustCard(data: data),
+                if (isPolarConnected) ...[
+                  const SizedBox(height: DSSpacing.lg),
+                  _ScoreHrTrustCard(data: data),
+                ],
               ],
             ),
           ),
@@ -163,6 +172,90 @@ class _PageHeader extends StatelessWidget {
           style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Polar empty state
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PolarInsightsEmptyState extends StatelessWidget {
+  const _PolarInsightsEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return _InsightCard(
+      title: 'Physiology Insights',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEAF7FA),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.favorite_border_rounded,
+                  color: _kTeal,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: DSSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Polar not connected',
+                      style: DSTypography.bodyMd.copyWith(
+                        color: DSColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: DSSpacing.xxs),
+                    Text(
+                      'Connect Polar to unlock BPM, HRV, and physiology insights.',
+                      style: DSTypography.bodySm.copyWith(
+                        color: DSColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DSSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => context.go('/polar'),
+              style: TextButton.styleFrom(
+                backgroundColor: _kTeal,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Connect Polar Device',
+                style: DSTypography.labelSm.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -406,32 +499,32 @@ class _PerformanceRecommendationCard extends StatelessWidget {
             Container(height: 1, color: const Color(0xFFE2F4F7)),
             const SizedBox(height: DSSpacing.md),
             ...data.recommendations.take(2).map(
-              (r) => Padding(
-                padding: const EdgeInsets.only(bottom: DSSpacing.xs),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: _kTeal,
-                        shape: BoxShape.circle,
-                      ),
+                  (r) => Padding(
+                    padding: const EdgeInsets.only(bottom: DSSpacing.xs),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 5),
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                            color: _kTeal,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: DSSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            r.text,
+                            style: DSTypography.bodySm
+                                .copyWith(color: DSColors.textSecondary),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: DSSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        r.text,
-                        style: DSTypography.bodySm
-                            .copyWith(color: DSColors.textSecondary),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
           ],
         ],
       ),
@@ -512,14 +605,29 @@ class _ScoreHrTrustCard extends StatelessWidget {
 
   Widget _staticChart() {
     const hrRaw = [72.0, 75.0, 78.0, 83.0, 86.0, 84.0, 80.0, 77.0, 74.0, 72.0];
-    const trustRaw = [86.0, 84.0, 82.0, 78.0, 74.0, 76.0, 80.0, 83.0, 85.0, 86.0];
+    const trustRaw = [
+      86.0,
+      84.0,
+      82.0,
+      78.0,
+      74.0,
+      76.0,
+      80.0,
+      83.0,
+      85.0,
+      86.0
+    ];
     return SizedBox(
       height: 130,
       child: LineChart(_chartData(
-        hrSpots: hrRaw.asMap().entries
+        hrSpots: hrRaw
+            .asMap()
+            .entries
             .map((e) => FlSpot(e.key.toDouble(), e.value))
             .toList(),
-        trustSpots: trustRaw.asMap().entries
+        trustSpots: trustRaw
+            .asMap()
+            .entries
             .map((e) => FlSpot(e.key.toDouble(), e.value))
             .toList(),
         minY: 60,

@@ -81,7 +81,8 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
     if (StorageService.isOnboardingComplete()) {
-      context.go('/home');
+      // Restore the last active shell tab; defaults to /home if none saved.
+      context.go(StorageService.getLastRoute());
       return;
     }
     final step = StorageService.getOnboardingStep();

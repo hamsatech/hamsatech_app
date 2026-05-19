@@ -17,10 +17,8 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     // ── Parse series ────────────────────────────────────────────────────────
 
     final seriesList = rawSummary.map((s) {
-      final shots = (s['shots'] as List)
-          .cast<String>()
-          .map(_parseScore)
-          .toList();
+      final shots =
+          (s['shots'] as List).cast<String>().map(_parseScore).toList();
       final total = (s['total'] as num).toDouble();
       final number = (s['seriesNumber'] as num).toInt();
       return _SeriesData(number: number, shots: shots, total: total);
@@ -33,15 +31,14 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final grandTotal = seriesList.fold(0.0, (sum, s) => sum + s.total);
     final shotsPerSeries = seriesList.first.shots.length;
     final maxSeriesTotal = shotsPerSeries * 10.0;
+    final isPolarConnected = StorageService.isPolarEnabled();
 
-    final bestSeries =
-        seriesList.reduce((a, b) => a.total > b.total ? a : b);
+    final bestSeries = seriesList.reduce((a, b) => a.total > b.total ? a : b);
 
     // ── Session metadata ─────────────────────────────────────────────────────
 
     final setup = StorageService.getSessionSetup();
-    final sessionTitle =
-        setup != null ? _buildTitle(setup) : 'Session Report';
+    final sessionTitle = setup != null ? _buildTitle(setup) : 'Session Report';
 
     final sessions = StorageService.getSessions();
     final completed =
@@ -59,12 +56,14 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
             .map((v) => (v - avgScore) * (v - avgScore))
             .reduce((a, b) => a + b) /
         allShots.length;
-    final avgHr = 60 + (avgScore * 2.5).round();
-    final peakHr = avgHr + 15 + (variance * 0.5).round().clamp(0, 20);
+    final generatedAvgHr = 60 + (avgScore * 2.5).round();
+    final generatedPeakHr =
+        generatedAvgHr + 15 + (variance * 0.5).round().clamp(0, 20);
+    final avgHr = isPolarConnected ? generatedAvgHr : 0;
+    final peakHr = isPolarConnected ? generatedPeakHr : 0;
 
     final (fatigueLabel, fatigueColor) = _fatigueLevel(variance);
-    final (recoveryLabel, recoveryColor) =
-        _recoveryLevel(last, avgScore);
+    final (recoveryLabel, recoveryColor) = _recoveryLevel(last, avgScore);
 
     final physiology = PhysiologyMetricsEntity(
       avgHr: avgHr,
@@ -80,7 +79,9 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final rng = Random(42);
     final seriesHrMap = <int, int>{};
     final seriesRows = seriesList.map((s) {
-      final seriesHr = (avgHr + rng.nextInt(10) - 5).clamp(50, 130);
+      final seriesHr = isPolarConnected
+          ? (generatedAvgHr + rng.nextInt(10) - 5).clamp(50, 130)
+          : 0;
       seriesHrMap[s.number] = seriesHr;
       return ReportSeriesRowEntity(
         seriesNumber: s.number,
@@ -95,30 +96,36 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
 
     final totalPoints = seriesList.length * shotsPerSeries;
     int spikeCount = 0;
-    final hrPoints = List.generate(totalPoints, (i) {
-      final seriesIdx = i ~/ shotsPerSeries;
-      final shotInSeries = i % shotsPerSeries;
-      final seriesHr = seriesHrMap[seriesList[seriesIdx].number] ?? avgHr;
-      final noise = (rng.nextDouble() - 0.5) * 14;
-      final bpm = (seriesHr + noise).clamp(50.0, 145.0);
-      final isSpike = bpm > _spikeThreshold;
-      if (isSpike) spikeCount++;
-      return HrChartPoint(
-        index: i,
-        bpm: bpm,
-        isSpike: isSpike,
-        isSeriesBoundary: shotInSeries == shotsPerSeries - 1 &&
-            seriesIdx < seriesList.length - 1,
-      );
-    });
+    final hrPoints = isPolarConnected
+        ? List.generate(totalPoints, (i) {
+            final seriesIdx = i ~/ shotsPerSeries;
+            final shotInSeries = i % shotsPerSeries;
+            final seriesHr =
+                seriesHrMap[seriesList[seriesIdx].number] ?? generatedAvgHr;
+            final noise = (rng.nextDouble() - 0.5) * 14;
+            final bpm = (seriesHr + noise).clamp(50.0, 145.0);
+            final isSpike = bpm > _spikeThreshold;
+            if (isSpike) spikeCount++;
+            return HrChartPoint(
+              index: i,
+              bpm: bpm,
+              isSpike: isSpike,
+              isSeriesBoundary: shotInSeries == shotsPerSeries - 1 &&
+                  seriesIdx < seriesList.length - 1,
+            );
+          })
+        : <HrChartPoint>[];
 
-    final hrMin = hrPoints.map((p) => p.bpm).reduce(min).round();
-    final hrPeak = hrPoints.map((p) => p.bpm).reduce(max).round();
-    final hrAvg = (hrPoints.map((p) => p.bpm).reduce((a, b) => a + b) /
-            hrPoints.length)
-        .round();
+    final hrMin =
+        isPolarConnected ? hrPoints.map((p) => p.bpm).reduce(min).round() : 0;
+    final hrPeak =
+        isPolarConnected ? hrPoints.map((p) => p.bpm).reduce(max).round() : 0;
+    final hrAvg = isPolarConnected
+        ? (hrPoints.map((p) => p.bpm).reduce((a, b) => a + b) / hrPoints.length)
+            .round()
+        : 0;
     final avgPreShotHr =
-        (avgHr - 3).clamp(50, 130); // ~3 bpm lower just before shot
+        isPolarConnected ? (generatedAvgHr - 3).clamp(50, 130) : 0;
 
     final hrMetrics = HrMetricsEntity(
       avgHr: hrAvg,
@@ -200,8 +207,18 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
 
   static String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
@@ -258,10 +275,8 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final post = last?['postSession'] as Map<String, dynamic>?;
     final postRating = (post?['overallRating'] as num?)?.toInt() ?? 3;
     final scoreFactor = (avgScore / 10).clamp(0.0, 1.0);
-    final postMoodRaw =
-        (preMoodRaw + (postRating >= 4 ? 0 : -1)).clamp(1, 5);
-    final postFatigue =
-        (10 - (scoreFactor * 4).round()).clamp(3, 9);
+    final postMoodRaw = (preMoodRaw + (postRating >= 4 ? 0 : -1)).clamp(1, 5);
+    final postFatigue = (10 - (scoreFactor * 4).round()).clamp(3, 9);
     final postSelfRating = (postRating * 2).clamp(2, 10);
 
     // Mood label mapping
@@ -273,8 +288,11 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
           _ => '😤 Poor',
         };
 
-    MetricColor moodColor(int raw) =>
-        raw >= 4 ? MetricColor.good : raw == 3 ? MetricColor.warning : MetricColor.bad;
+    MetricColor moodColor(int raw) => raw >= 4
+        ? MetricColor.good
+        : raw == 3
+            ? MetricColor.warning
+            : MetricColor.bad;
 
     return MentalStateComparisonEntity(rows: [
       // Row 1: Mood before vs Mood after
@@ -332,8 +350,7 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
       return InsightEntity(
         headline:
             'Your HR spiked $spikeCount times and score dipped in S${worstSeries.seriesNumber}.',
-        body:
-            'Stress-driven arousal broke your stability mid-session. '
+        body: 'Stress-driven arousal broke your stability mid-session. '
             'When HR exceeds ~${avgPreShotHr + 8} bpm pre-shot, '
             'your grouping tends to open by 15–20%.',
       );
@@ -341,8 +358,7 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     if (variance < 3 && avgScore >= 8) {
       return const InsightEntity(
         headline: 'Exceptional consistency',
-        body:
-            'Your shot variance was minimal this session. You maintained '
+        body: 'Your shot variance was minimal this session. You maintained '
             'tight groupings across all series — a sign of strong mental '
             'control under pressure.',
       );
@@ -350,16 +366,14 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     if (avgScore >= 8) {
       return InsightEntity(
         headline: 'High scoring session',
-        body:
-            'You scored ${avgScore.toStringAsFixed(1)} average per shot. '
+        body: 'You scored ${avgScore.toStringAsFixed(1)} average per shot. '
             "Keep reinforcing this pre-shot routine — it's clearly working. "
             'Watch for slight drops in the final series.',
       );
     }
     return const InsightEntity(
       headline: 'Solid baseline performance',
-      body:
-          'Your scores reflect a consistent baseline. Continue applying '
+      body: 'Your scores reflect a consistent baseline. Continue applying '
           'your pre-shot routine and look to increase shot scores '
           'in the 7–8 range toward 9–10.',
     );

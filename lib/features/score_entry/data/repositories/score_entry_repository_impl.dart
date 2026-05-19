@@ -1,6 +1,5 @@
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/score_entry_config.dart';
-import '../../domain/entities/session_series_entity.dart';
 import '../../domain/repositories/score_entry_repository.dart';
 
 class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
@@ -38,14 +37,20 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
   }
 
   @override
-  Future<void> saveScores(List<SessionSeries> series) async {
-    final data = series
-        .map((s) => {
-              'seriesNumber': s.seriesNumber,
-              'shots': s.shots.map((v) => v.display).toList(),
-              'total': s.total,
-            })
-        .toList();
+  Future<void> saveTotals(List<double> totals, int shotsPerSeries) async {
+    // Represent each series as synthetic per-shot averages so downstream
+    // analytics (variance, avg-per-shot, HR charts) remain meaningful.
+    final data = totals.asMap().entries.map((e) {
+      final avgShot =
+          shotsPerSeries > 0 ? e.value / shotsPerSeries : 0.0;
+      final avgStr = avgShot.toStringAsFixed(2);
+      return {
+        'seriesNumber': e.key + 1,
+        'shots': List<String>.filled(shotsPerSeries, avgStr),
+        'total': e.value,
+      };
+    }).toList();
+
     await StorageService.saveScoreSummary(data);
   }
 }
