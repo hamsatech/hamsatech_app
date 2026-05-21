@@ -8,6 +8,7 @@ import '../../../../core/services/storage_service.dart';
 import '../../../dashboard/presentation/bloc/dashboard_bloc.dart';
 import '../../../dashboard/presentation/bloc/dashboard_event.dart';
 import '../../domain/entities/alex_summary_entity.dart';
+import '../../domain/repositories/onboarding_repository.dart';
 import '../bloc/alex_summary_bloc.dart';
 import '../bloc/alex_summary_event.dart';
 import '../bloc/alex_summary_state.dart';
@@ -239,6 +240,12 @@ class _Footer extends StatelessWidget {
             color: DSColors.terracotta,
             onPressed: () async {
               await StorageService.setOnboardingComplete(true);
+
+              // If the Supabase athletes POST failed during assessment
+              // completion (network error), retry it here before navigating
+              // so the dashboard gets a real UUID, not the phone fallback.
+              await getIt<OnboardingRepository>().retryAthleteSync();
+
               getIt<DashboardBloc>().add(const DashboardRefreshRequested());
               if (context.mounted) context.go('/home');
             },

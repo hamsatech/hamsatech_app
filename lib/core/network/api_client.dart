@@ -154,7 +154,11 @@ class ApiClient {
         headers: {
           'apikey': ApiConstants.supabaseAnonKey,
           'Authorization': 'Bearer ${ApiConstants.supabaseAnonKey}',
+          'Accept': 'application/json',
           'Content-Type': 'application/json',
+          // Route all REST calls to hamsatech schema, not public.
+          'Accept-Profile': 'hamsatech',
+          'Content-Profile': 'hamsatech',
         },
       ),
     );

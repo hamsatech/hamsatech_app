@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
 import '../../../../core/widgets/saarthi_avatar.dart';
 import '../../../../core/widgets/saarthi_welcome_card.dart';
 
@@ -134,11 +137,38 @@ class _SaarthiChatScreenState extends State<SaarthiChatScreen>
     await Future.delayed(const Duration(milliseconds: 1600));
     if (!mounted) return;
 
+    final reply = _mockReply(trimmed);
     setState(() {
       _isTyping = false;
-      _messages.add(_ChatMessage(text: _mockReply(trimmed), isUser: false));
+      _messages.add(_ChatMessage(text: reply, isUser: false));
     });
     _scrollToBottom();
+
+    _persistChat(trimmed, reply);
+  }
+
+  void _persistChat(String userMessage, String aiResponse) {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) {
+      debugPrint('[SAARTHI] chat save skipped — no athlete_id (onboarding incomplete)');
+      return;
+    }
+    final sessionId = SessionMemory.sessionId ?? 'no-session';
+
+    Future(() async {
+      debugPrint('[SAARTHI] saving chat athleteId=$athleteId sessionId=$sessionId');
+      try {
+        final res = await ApiService.instance.saveChat(
+          athleteId: athleteId,
+          sessionId: sessionId,
+          userMessage: userMessage,
+          aiResponse: aiResponse,
+        );
+        debugPrint('[SAARTHI] chat saved status=${res.statusCode}');
+      } catch (e) {
+        debugPrint('[SAARTHI] chat save failed: $e');
+      }
+    });
   }
 
   void _scrollToBottom() {

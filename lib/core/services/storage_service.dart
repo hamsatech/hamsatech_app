@@ -147,6 +147,16 @@ class StorageService {
     return jsonDecode(str) as Map<String, dynamic>;
   }
 
+  // ── Supabase athlete_id (UUID returned after POST /athletes) ─────────────
+  // This is the single source of truth for the current user's Supabase ID.
+  // Written once after onboarding completes the athletes POST.
+  // All session, log, and chat writes read from here via AuthHelper.
+
+  static Future<void> saveAthleteId(String id) =>
+      _prefs.setString('supabase_athlete_id', id);
+
+  static String? getAthleteId() => _prefs.getString('supabase_athlete_id');
+
   // ── Baseline scores ───────────────────────────────────────────────────────
 
   static Future<void> saveBaselineScores(Map<String, double> scores) =>
@@ -158,6 +168,17 @@ class StorageService {
     final decoded = jsonDecode(str) as Map<String, dynamic>;
     return decoded.map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0.0));
   }
+
+  // ── Active session ID (current Supabase session UUID) ────────────────────
+  // Written after POST /sessions returns a session_id.
+  // Survives app restart so PATCH /sessions can close sessions opened offline.
+
+  static Future<void> saveSessionId(String id) =>
+      _prefs.setString('current_session_id', id);
+
+  static String? getSessionId() => _prefs.getString('current_session_id');
+
+  static Future<void> clearSessionId() => _prefs.remove('current_session_id');
 
   // ── Sessions ──────────────────────────────────────────────────────────────
 

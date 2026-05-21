@@ -52,5 +52,25 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
     }).toList();
 
     await StorageService.saveScoreSummary(data);
+
+    // TODO(backend): Sync score totals to shooting_session_log in Supabase.
+    // shooting_session_log has: avg_score, best_series_score, consistency_index,
+    // total_shots, session_duration_min, technical_rating, focus_rating, etc.
+    // This is NOT session_post_log (which records session reflection/mood data).
+    // Wire this after the session_id from SessionMemory is confirmed reliable:
+    //
+    // void _syncScoresToApi(List<double> totals, int shotsPerSeries) {
+    //   final sessionId = SessionMemory.sessionId;
+    //   if (sessionId == null || totals.isEmpty) return;
+    //   Future(() async {
+    //     try {
+    //       final total = totals.fold(0.0, (sum, t) => sum + t);
+    //       final avgScore = total / totals.length;
+    //       final bestSeries = totals.reduce((a, b) => a > b ? a : b);
+    //       final athleteId = SessionBloc._resolveAthleteId(); // expose as static helper
+    //       await ApiService.instance... // POST to shooting_session_log
+    //     } catch (_) {}
+    //   });
+    // }
   }
 }

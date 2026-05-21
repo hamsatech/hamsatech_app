@@ -10,11 +10,14 @@ class ApiInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
       debugPrint('[API →] ${options.method} ${options.uri}');
-      if (options.data != null) {
-        debugPrint('   body: ${options.data}');
-      }
+      debugPrint('   Accept-Profile  : ${options.headers['Accept-Profile']}');
+      debugPrint('   Content-Profile : ${options.headers['Content-Profile']}');
+      debugPrint('   Content-Type    : ${options.headers['Content-Type']}');
       if (options.queryParameters.isNotEmpty) {
         debugPrint('   params: ${options.queryParameters}');
+      }
+      if (options.data != null) {
+        debugPrint('   body: ${options.data}');
       }
     }
     handler.next(options);
@@ -26,6 +29,7 @@ class ApiInterceptor extends Interceptor {
       debugPrint(
         '[API ←] ${response.statusCode} ${response.requestOptions.uri}',
       );
+      debugPrint('   data: ${response.data}');
     }
     handler.next(response);
   }

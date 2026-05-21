@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/dashboard_data_entity.dart';
 import '../../domain/repositories/dashboard_repository.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
@@ -22,13 +24,30 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final hrv = _buildHrvData(baselineScores, readiness);
     final lastSession = _buildLastSession(sessions);
     final performanceHistory = _buildPerformanceHistory(sessions);
-    final insights = _generateInsights(readiness, lastSession, performanceHistory);
+    var insights = _generateInsights(readiness, lastSession, performanceHistory);
     final actionPlan = _generateActionPlan(readiness);
     final weeklyStats = _buildWeeklyStats(sessions);
-    final coachFeedback = _buildCoachFeedback(lastSession);
+    var coachFeedback = _buildCoachFeedback(lastSession);
     final streakDays = _calculateStreak(sessions);
     final isPolarConnected = StorageService.isPolarEnabled();
     final todayCheckinCompleted = checkIn != null;
+
+    // ── Augment with Supabase data (non-blocking fallback to local) ───────────
+    final athleteId = AuthHelper.getCurrentAthleteId();
+
+    if (athleteId != null) {
+      final apiInsights = await _fetchApiInsights(athleteId);
+      if (apiInsights != null && apiInsights.isNotEmpty) {
+        insights = apiInsights;
+      }
+
+      final apiCoachFeedback = await _fetchApiCoachFeedback(athleteId, profileJson);
+      if (apiCoachFeedback != null) {
+        coachFeedback = apiCoachFeedback;
+      }
+    } else {
+      debugPrint('[DASHBOARD] skipping API augmentation — no athlete_id');
+    }
 
     return DashboardDataEntity(
       athleteName: athleteName,
@@ -48,6 +67,60 @@ class DashboardRepositoryImpl implements DashboardRepository {
       performanceHistory: performanceHistory,
       actionPlan: actionPlan,
     );
+  }
+
+  // ─── API: AI Insights ──────────────────────────────────────────────────────
+
+  Future<List<String>?> _fetchApiInsights(String athleteId) async {
+    try {
+      debugPrint('[DASHBOARD] fetching ai_insights athleteId=$athleteId');
+      final res = await ApiService.instance.getAiInsights(athleteId);
+      final data = res.data;
+      if (data is! List || data.isEmpty) return null;
+      final texts = data
+          .map((e) => (e as Map?)?['insight_text']?.toString())
+          .whereType<String>()
+          .where((s) => s.isNotEmpty)
+          .take(3)
+          .toList();
+      debugPrint('[DASHBOARD] ai_insights fetched count=${texts.length}');
+      return texts.isEmpty ? null : texts;
+    } catch (e) {
+      debugPrint('[DASHBOARD] ai_insights fetch failed: $e');
+      return null;
+    }
+  }
+
+  // ─── API: Coach Feedback ───────────────────────────────────────────────────
+
+  Future<CoachFeedbackData?> _fetchApiCoachFeedback(
+    String athleteId,
+    Map<String, dynamic>? profileJson,
+  ) async {
+    try {
+      debugPrint('[DASHBOARD] fetching coach_feedback athleteId=$athleteId');
+      final res = await ApiService.instance.getCoachFeedback(athleteId);
+      final data = res.data;
+      if (data is! List || data.isEmpty) return null;
+      final row = data.first as Map<String, dynamic>;
+      final notes = row['coach_notes']?.toString() ?? '';
+      final plan = row['training_plan']?.toString() ?? '';
+      if (notes.isEmpty && plan.isEmpty) return null;
+      final coachName =
+          profileJson?['coachName'] as String? ?? 'Coach';
+      debugPrint('[DASHBOARD] coach_feedback fetched coachName=$coachName');
+      return CoachFeedbackData(
+        coachName: coachName,
+        message: '"$notes"',
+        about: 'Coach feedback',
+        assigned: plan.isNotEmpty ? plan : 'Review plan',
+        timestamp: DateTime.now(),
+        isRead: false,
+      );
+    } catch (e) {
+      debugPrint('[DASHBOARD] coach_feedback fetch failed: $e');
+      return null;
+    }
   }
 
   // ─── Greeting ─────────────────────────────────────────────────────────────
