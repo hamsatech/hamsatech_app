@@ -731,6 +731,14 @@ class ApiService {
           List<Map<String, dynamic>> rows) =>
       _dio.post('acc_stream', data: rows);
 
+  // ── Mobile backend — Athlete Profile ─────────────────────────────────────
+
+  /// GET /api/mobile/athletes/{athleteId}/profile
+  Future<Response<dynamic>> getMobileAthleteProfile(String athleteId) {
+    debugPrint('[PROFILE] GET api/mobile/athletes/$athleteId/profile');
+    return _mobileDio.get('api/mobile/athletes/$athleteId/profile');
+  }
+
   // ── Mobile backend — Dashboard Home ─────────────────────────────────────
 
   /// GET /api/mobile/athletes/{athleteId}/home

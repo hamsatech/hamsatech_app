@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -40,8 +42,73 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _ProfileView extends StatelessWidget {
+class _ProfileView extends StatefulWidget {
   const _ProfileView();
+
+  @override
+  State<_ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<_ProfileView> {
+  @override
+  void initState() {
+    super.initState();
+    _syncProfileFromApi();
+  }
+
+  void _syncProfileFromApi() {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) return;
+
+    Future(() async {
+      try {
+        final res = await ApiService.instance.getMobileAthleteProfile(athleteId);
+        final raw = res.data;
+        Map<String, dynamic>? apiData;
+        if (raw is Map<String, dynamic>) {
+          apiData = raw;
+        } else if (raw is Map && raw['data'] is Map<String, dynamic>) {
+          apiData = raw['data'] as Map<String, dynamic>;
+        }
+        if (apiData == null || apiData.isEmpty) return;
+
+        final existing = StorageService.getAthleteProfile() ?? {};
+        final merged = Map<String, dynamic>.from(existing);
+
+        String? pick(List<String> keys) {
+          for (final k in keys) {
+            final v = apiData![k];
+            if (v != null && v.toString().trim().isNotEmpty) return v.toString().trim();
+          }
+          return null;
+        }
+
+        final name = pick(['name', 'athlete_name', 'full_name']);
+        if (name != null) merged['name'] = name;
+
+        final age = apiData['age'];
+        if (age != null) merged['age'] = age;
+
+        final sport = pick(['sport_domain', 'sport', 'sportDomain']);
+        if (sport != null) merged['sportDomain'] = sport;
+
+        final expLevel = pick(['experience_level', 'experienceLevel']);
+        if (expLevel != null) merged['experienceLevel'] = expLevel;
+
+        final goal30 = pick(['goal_30', 'short_term_goal', 'goal30']);
+        if (goal30 != null) merged['goal30'] = goal30;
+
+        final goal6 = pick(['goal_6_month', 'long_term_goal', 'goal6Month']);
+        if (goal6 != null) merged['goal6Month'] = goal6;
+
+        await StorageService.saveAthleteProfile(merged);
+        debugPrint('[PROFILE] local profile updated from API');
+        if (mounted) setState(() {});
+      } catch (e) {
+        debugPrint('[PROFILE] API fetch failed (non-fatal): $e');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
