@@ -92,9 +92,8 @@ class AstraSymbol extends StatelessWidget {
       _kSvgAsset,
       width: size,
       height: size * 0.85,
-      colorFilter: color != null
-          ? ColorFilter.mode(color!, BlendMode.srcIn)
-          : null,
+      colorFilter:
+          color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
       semanticsLabel: 'ASTRA symbol',
     );
   }

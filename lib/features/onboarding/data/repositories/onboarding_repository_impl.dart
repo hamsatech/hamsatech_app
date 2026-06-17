@@ -61,7 +61,8 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           score: entry.value,
           answeredQuestions: totalQuestions,
         );
-        debugPrint('[PSYCH SCORES] ${entry.key} success status=${res.statusCode}');
+        debugPrint(
+            '[PSYCH SCORES] ${entry.key} success status=${res.statusCode}');
       } catch (e) {
         debugPrint('[PSYCH SCORES] ${entry.key} POST failed (non-fatal): $e');
       }
@@ -97,15 +98,15 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
     // Max score per question is 5; normalize to 0–100
     return {
-      'focus': _normalize(categoryTotals['focus'] ?? 0,
-          categoryCounts['focus'] ?? 1),
+      'focus': _normalize(
+          categoryTotals['focus'] ?? 0, categoryCounts['focus'] ?? 1),
       'emotionalStability': _normalize(
           categoryTotals['emotional_stability'] ?? 0,
           categoryCounts['emotional_stability'] ?? 1),
       'decisionStyle': _normalize(categoryTotals['decision_style'] ?? 0,
           categoryCounts['decision_style'] ?? 1),
-      'motivation': _normalize(categoryTotals['motivation'] ?? 0,
-          categoryCounts['motivation'] ?? 1),
+      'motivation': _normalize(
+          categoryTotals['motivation'] ?? 0, categoryCounts['motivation'] ?? 1),
     };
   }
 

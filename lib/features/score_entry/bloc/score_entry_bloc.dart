@@ -28,8 +28,7 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
 
   final ScoreEntryRepository _repository;
 
-  void _onStart(
-      ScoreEntryStartRequested event, Emitter<ScoreEntryState> emit) {
+  void _onStart(ScoreEntryStartRequested event, Emitter<ScoreEntryState> emit) {
     if (state is ScoreEntryActiveState) return;
     final config = _repository.getConfig();
     emit(ScoreEntryActiveState(
@@ -50,20 +49,51 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
   void _onUndo(ScoreEntryUndoLast event, Emitter<ScoreEntryState> emit) {
     final s = state;
     if (s is! ScoreEntryActiveState || !s.canUndo) return;
-    final updated =
-        s.enteredTotals.sublist(0, s.enteredTotals.length - 1);
+    final updated = s.enteredTotals.sublist(0, s.enteredTotals.length - 1);
     emit(s.copyWith(enteredTotals: updated));
   }
 
   Future<void> _onFinalConfirmed(
-      ScoreEntryFinalConfirmed event,
-      Emitter<ScoreEntryState> emit) async {
+      ScoreEntryFinalConfirmed event, Emitter<ScoreEntryState> emit) async {
     final s = state;
     if (s is! ScoreEntryActiveState || !s.isComplete) return;
     await _repository.saveTotals(s.enteredTotals, s.shotsPerSeries);
+    _syncSeries(s);
     _syncSessionEnd(s);
     _syncPostLog(s);
     emit(const ScoreEntrySavedState());
+  }
+
+  // ── Mobile backend: per-series sync ──────────────────────────────────────────
+
+  void _syncSeries(ScoreEntryActiveState s) {
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+
+    if (sessionId == null || athleteId == null) {
+      debugPrint(
+          '[SERIES SYNC] skipped — sessionId=$sessionId athleteId=$athleteId');
+      return;
+    }
+
+    Future(() async {
+      for (var i = 0; i < s.enteredTotals.length; i++) {
+        try {
+          final res = await ApiService.instance.saveSeries(
+            athleteId: athleteId,
+            sessionId: sessionId,
+            seriesNumber: i + 1,
+            totalScore: s.enteredTotals[i],
+            shotsFired: s.shotsPerSeries,
+          );
+          debugPrint(
+              '[SERIES SYNC] series ${i + 1} saved status=${res.statusCode}');
+        } catch (e) {
+          _logApiError('SERIES SYNC [${i + 1}]', e);
+          // Non-fatal: continue submitting remaining series.
+        }
+      }
+    });
   }
 
   void _syncSessionEnd(ScoreEntryActiveState s) {
@@ -81,11 +111,39 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
         ? s.enteredTotals.reduce((a, b) => a > b ? a : b).toDouble()
         : 0.0;
 
+    final pct = s.maxTotalScore > 0
+        ? (s.runningTotal / s.maxTotalScore * 100)
+        : 0.0;
+    final performanceRating = (pct / 10).round().clamp(1, 10);
+
     Future(() async {
       debugPrint('[SESSION END FLOW ENTERED]');
-      debugPrint('[SESSION END] sessionId=$supabaseSessionId totalShots=$totalShots avg=$avgScore best=$bestSeries');
+      debugPrint(
+          '[SESSION END] sessionId=$supabaseSessionId totalShots=$totalShots avg=$avgScore best=$bestSeries');
 
-      // Step 1: close the session row (end_time only)
+      final athleteId = AuthHelper.getCurrentAthleteId();
+
+      // Step 1: signal completion to mobile backend (canonical endpoint)
+      if (athleteId != null) {
+        try {
+          final completeRes = await ApiService.instance.completeMobileSession(
+            athleteId: athleteId,
+            sessionId: supabaseSessionId,
+            totalShots: totalShots,
+            totalScore: s.runningTotal,
+            avgScore: avgScore,
+            bestSeriesScore: bestSeries,
+            performanceRating: performanceRating,
+          );
+          debugPrint(
+              '[SESSION COMPLETE] mobile backend status=${completeRes.statusCode}');
+        } catch (e) {
+          _logApiError('SESSION COMPLETE', e);
+          // Non-fatal: continue to Supabase fallback updates.
+        }
+      }
+
+      // Step 2: close the session row in Supabase (end_time only)
       try {
         final res = await ApiService.instance.updateSessionComplete(
           sessionId: supabaseSessionId,
@@ -96,8 +154,7 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
         // continue to write shooting log even if end_time patch fails
       }
 
-      // Step 2: write score summary to shooting_session_log
-      final athleteId = AuthHelper.getCurrentAthleteId();
+      // Step 3: write score summary to shooting_session_log (Supabase)
       if (athleteId != null) {
         try {
           final logRes = await ApiService.instance.createShootingSessionLog(
@@ -107,12 +164,14 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
             avgScore: avgScore,
             bestSeriesScore: bestSeries,
           );
-          debugPrint('[SHOOTING LOG SUCCESS] status=${logRes.statusCode} data=${logRes.data}');
+          debugPrint(
+              '[SHOOTING LOG SUCCESS] status=${logRes.statusCode} data=${logRes.data}');
         } catch (e) {
           _logApiError('SHOOTING LOG', e);
         }
       } else {
-        debugPrint('[SHOOTING LOG] skipped — no athlete_id (onboarding incomplete)');
+        debugPrint(
+            '[SHOOTING LOG] skipped — no athlete_id (onboarding incomplete)');
       }
     });
   }
@@ -128,9 +187,8 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
     Future(() async {
       debugPrint('[POST LOG FLOW ENTERED]');
 
-      final pct = s.maxTotalScore > 0
-          ? (s.runningTotal / s.maxTotalScore * 100)
-          : 0.0;
+      final pct =
+          s.maxTotalScore > 0 ? (s.runningTotal / s.maxTotalScore * 100) : 0.0;
       final performanceRating = (pct / 10).round().clamp(1, 10);
       final focusLevel = performanceRating >= 8
           ? 'high'
@@ -159,7 +217,8 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
           sessionDuration: '0',
           performanceRating: performanceRating,
         );
-        debugPrint('[POST LOG RESPONSE] status=${res.statusCode} data=${res.data}');
+        debugPrint(
+            '[POST LOG RESPONSE] status=${res.statusCode} data=${res.data}');
         SessionMemory.clear();
       } catch (e) {
         _logApiError('POST LOG', e);

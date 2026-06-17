@@ -24,7 +24,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final hrv = _buildHrvData(baselineScores, readiness);
     final lastSession = _buildLastSession(sessions);
     final performanceHistory = _buildPerformanceHistory(sessions);
-    var insights = _generateInsights(readiness, lastSession, performanceHistory);
+    var insights =
+        _generateInsights(readiness, lastSession, performanceHistory);
     final actionPlan = _generateActionPlan(readiness);
     final weeklyStats = _buildWeeklyStats(sessions);
     var coachFeedback = _buildCoachFeedback(lastSession);
@@ -41,7 +42,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
         insights = apiInsights;
       }
 
-      final apiCoachFeedback = await _fetchApiCoachFeedback(athleteId, profileJson);
+      final apiCoachFeedback =
+          await _fetchApiCoachFeedback(athleteId, profileJson);
       if (apiCoachFeedback != null) {
         coachFeedback = apiCoachFeedback;
       }
@@ -106,8 +108,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
       final notes = row['coach_notes']?.toString() ?? '';
       final plan = row['training_plan']?.toString() ?? '';
       if (notes.isEmpty && plan.isEmpty) return null;
-      final coachName =
-          profileJson?['coachName'] as String? ?? 'Coach';
+      final coachName = profileJson?['coachName'] as String? ?? 'Coach';
       debugPrint('[DASHBOARD] coach_feedback fetched coachName=$coachName');
       return CoachFeedbackData(
         coachName: coachName,
@@ -168,9 +169,11 @@ class DashboardRepositoryImpl implements DashboardRepository {
     }
 
     return ReadinessMetrics(
-      readinessScore:
-          (focus * 0.30 + emotional * 0.25 + decision * 0.25 + motivation * 0.20)
-              .clamp(0, 100),
+      readinessScore: (focus * 0.30 +
+              emotional * 0.25 +
+              decision * 0.25 +
+              motivation * 0.20)
+          .clamp(0, 100),
       focusScore: focus,
       stressLevel: 100 - emotional,
       energyLevel: motivation * 0.8,

@@ -95,8 +95,7 @@ class SeriesCompleteState extends ScoreEntryState {
         : t.toStringAsFixed(1);
   }
 
-  bool get isLastSeries =>
-      previouslyCompletedSeries.length + 1 >= totalSeries;
+  bool get isLastSeries => previouslyCompletedSeries.length + 1 >= totalSeries;
 
   @override
   List<Object?> get props => [

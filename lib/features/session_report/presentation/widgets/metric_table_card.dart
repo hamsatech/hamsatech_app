@@ -98,8 +98,7 @@ MetricTableCard buildPhysiologyCard({
 }) {
   return MetricTableCard(rows: [
     if (showHrRows) ...[
-      MetricTableRow(
-          label: 'Avg Heart Rate', value: '${physiology.avgHr} bpm'),
+      MetricTableRow(label: 'Avg Heart Rate', value: '${physiology.avgHr} bpm'),
       MetricTableRow(
           label: 'Peak Heart Rate', value: '${physiology.peakHr} bpm'),
     ],

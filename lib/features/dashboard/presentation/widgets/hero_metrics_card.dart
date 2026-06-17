@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
-
-
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class HeroMetricsCard extends StatelessWidget {
@@ -178,9 +176,7 @@ class _MetricPill extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 18),
             const SizedBox(height: 4),
-            Text(value,
-                style:
-                    DSTypography.labelMedium.copyWith(color: color)),
+            Text(value, style: DSTypography.labelMedium.copyWith(color: color)),
             Text(label, style: DSTypography.caption),
           ],
         ),

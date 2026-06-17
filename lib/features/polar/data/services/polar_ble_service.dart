@@ -37,15 +37,18 @@ class PolarBleService {
           ));
         case 'deviceConnected':
           _deviceEventController.add(
-            PolarDeviceEvent(PolarDeviceStatus.connected, call.arguments as String),
+            PolarDeviceEvent(
+                PolarDeviceStatus.connected, call.arguments as String),
           );
         case 'deviceConnecting':
           _deviceEventController.add(
-            PolarDeviceEvent(PolarDeviceStatus.connecting, call.arguments as String),
+            PolarDeviceEvent(
+                PolarDeviceStatus.connecting, call.arguments as String),
           );
         case 'deviceDisconnected':
           _deviceEventController.add(
-            PolarDeviceEvent(PolarDeviceStatus.disconnected, call.arguments as String),
+            PolarDeviceEvent(
+                PolarDeviceStatus.disconnected, call.arguments as String),
           );
       }
     });

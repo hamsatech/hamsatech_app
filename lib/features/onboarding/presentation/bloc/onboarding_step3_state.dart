@@ -43,13 +43,15 @@ class OnboardingStep3State extends Equatable {
     this.factorTitle = 'What\'s getting in the way? (Select up to 3)',
     this.factorSubtitle = '',
     this.factorOptions = const [
-      PerformanceFactorModel(id: 'nervousness', label: 'Nervousness in competition'),
+      PerformanceFactorModel(
+          id: 'nervousness', label: 'Nervousness in competition'),
       PerformanceFactorModel(id: 'overthinking', label: 'Overthinking scores'),
       PerformanceFactorModel(id: 'poor_sleep', label: 'Poor sleep'),
       PerformanceFactorModel(id: 'distractions', label: 'Distractions'),
       PerformanceFactorModel(id: 'pressure', label: 'Pressure in big moments'),
       PerformanceFactorModel(id: 'lack_focus', label: 'Lack of focus'),
-      PerformanceFactorModel(id: 'inconsistent_routine', label: 'Inconsistent routine'),
+      PerformanceFactorModel(
+          id: 'inconsistent_routine', label: 'Inconsistent routine'),
     ],
     this.selectedFactors = const [],
     this.maxFactorSelection = 3,

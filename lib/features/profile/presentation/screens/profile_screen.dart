@@ -185,8 +185,7 @@ class _ProfileView extends StatelessWidget {
       if (v != null) scores.add(_safeNum(v));
     }
     if (scores.isEmpty) return '—';
-    return (scores.reduce((a, b) => a + b) / scores.length)
-        .toStringAsFixed(0);
+    return (scores.reduce((a, b) => a + b) / scores.length).toStringAsFixed(0);
   }
 
   String _computePersonalBest(List<Map<String, dynamic>> sessions) {
@@ -226,8 +225,7 @@ class _ProfileView extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style:
-                ElevatedButton.styleFrom(backgroundColor: DSColors.error),
+            style: ElevatedButton.styleFrom(backgroundColor: DSColors.error),
             onPressed: () {
               Navigator.pop(ctx);
               context.read<AuthBloc>().add(const AuthLogoutRequested());

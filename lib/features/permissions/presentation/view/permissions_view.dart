@@ -108,15 +108,11 @@ class _PermissionsViewState extends State<PermissionsView> {
                           iconColor: DSColors.info,
                           iconBackgroundColor:
                               DSColors.info.withValues(alpha: 0.10),
-
                           title: 'Bluetooth',
                           subtitle: 'To connect to Polar',
-
                           isGranted: state.bluetoothGranted,
                           isLoading: state.bluetoothLoading,
-
-                          onTap: () =>
-                              bloc.add(const OnBluetoothTapped()),
+                          onTap: () => bloc.add(const OnBluetoothTapped()),
                         ),
 
                         const SizedBox(height: DSSpacing.lg),
@@ -127,15 +123,11 @@ class _PermissionsViewState extends State<PermissionsView> {
                           iconColor: DSColors.warning,
                           iconBackgroundColor:
                               DSColors.warning.withValues(alpha: 0.10),
-
                           title: 'Notifications',
                           subtitle: 'For session reminders',
-
                           isGranted: state.notificationsGranted,
                           isLoading: state.notificationsLoading,
-
-                          onTap: () =>
-                              bloc.add(const OnNotificationsTapped()),
+                          onTap: () => bloc.add(const OnNotificationsTapped()),
                         ),
 
                         const SizedBox(height: DSSpacing.lg),
@@ -146,26 +138,19 @@ class _PermissionsViewState extends State<PermissionsView> {
                           iconColor: DSColors.success,
                           iconBackgroundColor:
                               DSColors.success.withValues(alpha: 0.10),
-
                           title: 'Microphone',
                           subtitle: 'For session reminders',
-
                           badgeLabel: 'Optional',
-
                           isGranted: state.microphoneGranted,
                           isLoading: state.microphoneLoading,
-
-                          onTap: () =>
-                              bloc.add(const OnMicrophoneTapped()),
+                          onTap: () => bloc.add(const OnMicrophoneTapped()),
                         ),
                       ],
                     ),
                   ),
                 ),
-
                 _BottomCta(
-                  isLoading:
-                      state.status == PermissionsStatus.loading,
+                  isLoading: state.status == PermissionsStatus.loading,
                 ),
               ],
             ),
@@ -219,14 +204,9 @@ class PermissionItemCard extends StatelessWidget {
             color: isGranted
                 ? DSColors.success.withValues(alpha: 0.05)
                 : DSColors.white,
-
             borderRadius: DSRadius.borderLg,
-
             border: Border.all(
-              color: isGranted
-                  ? DSColors.success
-                  : DSColors.gray200,
-
+              color: isGranted ? DSColors.success : DSColors.gray200,
               width: isGranted ? 1.5 : 1,
             ),
           ),
@@ -245,52 +225,39 @@ class PermissionItemCard extends StatelessWidget {
                   size: DSSpacing.xxl,
                 ),
               ),
-
               const SizedBox(width: DSSpacing.lg),
-
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
-
                   children: [
                     Row(
                       children: [
                         Flexible(
                           child: Text(
                             title,
-                            style: DSTypography.headingLarge
-                                .copyWith(
+                            style: DSTypography.headingLarge.copyWith(
                               color: DSColors.black,
                             ),
                           ),
                         ),
-
                         if (badgeLabel != null) ...[
                           const SizedBox(width: DSSpacing.sm),
-
                           _Badge(label: badgeLabel!),
                         ],
                       ],
                     ),
-
                     const SizedBox(height: DSSpacing.xs),
-
                     Text(
                       subtitle,
-                      style:
-                          DSTypography.bodyLarge.copyWith(
+                      style: DSTypography.bodyLarge.copyWith(
                         color: DSColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(width: DSSpacing.md),
-
               if (isLoading)
                 const SizedBox(
                   width: 22,
@@ -353,20 +320,17 @@ class _DividerLabel extends StatelessWidget {
         const Expanded(
           child: Divider(color: DSColors.gray300),
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: DSSpacing.lg,
           ),
           child: Text(
             'To continue, we need',
-            style:
-                DSTypography.headingMedium.copyWith(
+            style: DSTypography.headingMedium.copyWith(
               color: DSColors.textPrimary,
             ),
           ),
         ),
-
         const Expanded(
           child: Divider(color: DSColors.gray300),
         ),
@@ -417,14 +381,12 @@ class _BottomCta extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-
       padding: const EdgeInsets.fromLTRB(
         DSSpacing.xxl,
         DSSpacing.xxl,
         DSSpacing.xxl,
         DSSpacing.xxl,
       ),
-
       decoration: const BoxDecoration(
         color: DSColors.white,
         border: Border(
@@ -433,7 +395,6 @@ class _BottomCta extends StatelessWidget {
           ),
         ),
       ),
-
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -442,20 +403,14 @@ class _BottomCta extends StatelessWidget {
             isFullWidth: true,
             size: DSButtonSize.lg,
             isLoading: isLoading,
-
             onPressed: () {
-              context
-                  .read<PermissionsBloc>()
-                  .add(const OnContinuePressed());
+              context.read<PermissionsBloc>().add(const OnContinuePressed());
             },
           ),
-
           const SizedBox(height: DSSpacing.lg),
-
           DSButton(
             label: 'I don\'t have a polar yet',
             variant: DSButtonVariant.linkSecondary,
-
             onPressed: () async {
               await StorageService.setPolarEnabled(false);
               await StorageService.setOnboardingComplete(true);

@@ -37,9 +37,7 @@ class _LiveSessionViewState extends State<_LiveSessionView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context
-          .read<LiveTrainingBloc>()
-          .add(const LiveTrainingStartRequested());
+      context.read<LiveTrainingBloc>().add(const LiveTrainingStartRequested());
     });
   }
 
@@ -52,8 +50,7 @@ class _LiveSessionViewState extends State<_LiveSessionView> {
         }
       },
       builder: (context, state) {
-        final s =
-            state is LiveSessionActiveState ? state : null;
+        final s = state is LiveSessionActiveState ? state : null;
         return Scaffold(
           backgroundColor: const Color(0xFFF5FDFF),
           body: SafeArea(
@@ -77,8 +74,7 @@ class _LiveSessionViewState extends State<_LiveSessionView> {
                         HrAnalyticsCard(
                           baselineHr: s?.baselineHr ?? 65,
                           simulatedHr: s?.simulatedHr,
-                          simulatedHrHistory:
-                              s?.simulatedHrHistory ?? const [],
+                          simulatedHrHistory: s?.simulatedHrHistory ?? const [],
                         ),
                       ],
                     ),
@@ -120,9 +116,7 @@ class _BottomActionBar extends StatelessWidget {
                   .read<LiveTrainingBloc>()
                   .add(const LiveTrainingPauseToggled()),
               icon: Icon(
-                isPaused
-                    ? Icons.play_arrow_rounded
-                    : Icons.pause_rounded,
+                isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                 size: 18,
               ),
               label: Text(isPaused ? 'Resume' : 'Pause'),

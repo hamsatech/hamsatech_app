@@ -79,7 +79,8 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     PolarDeviceFoundEvent event,
     Emitter<PolarState> emit,
   ) {
-    if (state.discoveredDevices.any((d) => d.deviceId == event.deviceId)) return;
+    if (state.discoveredDevices.any((d) => d.deviceId == event.deviceId))
+      return;
     emit(state.copyWith(
       discoveredDevices: [
         ...state.discoveredDevices,

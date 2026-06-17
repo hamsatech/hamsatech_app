@@ -55,7 +55,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   ) {
     // Restore saved progress from a previous cold-start session if present.
     final saved = StorageService.getQuestionnaireProgress();
-    debugPrint('[Assessment] AssessmentStarted: saved=${saved != null}, questionsInState=${state.questions.length}');
+    debugPrint(
+        '[Assessment] AssessmentStarted: saved=${saved != null}, questionsInState=${state.questions.length}');
     // Within the same session the bloc may already hold questions, but saved
     // progress is authoritative after "Skip for now".
     if (state.questions.isNotEmpty && saved == null) return;
@@ -67,7 +68,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         saved != null ? saved['answers'] as Map<int, int> : <int, int>{};
     final resumeIndex =
         savedAnswers.length > savedIndex ? savedAnswers.length : savedIndex;
-    debugPrint('[Assessment] Resuming at index=$resumeIndex, answered=${savedAnswers.length}');
+    debugPrint(
+        '[Assessment] Resuming at index=$resumeIndex, answered=${savedAnswers.length}');
     emit(state.copyWith(
       questions: questions,
       step: OnboardingStep.assessment,
@@ -112,7 +114,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     OnboardingAssessmentCompleted event,
     Emitter<OnboardingState> emit,
   ) async {
-    debugPrint('[Assessment] AssessmentCompleted: answered=${state.answers.length}');
+    debugPrint(
+        '[Assessment] AssessmentCompleted: answered=${state.answers.length}');
     emit(state.copyWith(status: OnboardingStatus.loading));
     try {
       final scores = _repository.calculateScores(state.answers);

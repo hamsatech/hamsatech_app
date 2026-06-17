@@ -25,14 +25,12 @@ class EmotionSelector extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFFECFDF5)
-                    : Colors.transparent,
+                color:
+                    isSelected ? const Color(0xFFECFDF5) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF2F7E8F)
-                      : Colors.transparent,
+                  color:
+                      isSelected ? const Color(0xFF2F7E8F) : Colors.transparent,
                   width: 1.5,
                 ),
               ),
@@ -48,9 +46,8 @@ class EmotionSelector extends StatelessWidget {
                     mood.label,
                     style: TextStyle(
                       fontSize: 10,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
                       color: isSelected
                           ? const Color(0xFF2F7E8F)
                           : const Color(0xFF4D8F9C),

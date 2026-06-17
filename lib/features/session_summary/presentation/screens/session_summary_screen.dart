@@ -44,7 +44,8 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
             ),
           ),
           body: switch (state) {
-            SessionSummaryLoading() || SessionSummaryInitial() =>
+            SessionSummaryLoading() ||
+            SessionSummaryInitial() =>
               const Center(child: CircularProgressIndicator(color: _kTeal)),
             SessionSummaryError(:final message) => Center(
                 child: Text(

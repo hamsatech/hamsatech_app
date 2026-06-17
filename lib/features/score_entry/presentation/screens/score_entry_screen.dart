@@ -25,9 +25,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context
-            .read<ScoreEntryBloc>()
-            .add(const ScoreEntryStartRequested());
+        context.read<ScoreEntryBloc>().add(const ScoreEntryStartRequested());
         _inputFocus.requestFocus();
       }
     });
@@ -52,8 +50,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
       return;
     }
     if (value > state.maxSeriesScore) {
-      setState(
-          () => _inputError = 'Max is ${state.formattedMaxSeriesScore}');
+      setState(() => _inputError = 'Max is ${state.formattedMaxSeriesScore}');
       return;
     }
     setState(() => _inputError = null);
@@ -181,8 +178,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
           const SizedBox(height: 4),
           Text(
             'Review your scores and continue.',
-            style: DSTypography.bodySm
-                .copyWith(color: DSColors.textSecondary),
+            style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
           ),
         ],
       );
@@ -198,25 +194,21 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
         const SizedBox(height: 4),
         Text(
           'Enter the total score for this series.',
-          style: DSTypography.bodySm
-              .copyWith(color: DSColors.textSecondary),
+          style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
         ),
         const SizedBox(height: DSSpacing.sm),
         Text.rich(
           TextSpan(
             text: 'Series ',
-            style:
-                DSTypography.headingMd.copyWith(color: DSColors.black),
+            style: DSTypography.headingMd.copyWith(color: DSColors.black),
             children: [
               TextSpan(
                 text: '${state.currentSeriesNumber}',
-                style: DSTypography.headingMd
-                    .copyWith(color: DSColors.brand),
+                style: DSTypography.headingMd.copyWith(color: DSColors.brand),
               ),
               TextSpan(
                 text: ' of ${state.totalSeries}',
-                style: DSTypography.headingMd
-                    .copyWith(color: DSColors.black),
+                style: DSTypography.headingMd.copyWith(color: DSColors.black),
               ),
             ],
           ),
@@ -234,8 +226,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
       decoration: BoxDecoration(
         color: DSColors.appCard,
         borderRadius: BorderRadius.circular(20),
-        border:
-            Border.all(color: DSColors.appBorder.withValues(alpha: 0.5)),
+        border: Border.all(color: DSColors.appBorder.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -282,16 +273,15 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: DSColors.brandMuted,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   'Max score: ${state.formattedMaxSeriesScore}',
-                  style: DSTypography.labelXs
-                      .copyWith(color: DSColors.brand),
+                  style: DSTypography.labelXs.copyWith(color: DSColors.brand),
                 ),
               ),
             ],
@@ -300,16 +290,14 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
           // Input label
           Text(
             'Enter total score (out of ${state.formattedMaxSeriesScore})',
-            style: DSTypography.bodyMd
-                .copyWith(color: DSColors.textSecondary),
+            style: DSTypography.bodyMd.copyWith(color: DSColors.textSecondary),
           ),
           const SizedBox(height: DSSpacing.sm),
           // Score input field
           TextField(
             controller: _inputCtrl,
             focusNode: _inputFocus,
-            keyboardType: const TextInputType.numberWithOptions(
-                decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'Inter',
@@ -329,26 +317,22 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
               errorText: _inputError,
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: DSColors.appBorder, width: 1.5),
+                borderSide: BorderSide(color: DSColors.appBorder, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                    color: DSColors.brand, width: 2),
+                borderSide: const BorderSide(color: DSColors.brand, width: 2),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                    color: DSColors.error, width: 1.5),
+                borderSide: const BorderSide(color: DSColors.error, width: 1.5),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                    color: DSColors.error, width: 2),
+                borderSide: const BorderSide(color: DSColors.error, width: 2),
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                  vertical: 18, horizontal: 16),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
             ),
             onSubmitted: (_) => _onSave(ctx, state),
           ),
@@ -408,9 +392,8 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
     return DSPrimaryButton(
       label: 'Continue to Summary  ✓',
       color: DSColors.brand,
-      onPressed: () => ctx
-          .read<ScoreEntryBloc>()
-          .add(const ScoreEntryFinalConfirmed()),
+      onPressed: () =>
+          ctx.read<ScoreEntryBloc>().add(const ScoreEntryFinalConfirmed()),
     );
   }
 
@@ -421,8 +404,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
       decoration: BoxDecoration(
         color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: DSColors.appBorder.withValues(alpha: 0.5)),
+        border: Border.all(color: DSColors.appBorder.withValues(alpha: 0.5)),
       ),
       child: Column(
         children: List.generate(state.totalSeries, (i) {
@@ -431,8 +413,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
           return _SeriesListItem(
             number: seriesNum,
             shotsPerSeries: state.shotsPerSeries,
-            formattedTotal:
-                isCompleted ? state.formattedEnteredTotal(i) : null,
+            formattedTotal: isCompleted ? state.formattedEnteredTotal(i) : null,
             isLast: i == state.totalSeries - 1,
           );
         }),
@@ -449,8 +430,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
       decoration: BoxDecoration(
         color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: DSColors.appBorder.withValues(alpha: 0.5)),
+        border: Border.all(color: DSColors.appBorder.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -481,8 +461,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
               children: [
                 Text(
                   'Running total',
-                  style: DSTypography.headingSm
-                      .copyWith(color: DSColors.black),
+                  style: DSTypography.headingSm.copyWith(color: DSColors.black),
                 ),
                 Text(
                   'After $completedCount of ${state.totalSeries} series',
@@ -497,13 +476,11 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
             children: [
               Text(
                 completedCount > 0 ? state.formattedRunningTotal : '—',
-                style: DSTypography.headingLg
-                    .copyWith(color: DSColors.brand),
+                style: DSTypography.headingLg.copyWith(color: DSColors.brand),
               ),
               Text(
                 '/ ${state.formattedMaxTotalScore}',
-                style: DSTypography.bodySm
-                    .copyWith(color: DSColors.textMuted),
+                style: DSTypography.bodySm.copyWith(color: DSColors.textMuted),
               ),
             ],
           ),
@@ -533,14 +510,13 @@ class _SeriesListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: DSSpacing.lg, vertical: 14),
+      padding:
+          const EdgeInsets.symmetric(horizontal: DSSpacing.lg, vertical: 14),
       decoration: BoxDecoration(
         border: isLast
             ? null
             : const Border(
-                bottom: BorderSide(
-                    color: DSColors.appBorder, width: 0.5),
+                bottom: BorderSide(color: DSColors.appBorder, width: 0.5),
               ),
       ),
       child: Row(
@@ -557,9 +533,7 @@ class _SeriesListItem extends StatelessWidget {
               child: Text(
                 '$number',
                 style: DSTypography.labelXs.copyWith(
-                  color: _isCompleted
-                      ? Colors.white
-                      : DSColors.textSecondary,
+                  color: _isCompleted ? Colors.white : DSColors.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -574,18 +548,16 @@ class _SeriesListItem extends StatelessWidget {
                 Text(
                   'Series $number',
                   style: DSTypography.bodyMd.copyWith(
-                    color: _isCompleted
-                        ? DSColors.black
-                        : DSColors.textSecondary,
-                    fontWeight: _isCompleted
-                        ? FontWeight.w600
-                        : FontWeight.w400,
+                    color:
+                        _isCompleted ? DSColors.black : DSColors.textSecondary,
+                    fontWeight:
+                        _isCompleted ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
                 Text(
                   '$shotsPerSeries shots',
-                  style: DSTypography.bodyXs
-                      .copyWith(color: DSColors.textMuted),
+                  style:
+                      DSTypography.bodyXs.copyWith(color: DSColors.textMuted),
                 ),
               ],
             ),
@@ -594,21 +566,18 @@ class _SeriesListItem extends StatelessWidget {
           if (_isCompleted)
             Text(
               formattedTotal!,
-              style: DSTypography.headingMd
-                  .copyWith(color: DSColors.brand),
+              style: DSTypography.headingMd.copyWith(color: DSColors.brand),
             )
           else
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: DSColors.gray100,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 '—',
-                style: DSTypography.labelSm
-                    .copyWith(color: DSColors.textMuted),
+                style: DSTypography.labelSm.copyWith(color: DSColors.textMuted),
               ),
             ),
         ],

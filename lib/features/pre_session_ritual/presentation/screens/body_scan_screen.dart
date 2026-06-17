@@ -47,8 +47,9 @@ class _BodyScanView extends StatelessWidget {
                   const SizedBox(height: 14),
                   RitualHeader(
                     title: 'Body Scan',
-                    onSkip: () =>
-                        context.read<RitualBloc>().add(const RitualSkipBodyScan()),
+                    onSkip: () => context
+                        .read<RitualBloc>()
+                        .add(const RitualSkipBodyScan()),
                   ),
                   Expanded(
                     child: Column(

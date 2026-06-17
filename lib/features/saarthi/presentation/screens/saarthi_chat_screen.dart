@@ -150,13 +150,15 @@ class _SaarthiChatScreenState extends State<SaarthiChatScreen>
   void _persistChat(String userMessage, String aiResponse) {
     final athleteId = AuthHelper.getCurrentAthleteId();
     if (athleteId == null) {
-      debugPrint('[SAARTHI] chat save skipped — no athlete_id (onboarding incomplete)');
+      debugPrint(
+          '[SAARTHI] chat save skipped — no athlete_id (onboarding incomplete)');
       return;
     }
     final sessionId = SessionMemory.sessionId ?? 'no-session';
 
     Future(() async {
-      debugPrint('[SAARTHI] saving chat athleteId=$athleteId sessionId=$sessionId');
+      debugPrint(
+          '[SAARTHI] saving chat athleteId=$athleteId sessionId=$sessionId');
       try {
         final res = await ApiService.instance.saveChat(
           athleteId: athleteId,
@@ -414,27 +416,23 @@ class _MessageBubble extends StatelessWidget {
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.72,
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isUser
-                        ? const Color(0xFF2F7E8F)
-                        : DSColors.appCard,
+                    color: isUser ? const Color(0xFF2F7E8F) : DSColors.appCard,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
                       bottomLeft: Radius.circular(isUser ? 16 : 4),
                       bottomRight: Radius.circular(isUser ? 4 : 16),
                     ),
-                    border: isUser
-                        ? null
-                        : Border.all(color: DSColors.appBorder),
+                    border:
+                        isUser ? null : Border.all(color: DSColors.appBorder),
                   ),
                   child: Text(
                     message.text,
                     style: DSTypography.bodyMedium.copyWith(
-                      color:
-                          isUser ? Colors.white : DSColors.textPrimary,
+                      color: isUser ? Colors.white : DSColors.textPrimary,
                     ),
                   ),
                 ),
@@ -479,8 +477,7 @@ class _TypingBubble extends StatelessWidget {
           const SaarthiAvatar(size: 32),
           const SizedBox(width: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: DSColors.appCard,
               borderRadius: const BorderRadius.only(
@@ -570,8 +567,7 @@ class _SuggestionCard extends StatelessWidget {
                 color: const Color(0xFF2F7E8F).withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(item.icon,
-                  color: const Color(0xFF2F7E8F), size: 18),
+              child: Icon(item.icon, color: const Color(0xFF2F7E8F), size: 18),
             ),
             const SizedBox(height: 10),
             Text(
@@ -632,8 +628,8 @@ class _BottomInput extends StatelessWidget {
                   hintStyle: DSTypography.bodyMedium.copyWith(
                     color: DSColors.textPlaceholder,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   border: InputBorder.none,
                   isDense: true,
                 ),
@@ -650,8 +646,8 @@ class _BottomInput extends StatelessWidget {
                 color: Color(0xFF2F7E8F),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send_rounded,
-                  color: Colors.white, size: 18),
+              child:
+                  const Icon(Icons.send_rounded, color: Colors.white, size: 18),
             ),
           ),
         ],
@@ -659,4 +655,3 @@ class _BottomInput extends StatelessWidget {
     );
   }
 }
-

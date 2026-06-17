@@ -18,7 +18,8 @@ class OnboardingStep3Bloc
     OnAvgScoreChanged event,
     Emitter<OnboardingStep3State> emit,
   ) {
-    final next = state.copyWith(avgScore: event.value.trim(), errorMessage: null);
+    final next =
+        state.copyWith(avgScore: event.value.trim(), errorMessage: null);
     emit(_validate(next));
   }
 
@@ -26,7 +27,8 @@ class OnboardingStep3Bloc
     OnTargetScoreChanged event,
     Emitter<OnboardingStep3State> emit,
   ) {
-    final next = state.copyWith(targetScore: event.value.trim(), errorMessage: null);
+    final next =
+        state.copyWith(targetScore: event.value.trim(), errorMessage: null);
     emit(_validate(next));
   }
 
@@ -43,7 +45,8 @@ class OnboardingStep3Bloc
     }
     // Silently ignore tap when max reached and factor not yet selected
 
-    emit(_validate(state.copyWith(selectedFactors: current, errorMessage: null)));
+    emit(_validate(
+        state.copyWith(selectedFactors: current, errorMessage: null)));
   }
 
   Future<void> _onSubmit(
@@ -69,13 +72,16 @@ class OnboardingStep3Bloc
             targetScore: state.targetScore,
             performanceBlockers: state.selectedFactors,
           );
-          debugPrint('[ONBOARDING] current-performance synced athleteId=$athleteId');
+          debugPrint(
+              '[ONBOARDING] current-performance synced athleteId=$athleteId');
         } catch (e) {
-          debugPrint('[ONBOARDING] current-performance sync failed (non-fatal): $e');
+          debugPrint(
+              '[ONBOARDING] current-performance sync failed (non-fatal): $e');
         }
       });
     } else {
-      debugPrint('[ONBOARDING] current-performance skipped — no athlete_id yet');
+      debugPrint(
+          '[ONBOARDING] current-performance skipped — no athlete_id yet');
     }
   }
 

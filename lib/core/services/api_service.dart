@@ -46,7 +46,8 @@ class ApiService {
   }
 
   static Dio _buildMobileDio() {
-    debugPrint('[API BASE URL] mobile backend: ${ApiConstants.mobileApiBaseUrl}');
+    debugPrint(
+        '[API BASE URL] mobile backend: ${ApiConstants.mobileApiBaseUrl}');
     final dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.mobileApiBaseUrl,
@@ -239,8 +240,7 @@ class ApiService {
   /// Called once after OTP verification to resolve the canonical uid from
   /// hamsatech.users. This uid is stored locally and passed as athlete_id
   /// in POST /athletes so both tables share the same identifier.
-  Future<Response<dynamic>> getUserByPhone(String phone) =>
-      _dio.get(
+  Future<Response<dynamic>> getUserByPhone(String phone) => _dio.get(
         'users',
         queryParameters: {
           'phone_number': 'eq.$phone',
@@ -251,8 +251,7 @@ class ApiService {
   // ── Athlete ───────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/athletes?athlete_id=eq.{id}&select=*,athlete_details(*),athlete_family(*)
-  Future<Response<dynamic>> getAthleteProfile(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getAthleteProfile(String athleteId) => _dio.get(
         'athletes',
         queryParameters: {
           'athlete_id': 'eq.$athleteId',
@@ -292,11 +291,82 @@ class ApiService {
   }
 
   // ── Sessions (training) ───────────────────────────────────────────────────
-  // Table: sessions (session_id, athlete_id, session_type, start_time, end_time)
-  // NOT App_Sessions — that table stores auth tokens, not training records.
 
-  /// POST /rest/v1/sessions — create a new training session.
-  /// Returns the inserted row (201 + JSON array) via Prefer: return=representation.
+  /// POST /api/mobile/athletes/{athleteId}/sessions
+  /// Creates a training session via the mobile backend (canonical endpoint).
+  /// Response: { session_id, athlete_id, session_type, status, start_time, ... }
+  Future<Response<dynamic>> createMobileSession({
+    required String athleteId,
+    required String sessionType,
+    required String rangeType,
+    required int plannedShots,
+    required String discipline,
+  }) {
+    debugPrint('[SESSION CREATE] POST api/mobile/athletes/$athleteId/sessions');
+    return _mobileDio.post(
+      'api/mobile/athletes/$athleteId/sessions',
+      data: {
+        'range_type': rangeType,
+        'session_type': sessionType,
+        'planned_shots': plannedShots,
+        'discipline': discipline,
+      },
+    );
+  }
+
+  /// POST /api/mobile/athletes/{athleteId}/sessions/{sessionId}/series
+  /// Submits one completed series. Called once per series after final confirmation.
+  /// Payload: { series_number, total_score, shots_fired }
+  Future<Response<dynamic>> saveSeries({
+    required String athleteId,
+    required String sessionId,
+    required int seriesNumber,
+    required double totalScore,
+    required int shotsFired,
+  }) {
+    debugPrint(
+        '[SERIES] POST api/mobile/athletes/$athleteId/sessions/$sessionId/series #$seriesNumber');
+    return _mobileDio.post(
+      'api/mobile/athletes/$athleteId/sessions/$sessionId/series',
+      data: {
+        'series_number': seriesNumber,
+        'total_score': totalScore,
+        'shots_fired': shotsFired,
+      },
+    );
+  }
+
+  /// POST /api/mobile/athletes/{athleteId}/sessions/{sessionId}/complete
+  /// Signals session completion to the mobile backend with optional score summary.
+  /// All fields except athleteId and sessionId are optional — pass what's available.
+  Future<Response<dynamic>> completeMobileSession({
+    required String athleteId,
+    required String sessionId,
+    int? durationMinutes,
+    int? totalShots,
+    double? totalScore,
+    double? avgScore,
+    double? bestSeriesScore,
+    int? performanceRating,
+    String? notes,
+  }) {
+    debugPrint(
+        '[SESSION COMPLETE] POST api/mobile/athletes/$athleteId/sessions/$sessionId/complete');
+    return _mobileDio.post(
+      'api/mobile/athletes/$athleteId/sessions/$sessionId/complete',
+      data: {
+        if (durationMinutes != null) 'duration_minutes': durationMinutes,
+        if (totalShots != null) 'total_shots': totalShots,
+        if (totalScore != null) 'total_score': totalScore,
+        if (avgScore != null) 'avg_score': avgScore,
+        if (bestSeriesScore != null) 'best_series_score': bestSeriesScore,
+        if (performanceRating != null) 'performance_rating': performanceRating,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+    );
+  }
+
+  /// POST /rest/v1/sessions — legacy Supabase direct write (kept for fallback).
   Future<Response<dynamic>> createSession({
     required String athleteId,
     required String sessionType,
@@ -365,8 +435,10 @@ class ApiService {
       'total_shots': totalShots,
       'avg_score': double.parse(avgScore.toStringAsFixed(2)),
       'best_series_score': double.parse(bestSeriesScore.toStringAsFixed(2)),
-      if (sessionDurationMin != null) 'session_duration_min': sessionDurationMin,
-      if (consistencyIndex != null) 'consistency_index': double.parse(consistencyIndex.toStringAsFixed(2)),
+      if (sessionDurationMin != null)
+        'session_duration_min': sessionDurationMin,
+      if (consistencyIndex != null)
+        'consistency_index': double.parse(consistencyIndex.toStringAsFixed(2)),
     };
     debugPrint('[SHOOTING LOG] POST shooting_session_log $body');
     return _dio.post(
@@ -417,8 +489,7 @@ class ApiService {
   }
 
   /// GET /rest/v1/session_pre_log?session_id=eq.{id}
-  Future<Response<dynamic>> getPreSessionLog(String sessionId) =>
-      _dio.get(
+  Future<Response<dynamic>> getPreSessionLog(String sessionId) => _dio.get(
         'session_pre_log',
         queryParameters: {'session_id': 'eq.$sessionId'},
       );
@@ -463,8 +534,7 @@ class ApiService {
   }
 
   /// GET /rest/v1/session_post_log?session_id=eq.{id}
-  Future<Response<dynamic>> getPostSessionLog(String sessionId) =>
-      _dio.get(
+  Future<Response<dynamic>> getPostSessionLog(String sessionId) => _dio.get(
         'session_post_log',
         queryParameters: {'session_id': 'eq.$sessionId'},
       );
@@ -501,8 +571,7 @@ class ApiService {
   }
 
   /// GET /rest/v1/psychology_questions?select=*,psychology_question_options(*)
-  Future<Response<dynamic>> getPsychologyQuestions() =>
-      _dio.get(
+  Future<Response<dynamic>> getPsychologyQuestions() => _dio.get(
         'psychology_questions',
         queryParameters: {
           'select': '*,psychology_question_options(*)',
@@ -529,8 +598,7 @@ class ApiService {
   }
 
   /// GET /rest/v1/psychology_scores?athlete_id=eq.{id}
-  Future<Response<dynamic>> getPsychologyScores(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getPsychologyScores(String athleteId) => _dio.get(
         'psychology_scores',
         queryParameters: {'athlete_id': 'eq.$athleteId'},
       );
@@ -538,8 +606,7 @@ class ApiService {
   // ── Athlete chat (Saarthi) ────────────────────────────────────────────────
 
   /// GET /rest/v1/athlete_chat?athlete_id=eq.{id}&order=created_at.desc
-  Future<Response<dynamic>> getChatHistory(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getChatHistory(String athleteId) => _dio.get(
         'athlete_chat',
         queryParameters: {
           'athlete_id': 'eq.$athleteId',
@@ -573,8 +640,7 @@ class ApiService {
   // ── Physiology ────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/athlete_physiology?athlete_id=eq.{id}&order=recorded_date.desc
-  Future<Response<dynamic>> getAthletePhysiology(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getAthletePhysiology(String athleteId) => _dio.get(
         'athlete_physiology',
         queryParameters: {
           'athlete_id': 'eq.$athleteId',
@@ -583,15 +649,13 @@ class ApiService {
       );
 
   /// POST /rest/v1/athlete_physiology
-  Future<Response<dynamic>> saveAthletePhysiology(
-      Map<String, dynamic> data) =>
+  Future<Response<dynamic>> saveAthletePhysiology(Map<String, dynamic> data) =>
       _dio.post('athlete_physiology', data: data);
 
   // ── Performance & AI ──────────────────────────────────────────────────────
 
   /// GET /rest/v1/performance_summary?athlete_id=eq.{id}&order=created_at.desc
-  Future<Response<dynamic>> getPerformanceSummary(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getPerformanceSummary(String athleteId) => _dio.get(
         'performance_summary',
         queryParameters: {
           'athlete_id': 'eq.$athleteId',
@@ -600,8 +664,7 @@ class ApiService {
       );
 
   /// GET /rest/v1/ai_insights?athlete_id=eq.{id}
-  Future<Response<dynamic>> getAiInsights(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getAiInsights(String athleteId) => _dio.get(
         'ai_insights',
         queryParameters: {'athlete_id': 'eq.$athleteId'},
       );
@@ -609,8 +672,7 @@ class ApiService {
   // ── Tachus / shooting analytics ───────────────────────────────────────────
 
   /// GET /rest/v1/tachus_reports?athlete_id=eq.{id}
-  Future<Response<dynamic>> getTachusReports(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getTachusReports(String athleteId) => _dio.get(
         'tachus_reports',
         queryParameters: {'athlete_id': 'eq.$athleteId'},
       );
@@ -618,8 +680,7 @@ class ApiService {
   // ── Coach ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/coach_feedback?athlete_id=eq.{id}
-  Future<Response<dynamic>> getCoachFeedback(String athleteId) =>
-      _dio.get(
+  Future<Response<dynamic>> getCoachFeedback(String athleteId) => _dio.get(
         'coach_feedback',
         queryParameters: {'athlete_id': 'eq.$athleteId'},
       );
@@ -627,8 +688,7 @@ class ApiService {
   // ── Audio library ─────────────────────────────────────────────────────────
 
   /// GET /rest/v1/audio_library?is_active=eq.true
-  Future<Response<dynamic>> getAudioLibrary() =>
-      _dio.get(
+  Future<Response<dynamic>> getAudioLibrary() => _dio.get(
         'audio_library',
         queryParameters: {'is_active': 'eq.true'},
       );
@@ -637,17 +697,17 @@ class ApiService {
 
   /// POST /rest/v1/hr_stream — bulk insert heart rate readings.
   Future<Response<dynamic>> bulkInsertHrStream(
-      List<Map<String, dynamic>> rows) =>
+          List<Map<String, dynamic>> rows) =>
       _dio.post('hr_stream', data: rows);
 
   /// POST /rest/v1/ecg_stream — bulk insert ECG readings.
   Future<Response<dynamic>> bulkInsertEcgStream(
-      List<Map<String, dynamic>> rows) =>
+          List<Map<String, dynamic>> rows) =>
       _dio.post('ecg_stream', data: rows);
 
   /// POST /rest/v1/acc_stream — bulk insert accelerometer readings.
   Future<Response<dynamic>> bulkInsertAccStream(
-      List<Map<String, dynamic>> rows) =>
+          List<Map<String, dynamic>> rows) =>
       _dio.post('acc_stream', data: rows);
 
   // ── RPC ───────────────────────────────────────────────────────────────────
@@ -655,8 +715,7 @@ class ApiService {
   /// POST /rest/v1/rpc/get_dashboard_data
   /// TODO(backend): PostgreSQL function must be created in Supabase first.
   /// Returns: {physiology, latest_session, session_summary, performance, insights}
-  Future<Response<dynamic>> getDashboardData(String athleteId) =>
-      _dio.post(
+  Future<Response<dynamic>> getDashboardData(String athleteId) => _dio.post(
         'rpc/get_dashboard_data',
         data: {'p_athlete_id': athleteId},
       );
@@ -665,8 +724,7 @@ class ApiService {
 // ── Request / response logger ─────────────────────────────────────────────────
 
 class _ApiLogger extends Interceptor {
-  static const _line =
-      '──────────────────────────────────────────────────────';
+  static const _line = '──────────────────────────────────────────────────────';
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {

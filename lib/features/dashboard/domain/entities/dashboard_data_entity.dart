@@ -56,7 +56,8 @@ class DashboardDataEntity extends Equatable {
       streakDays: streakDays,
       coachFeedback: coachFeedback ?? this.coachFeedback,
       weeklyStats: weeklyStats,
-      todayCheckinCompleted: todayCheckinCompleted ?? this.todayCheckinCompleted,
+      todayCheckinCompleted:
+          todayCheckinCompleted ?? this.todayCheckinCompleted,
       aiInsights: aiInsights,
       lastSession: lastSession,
       performanceHistory: performanceHistory,

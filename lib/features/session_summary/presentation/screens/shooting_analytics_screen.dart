@@ -49,7 +49,8 @@ class _ShootingAnalyticsScreenState extends State<ShootingAnalyticsScreen> {
             ),
           ),
           body: switch (state) {
-            SessionSummaryLoading() || SessionSummaryInitial() =>
+            SessionSummaryLoading() ||
+            SessionSummaryInitial() =>
               const Center(child: CircularProgressIndicator(color: _kTeal)),
             SessionSummaryError(:final message) => Center(
                 child: Text(
@@ -58,7 +59,8 @@ class _ShootingAnalyticsScreenState extends State<ShootingAnalyticsScreen> {
                       .copyWith(color: DSColors.textSecondary),
                 ),
               ),
-            SessionSummaryLoaded(:final data) => _AnalyticsDashboard(data: data),
+            SessionSummaryLoaded(:final data) =>
+              _AnalyticsDashboard(data: data),
             _ => const SizedBox.shrink(),
           },
         );
@@ -182,7 +184,8 @@ class _MetricsGrid extends StatelessWidget {
             : 0;
     final mentalTrend = data.moodCorrelation?.moodLabel ?? 'steady focus';
 
-    final periodAvg = data.moodCorrelation?.sessionAvg ?? data.averagePerShot * 0.98;
+    final periodAvg =
+        data.moodCorrelation?.sessionAvg ?? data.averagePerShot * 0.98;
     final scoreTrend = has
         ? '+${(data.averagePerShot - periodAvg).abs().toStringAsFixed(2)}'
         : 'no data';
@@ -442,9 +445,21 @@ class _ScorePatternCard extends StatelessWidget {
   final SessionSummaryEntity data;
 
   static const _demo = [
-    10.2, 9.8, 9.1, 10.4, 9.9,
-    8.7, 10.1, 9.2, 9.7, 10.5,
-    10.0, 9.3, 9.8, 10.3, 10.1,
+    10.2,
+    9.8,
+    9.1,
+    10.4,
+    9.9,
+    8.7,
+    10.1,
+    9.2,
+    9.7,
+    10.5,
+    10.0,
+    9.3,
+    9.8,
+    10.3,
+    10.1,
   ];
 
   @override

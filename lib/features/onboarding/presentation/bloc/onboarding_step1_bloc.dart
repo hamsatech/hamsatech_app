@@ -74,9 +74,11 @@ class OnboardingStep1Bloc
                 : state.gender.name,
             city: state.city,
           );
-          debugPrint('[ONBOARDING] personal-details synced athleteId=$athleteId');
+          debugPrint(
+              '[ONBOARDING] personal-details synced athleteId=$athleteId');
         } catch (e) {
-          debugPrint('[ONBOARDING] personal-details sync failed (non-fatal): $e');
+          debugPrint(
+              '[ONBOARDING] personal-details sync failed (non-fatal): $e');
         }
       });
     } else {
@@ -92,7 +94,8 @@ class OnboardingStep1Bloc
     // - city non-empty
 
     if (s.name.isEmpty) {
-      return s.copyWith(isValid: false, errorMessage: 'Please enter your full name');
+      return s.copyWith(
+          isValid: false, errorMessage: 'Please enter your full name');
     }
     if (s.name.length < 2) {
       return s.copyWith(isValid: false, errorMessage: 'Name is too short');
@@ -100,10 +103,12 @@ class OnboardingStep1Bloc
 
     final ageInt = int.tryParse(s.age);
     if (ageInt == null) {
-      return s.copyWith(isValid: false, errorMessage: 'Please enter a valid age');
+      return s.copyWith(
+          isValid: false, errorMessage: 'Please enter a valid age');
     }
     if (ageInt < 10 || ageInt > 120) {
-      return s.copyWith(isValid: false, errorMessage: 'Please enter a realistic age');
+      return s.copyWith(
+          isValid: false, errorMessage: 'Please enter a realistic age');
     }
 
     if (s.gender == OnboardingGender.unknown) {

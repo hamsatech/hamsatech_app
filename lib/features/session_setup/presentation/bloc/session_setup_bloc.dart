@@ -96,25 +96,29 @@ class SessionSetupBloc extends Bloc<SessionSetupEvent, SessionSetupState> {
 
     emit(editing.copyWith(isSubmitting: true));
     try {
-      // ── Step 1: create session row ─────────────────────────────────────────
+      // ── Step 1: create session via mobile backend ──────────────────────────
       String? sessionId;
       final athleteId = AuthHelper.getCurrentAthleteId();
       if (athleteId != null) {
         try {
-          debugPrint('[SESSION] calling createSession athleteId=$athleteId');
-          final response = await ApiService.instance.createSession(
+          debugPrint('[SESSION] POST api/mobile/athletes/$athleteId/sessions');
+          final response = await ApiService.instance.createMobileSession(
             athleteId: athleteId,
             sessionType: _toApiSessionType(editing.sessionType),
+            rangeType: _toApiRangeType(editing.rangeType),
+            plannedShots: editing.plannedShots,
+            discipline: editing.discipline,
           );
-          debugPrint('[SESSION CREATED]');
-          debugPrint('[SESSION RESPONSE] ${response.data}');
+          debugPrint('[SESSION CREATED] response=${response.data}');
           sessionId = _extractSessionId(response.data);
           SessionMemory.sessionId = sessionId;
           if (sessionId != null) {
             await StorageService.saveSessionId(sessionId);
-            debugPrint('[SESSION] session_id persisted to StorageService: $sessionId');
+            debugPrint('[SESSION] session_id persisted: $sessionId');
+          } else {
+            debugPrint(
+                '[SESSION] WARNING: no session_id in response: ${response.data}');
           }
-          debugPrint('[SESSION ID] $sessionId');
         } catch (apiError) {
           _logApiError('SESSION CREATE', apiError);
           // API failure does not block the local flow.
@@ -147,7 +151,8 @@ class SessionSetupBloc extends Bloc<SessionSetupEvent, SessionSetupState> {
             mentalState: 'neutral',
             feelingRating: 'moderate',
           );
-          debugPrint('[PRE LOG RESPONSE] status=${preRes.statusCode} data=${preRes.data}');
+          debugPrint(
+              '[PRE LOG RESPONSE] status=${preRes.statusCode} data=${preRes.data}');
         } catch (preLogError) {
           _logApiError('PRE LOG', preLogError);
         }
@@ -177,12 +182,25 @@ class SessionSetupBloc extends Bloc<SessionSetupEvent, SessionSetupState> {
         null => 'training',
       };
 
+  String _toApiRangeType(RangeType? type) => switch (type) {
+        RangeType.electronic => 'electronic',
+        RangeType.paper => 'paper',
+        null => 'paper',
+      };
+
   String? _extractSessionId(dynamic data) {
     if (data is List && data.isNotEmpty) {
       final row = data.first;
       if (row is Map) return (row['session_id'] ?? row['id'])?.toString();
     }
-    if (data is Map) return (data['session_id'] ?? data['id'])?.toString();
+    if (data is Map) {
+      // Handle wrapped response: { "data": { "session_id": "..." } }
+      if (data['data'] is Map) {
+        final inner = data['data'] as Map;
+        return (inner['session_id'] ?? inner['id'])?.toString();
+      }
+      return (data['session_id'] ?? data['id'])?.toString();
+    }
     return null;
   }
 

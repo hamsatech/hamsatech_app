@@ -26,7 +26,8 @@ class ReportSectionHeader extends StatelessWidget {
             const SizedBox(height: DSSpacing.xxs),
             Text(
               subtitle!,
-              style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
+              style:
+                  DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
             ),
           ],
         ],

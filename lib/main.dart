@@ -6,7 +6,6 @@ import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
 import 'core/services/storage_service.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
@@ -18,7 +17,6 @@ void main() async {
   ]);
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

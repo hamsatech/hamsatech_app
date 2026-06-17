@@ -21,7 +21,7 @@ class _BreathingCircleState extends State<BreathingCircle>
   late Animation<double> _scale;
 
   static const _outerColor = Color(0xFFBFDBFE); // blue-200
-  static const _midColor = Color(0xFF93C5FD);   // blue-300
+  static const _midColor = Color(0xFF93C5FD); // blue-300
   static const _innerColor = Color(0xFF2F7E8F); // blue-600
 
   @override

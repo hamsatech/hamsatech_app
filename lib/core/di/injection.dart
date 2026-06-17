@@ -102,8 +102,8 @@ void setupDI() {
 
   getIt.registerLazySingleton<LiveTrainingRepository>(
       () => LiveTrainingRepositoryImpl());
-  getIt.registerLazySingleton<LiveTrainingBloc>(
-      () => LiveTrainingBloc(getIt()));
+  getIt
+      .registerLazySingleton<LiveTrainingBloc>(() => LiveTrainingBloc(getIt()));
 
   getIt.registerLazySingleton<ScoreEntryRepository>(
       () => ScoreEntryRepositoryImpl());

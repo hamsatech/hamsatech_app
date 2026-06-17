@@ -45,7 +45,14 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
       final row = data.first;
       if (row is Map) return (row['session_id'] ?? row['id'])?.toString();
     }
-    if (data is Map) return (data['session_id'] ?? data['id'])?.toString();
+    if (data is Map) {
+      // Handle wrapped response: { "data": { "session_id": "..." } }
+      if (data['data'] is Map) {
+        final inner = data['data'] as Map;
+        return (inner['session_id'] ?? inner['id'])?.toString();
+      }
+      return (data['session_id'] ?? data['id'])?.toString();
+    }
     return null;
   }
 
@@ -61,43 +68,66 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
     }
   }
 
-  // ── Supabase: session create + pre-log ─────────────────────────────────────
+  // ── Session create + pre-log ──────────────────────────────────────────────
 
   void _syncSessionStart(PreSessionData pre) {
     Future(() async {
-      // ── Step 1: create session row ────────────────────────────────────────
-      String? sessionId;
-      try {
+      // ── Step 1: resolve session_id ────────────────────────────────────────
+      // SessionSetupBloc already created the session and stored the id.
+      // Reuse it to avoid creating a duplicate session record.
+      String? sessionId =
+          SessionMemory.sessionId ?? StorageService.getSessionId();
+
+      if (sessionId == null) {
+        // Standalone flow (pre-session screen reached without Setup screen).
+        // Create a new session via the mobile backend using stored setup data.
         final athleteId = _resolveAthleteId();
         if (athleteId == null) {
-          debugPrint('[SESSION] skipped — no athlete_id (onboarding incomplete)');
+          debugPrint(
+              '[SESSION] skipped — no athlete_id (onboarding incomplete)');
           return;
         }
-        debugPrint('[SESSION] calling createSession athleteId=$athleteId');
 
-        final res = await ApiService.instance.createSession(
-          athleteId: athleteId,
-          sessionType: 'training',
-        );
-        sessionId = _extractSessionId(res.data);
-        if (sessionId == null) {
-          debugPrint('[SESSION] WARNING: no session_id in response: ${res.data}');
+        final setup = StorageService.getSessionSetup();
+        final sessionType = setup?['sessionType'] as String? ?? 'training';
+        final rangeType = setup?['rangeType'] as String? ?? 'paper';
+        final plannedShots = (setup?['plannedShots'] as num?)?.toInt() ?? 60;
+        final discipline = setup?['discipline'] as String? ?? '';
+
+        try {
+          debugPrint(
+              '[SESSION] standalone — POST api/mobile/athletes/$athleteId/sessions');
+          final res = await ApiService.instance.createMobileSession(
+            athleteId: athleteId,
+            sessionType: sessionType,
+            rangeType: rangeType,
+            plannedShots: plannedShots,
+            discipline: discipline,
+          );
+          sessionId = _extractSessionId(res.data);
+          if (sessionId == null) {
+            debugPrint(
+                '[SESSION] WARNING: no session_id in response: ${res.data}');
+            return;
+          }
+          SessionMemory.sessionId = sessionId;
+          await StorageService.saveSessionId(sessionId);
+          debugPrint('[SESSION] standalone session created id=$sessionId');
+        } catch (e) {
+          _logApiError('SESSION CREATE', e);
           return;
         }
-        SessionMemory.sessionId = sessionId;
-        await StorageService.saveSessionId(sessionId);
-        debugPrint('[SESSION] session_id persisted to StorageService: $sessionId');
-        debugPrint('[SESSION] created id=$sessionId');
-      } catch (e) {
-        _logApiError('SESSION CREATE', e);
-        return; // can't write pre-log without a session_id
+      } else {
+        debugPrint(
+            '[SESSION] reusing existing session_id=$sessionId from SetupBloc');
       }
 
       // ── Step 2: pre-log (independent — failure must not block the session) ─
       try {
-        final readiness = ((pre.energy + pre.focus + (11 - pre.stress) + pre.confidence) / 4)
-            .round()
-            .clamp(1, 10);
+        final readiness =
+            ((pre.energy + pre.focus + (11 - pre.stress) + pre.confidence) / 4)
+                .round()
+                .clamp(1, 10);
         final mentalState = pre.focus >= 7
             ? 'focused'
             : pre.focus >= 4
@@ -127,14 +157,15 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
           mentalState: mentalState,
           feelingRating: feelingRating,
         );
-        debugPrint('[PRE LOG SUCCESS] status=${res.statusCode} data=${res.data}');
+        debugPrint(
+            '[PRE LOG SUCCESS] status=${res.statusCode} data=${res.data}');
       } catch (e) {
         _logApiError('PRE LOG', e);
       }
     });
   }
 
-  // ── Supabase: end_time update + post-log ───────────────────────────────────
+  // ── Session complete + post-log ────────────────────────────────────────────
 
   void _syncSessionComplete(
     String localSessionId,
@@ -149,9 +180,32 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
         return;
       }
 
-      // ── Step 1: update end_time (independent — failure must not block post-log)
+      final athleteId = _resolveAthleteId();
+      final rating = post.overallRating; // 1–5
+      final performanceRating = (rating * 2).clamp(1, 10); // → 2–10
+
+      // ── Step 1: signal completion to mobile backend (canonical endpoint) ────
+      if (athleteId != null) {
+        try {
+          final completeRes = await ApiService.instance.completeMobileSession(
+            athleteId: athleteId,
+            sessionId: supabaseSessionId,
+            durationMinutes: durationMinutes,
+            performanceRating: performanceRating,
+            notes: post.mentalNotes,
+          );
+          debugPrint(
+              '[SESSION COMPLETE] mobile backend status=${completeRes.statusCode}');
+        } catch (e) {
+          _logApiError('SESSION COMPLETE', e);
+          // Non-fatal: continue to Supabase fallback updates.
+        }
+      }
+
+      // ── Step 2: update end_time in Supabase (independent — failure must not block post-log)
       try {
-        debugPrint('[SESSION END] calling updateSessionEndTime id=$supabaseSessionId');
+        debugPrint(
+            '[SESSION END] calling updateSessionEndTime id=$supabaseSessionId');
         await ApiService.instance.updateSessionEndTime(
           sessionId: supabaseSessionId,
           endTime: DateTime.now().toIso8601String(),
@@ -162,10 +216,8 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
         // intentionally continue to post-log even if end_time patch fails
       }
 
-      // ── Step 2: post-log ──────────────────────────────────────────────────
+      // ── Step 3: post-log ──────────────────────────────────────────────────
       try {
-        final rating = post.overallRating; // 1–5
-        final performanceRating = (rating * 2).clamp(1, 10); // → 2–10
         final focusLevel = rating >= 4
             ? 'high'
             : rating >= 3
@@ -195,7 +247,8 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
           challenges: challenges,
           coachFeedback: post.mentalNotes,
         );
-        debugPrint('[POST LOG SUCCESS] status=${res.statusCode} data=${res.data}');
+        debugPrint(
+            '[POST LOG SUCCESS] status=${res.statusCode} data=${res.data}');
 
         SessionMemory.clear();
       } catch (e) {

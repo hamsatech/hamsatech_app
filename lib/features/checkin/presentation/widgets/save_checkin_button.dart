@@ -27,7 +27,8 @@ class SaveCheckinButton extends StatelessWidget {
             onPressed: (canSave && !isLoading) ? onSave : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: DSColors.terracotta,
-              disabledBackgroundColor: DSColors.terracotta.withValues(alpha: 0.45),
+              disabledBackgroundColor:
+                  DSColors.terracotta.withValues(alpha: 0.45),
               foregroundColor: Colors.white,
               disabledForegroundColor: Colors.white.withValues(alpha: 0.55),
               elevation: 0,

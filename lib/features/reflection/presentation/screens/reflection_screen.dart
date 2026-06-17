@@ -3,7 +3,6 @@ import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-
 import '../../../../core/di/injection.dart';
 import '../../domain/entities/journal_entry_entity.dart';
 import '../bloc/reflection_bloc.dart';
@@ -53,7 +52,9 @@ class _ReflectionView extends StatelessWidget {
             );
           }
 
-          final entries = state is ReflectionLoaded ? state.entries : <JournalEntryEntity>[];
+          final entries = state is ReflectionLoaded
+              ? state.entries
+              : <JournalEntryEntity>[];
 
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -68,8 +69,7 @@ class _ReflectionView extends StatelessWidget {
         onPressed: () => _showAddEntrySheet(context),
         backgroundColor: DSColors.brand,
         icon: const Icon(Icons.edit_rounded, color: Colors.white),
-        label: const Text('Write Entry',
-            style: TextStyle(color: Colors.white)),
+        label: const Text('Write Entry', style: TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -157,25 +157,22 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
                 }),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? DSColors.brand.withValues(alpha: 0.2)
                         : DSColors.appCard,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected
-                          ? DSColors.brand
-                          : DSColors.appBorder,
+                      color: isSelected ? DSColors.brand : DSColors.appBorder,
                     ),
                   ),
                   child: Text(
                     '$emoji $label',
                     style: DSTypography.labelMedium.copyWith(
-                      color: isSelected
-                          ? DSColors.brand
-                          : DSColors.textSecondary,
+                      color:
+                          isSelected ? DSColors.brand : DSColors.textSecondary,
                     ),
                   ),
                 ),
@@ -251,16 +248,16 @@ class _EntryCard extends StatelessWidget {
                 const Spacer(),
                 if (entry.emotion != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: DSColors.brand.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       entry.emotion!,
-                      style: DSTypography.caption
-                          .copyWith(color: DSColors.brand),
+                      style:
+                          DSTypography.caption.copyWith(color: DSColors.brand),
                     ),
                   ),
               ],

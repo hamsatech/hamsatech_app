@@ -10,7 +10,8 @@ class BaselineQuestionEntity extends Equatable {
 
   final int id;
   final String question;
-  final String category; // focus | emotional_stability | decision_style | motivation
+  final String
+      category; // focus | emotional_stability | decision_style | motivation
   final List<AnswerOptionEntity> options;
 
   @override

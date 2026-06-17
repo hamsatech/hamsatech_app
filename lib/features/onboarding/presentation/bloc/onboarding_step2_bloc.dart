@@ -20,7 +20,8 @@ class OnboardingStep2Bloc
     OnDisciplineChanged event,
     Emitter<OnboardingStep2State> emit,
   ) {
-    final next = state.copyWith(discipline: event.discipline, errorMessage: null);
+    final next =
+        state.copyWith(discipline: event.discipline, errorMessage: null);
     emit(_validate(next));
   }
 
@@ -28,7 +29,8 @@ class OnboardingStep2Bloc
     OnExperienceChanged event,
     Emitter<OnboardingStep2State> emit,
   ) {
-    final next = state.copyWith(experience: event.experience, errorMessage: null);
+    final next =
+        state.copyWith(experience: event.experience, errorMessage: null);
     emit(_validate(next));
   }
 
@@ -86,9 +88,11 @@ class OnboardingStep2Bloc
             yearsShooting: state.yearsShoot,
             academyOrClub: state.academy,
           );
-          debugPrint('[ONBOARDING] shooting-profile synced athleteId=$athleteId');
+          debugPrint(
+              '[ONBOARDING] shooting-profile synced athleteId=$athleteId');
         } catch (e) {
-          debugPrint('[ONBOARDING] shooting-profile sync failed (non-fatal): $e');
+          debugPrint(
+              '[ONBOARDING] shooting-profile sync failed (non-fatal): $e');
         }
       });
     } else {

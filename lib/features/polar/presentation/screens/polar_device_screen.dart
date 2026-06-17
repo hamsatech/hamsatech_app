@@ -561,8 +561,7 @@ class _DemoDeviceCardState extends State<_DemoDeviceCard> {
                   _connecting ? 'Connecting...' : 'H10',
                   style: TextStyle(
                     fontSize: 12,
-                    color:
-                        _connecting ? _kConnectingText : _kTextSecondary,
+                    color: _connecting ? _kConnectingText : _kTextSecondary,
                   ),
                 ),
               ],

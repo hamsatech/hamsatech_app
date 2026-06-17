@@ -44,9 +44,9 @@ class PreSessionData extends Equatable {
     required this.confidence,
   });
 
-  final int energy;     // 1–10
-  final int focus;      // 1–10
-  final int stress;     // 1–10
+  final int energy; // 1–10
+  final int focus; // 1–10
+  final int stress; // 1–10
   final int confidence; // 1–10
 
   @override
@@ -67,8 +67,7 @@ class PostSessionData extends Equatable {
   final String mentalNotes;
 
   @override
-  List<Object?> get props =>
-      [overallRating, wentWell, wentWrong, mentalNotes];
+  List<Object?> get props => [overallRating, wentWell, wentWrong, mentalNotes];
 }
 
 enum SessionStatus { notStarted, active, completed }

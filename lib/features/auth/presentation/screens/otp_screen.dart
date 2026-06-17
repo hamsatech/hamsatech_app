@@ -144,8 +144,8 @@ class _OtpViewState extends State<_OtpView> {
                   disabledBorderColor: DSColors.gray200,
                   filled: true,
                   fillColor: Colors.white,
-                  textStyle:
-                      DSTypography.headingMd.copyWith(color: DSColors.textPrimary),
+                  textStyle: DSTypography.headingMd
+                      .copyWith(color: DSColors.textPrimary),
                   cursorColor: DSColors.brand,
                   // phone keyboard commits each char immediately — avoids
                   // Android IME composing-text artefacts that appear as symbols

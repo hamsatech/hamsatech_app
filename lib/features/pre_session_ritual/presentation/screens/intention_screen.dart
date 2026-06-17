@@ -35,8 +35,7 @@ class _IntentionViewState extends State<_IntentionView> {
   void initState() {
     super.initState();
     final current = context.read<RitualBloc>().state;
-    final initial =
-        current is RitualIntentionState ? current.intention : '';
+    final initial = current is RitualIntentionState ? current.intention : '';
     _controller = TextEditingController(text: initial);
   }
 
@@ -157,9 +156,8 @@ class _IntentionTextField extends StatelessWidget {
           contentPadding: EdgeInsets.all(16),
           border: InputBorder.none,
         ),
-        onChanged: (v) => context
-            .read<RitualBloc>()
-            .add(RitualIntentionChanged(v)),
+        onChanged: (v) =>
+            context.read<RitualBloc>().add(RitualIntentionChanged(v)),
       ),
     );
   }

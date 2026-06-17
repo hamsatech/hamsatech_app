@@ -30,7 +30,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final athleteId = _extractAthleteId(res.data);
       if (athleteId == null || athleteId.isEmpty) {
-        throw Exception('Verification failed — no athleteId returned from server.');
+        throw Exception(
+            'Verification failed — no athleteId returned from server.');
       }
 
       debugPrint('[AUTH SUCCESS] athleteId=$athleteId');

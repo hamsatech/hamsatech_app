@@ -31,8 +31,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthVerifying());
     try {
-      final user =
-          await _repository.verifyOtp(event.phoneOrEmail, event.otp);
+      final user = await _repository.verifyOtp(event.phoneOrEmail, event.otp);
       emit(AuthAuthenticated(user));
     } catch (e) {
       emit(AuthFailure(e.toString()));

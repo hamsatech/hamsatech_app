@@ -47,8 +47,7 @@ class RangeTypeSelector extends StatelessWidget {
                   type.label,
                   style: DSTypography.labelMd.copyWith(
                     color: isSelected ? DSColors.gray100 : DSColors.gray400,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),

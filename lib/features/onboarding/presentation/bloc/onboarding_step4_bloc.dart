@@ -59,7 +59,8 @@ class OnboardingStep4Bloc
             goal30d: state.goal30Value,
             goal6m: state.goal6MonthValue,
           );
-          debugPrint('[ONBOARDING] goals synced — backend will set onboarding_complete=true');
+          debugPrint(
+              '[ONBOARDING] goals synced — backend will set onboarding_complete=true');
         } catch (e) {
           debugPrint('[ONBOARDING] goals sync failed (non-fatal): $e');
         }
@@ -70,8 +71,7 @@ class OnboardingStep4Bloc
   }
 
   OnboardingStep4State _validate(OnboardingStep4State s) {
-    final hasAnyGoal =
-        s.goal30Value.isNotEmpty || s.goal6MonthValue.isNotEmpty;
+    final hasAnyGoal = s.goal30Value.isNotEmpty || s.goal6MonthValue.isNotEmpty;
     if (!hasAnyGoal) {
       return s.copyWith(
         isValid: false,

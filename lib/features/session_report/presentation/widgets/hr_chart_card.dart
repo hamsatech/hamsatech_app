@@ -90,8 +90,7 @@ class HrChartCard extends StatelessWidget {
         // ── Chart ────────────────────────────────────────────────────────────
         Container(
           height: 180,
-          padding:
-              const EdgeInsets.fromLTRB(0, DSSpacing.sm, DSSpacing.sm, 0),
+          padding: const EdgeInsets.fromLTRB(0, DSSpacing.sm, DSSpacing.sm, 0),
           decoration: BoxDecoration(
             color: DSColors.white,
             border: Border.all(color: DSColors.gray200),
@@ -116,12 +115,12 @@ class HrChartCard extends StatelessWidget {
                 border: Border.all(color: DSColors.gray200),
               ),
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -195,8 +194,7 @@ class HrChartCard extends StatelessWidget {
         Row(
           children: [
             _LegendItem(
-              indicator: Container(
-                  width: 20, height: 2, color: DSColors.error),
+              indicator: Container(width: 20, height: 2, color: DSColors.error),
               label: 'Avg HR',
             ),
             const SizedBox(width: DSSpacing.lg),

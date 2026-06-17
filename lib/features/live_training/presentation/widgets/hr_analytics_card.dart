@@ -239,9 +239,36 @@ class _HrBarChart extends StatelessWidget {
 
   // Naturalistic rising pattern shown before any readings arrive.
   static const _placeholderHeights = [
-    0.28, 0.32, 0.30, 0.35, 0.38, 0.36, 0.40, 0.44, 0.42, 0.48,
-    0.50, 0.47, 0.52, 0.56, 0.53, 0.58, 0.62, 0.59, 0.66, 0.70,
-    0.68, 0.73, 0.70, 0.76, 0.74, 0.80, 0.76, 0.82, 0.79, 0.74,
+    0.28,
+    0.32,
+    0.30,
+    0.35,
+    0.38,
+    0.36,
+    0.40,
+    0.44,
+    0.42,
+    0.48,
+    0.50,
+    0.47,
+    0.52,
+    0.56,
+    0.53,
+    0.58,
+    0.62,
+    0.59,
+    0.66,
+    0.70,
+    0.68,
+    0.73,
+    0.70,
+    0.76,
+    0.74,
+    0.80,
+    0.76,
+    0.82,
+    0.79,
+    0.74,
   ];
 
   @override
@@ -286,9 +313,7 @@ class _HrBarChart extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 1.0),
         height: _maxHeight * heightFraction.clamp(0.08, 1.0),
         decoration: BoxDecoration(
-          color: isPlaceholder
-              ? _barColor.withValues(alpha: 0.22)
-              : _barColor,
+          color: isPlaceholder ? _barColor.withValues(alpha: 0.22) : _barColor,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(2),
           ),

@@ -35,8 +35,7 @@ class OnboardingState extends Equatable {
   BaselineQuestionEntity? get currentQuestion =>
       questions.isNotEmpty ? questions[currentQuestionIndex] : null;
 
-  bool get isLastQuestion =>
-      currentQuestionIndex == questions.length - 1;
+  bool get isLastQuestion => currentQuestionIndex == questions.length - 1;
 
   double get assessmentProgress =>
       questions.isEmpty ? 0 : (currentQuestionIndex + 1) / questions.length;

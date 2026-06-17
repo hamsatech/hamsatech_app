@@ -306,8 +306,7 @@ class _ActionIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconColor =
-        isDestructive ? DSColors.error : DSColors.textSecondary;
+    final iconColor = isDestructive ? DSColors.error : DSColors.textSecondary;
     final bgColor = isDestructive
         ? DSColors.error.withValues(alpha: 0.08)
         : DSColors.gray100;
@@ -338,9 +337,7 @@ class _ActionIconButton extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: isDestructive
-                  ? DSColors.error
-                  : DSColors.textSecondary,
+              color: isDestructive ? DSColors.error : DSColors.textSecondary,
             ),
           ),
         ],
@@ -401,8 +398,7 @@ class _FeedbackBottomSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Help us improve Astra by sharing your thoughts.',
-            style: DSTypography.bodySm
-                .copyWith(color: DSColors.textSecondary),
+            style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
           ),
           const SizedBox(height: 20),
           _FeedbackOption(
@@ -502,16 +498,14 @@ void _showLogoutDialog(BuildContext context) {
       ),
       content: Text(
         'You will be returned to the login screen.',
-        style:
-            DSTypography.bodyMd.copyWith(color: DSColors.textSecondary),
+        style: DSTypography.bodyMd.copyWith(color: DSColors.textSecondary),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogCtx),
           child: Text(
             'Cancel',
-            style: DSTypography.labelMd
-                .copyWith(color: DSColors.textSecondary),
+            style: DSTypography.labelMd.copyWith(color: DSColors.textSecondary),
           ),
         ),
         ElevatedButton(

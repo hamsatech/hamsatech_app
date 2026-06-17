@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
-
-
 class AiInsightsCard extends StatelessWidget {
   const AiInsightsCard({super.key, required this.insights});
 

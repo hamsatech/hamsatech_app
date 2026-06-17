@@ -32,7 +32,8 @@ class AuthHelper {
 
     // Phone number is intentionally NOT used as a fallback — it is not a
     // valid athlete_id and causes FK constraint failures on the backend.
-    debugPrint('[AUTH HELPER] no athlete_id found — POST /athletes may be pending');
+    debugPrint(
+        '[AUTH HELPER] no athlete_id found — POST /athletes may be pending');
     return null;
   }
 }

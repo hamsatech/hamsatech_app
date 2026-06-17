@@ -230,8 +230,7 @@ class _MoodItem extends StatelessWidget {
             mood.label,
             style: DSTypography.labelXs.copyWith(
               color: isSelected ? _kTeal : DSColors.textSecondary,
-              fontWeight:
-                  isSelected ? FontWeight.w600 : FontWeight.w400,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
         ],
@@ -276,8 +275,8 @@ class _ReflectionField extends StatelessWidget {
           style: DSTypography.bodyMd.copyWith(color: DSColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: DSTypography.bodyMd
-                .copyWith(color: DSColors.textPlaceholder),
+            hintStyle:
+                DSTypography.bodyMd.copyWith(color: DSColors.textPlaceholder),
             filled: true,
             fillColor: DSColors.white,
             contentPadding: const EdgeInsets.all(DSSpacing.lg),

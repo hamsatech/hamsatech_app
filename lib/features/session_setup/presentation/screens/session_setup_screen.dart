@@ -50,9 +50,8 @@ class _SessionSetupView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        final editing = state is SessionSetupEditing
-            ? state
-            : const SessionSetupEditing();
+        final editing =
+            state is SessionSetupEditing ? state : const SessionSetupEditing();
 
         return Scaffold(
           backgroundColor: DSColors.appBackground,
@@ -131,7 +130,8 @@ class _SessionSetupView extends StatelessWidget {
                       const SizedBox(height: 10),
                       PlannedShotsSelector(
                         value: editing.plannedShots,
-                        quickSelectValues: SessionSetupEditing.quickSelectValues,
+                        quickSelectValues:
+                            SessionSetupEditing.quickSelectValues,
                         min: SessionSetupEditing.minShots,
                         max: SessionSetupEditing.maxShots,
                         onChanged: (v) => context

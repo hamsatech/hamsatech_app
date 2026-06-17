@@ -21,5 +21,6 @@ class OnboardingSlideEntity extends Equatable {
   bool get hasImage => imageAssetPath != null;
 
   @override
-  List<Object?> get props => [id, title, description, comingSoon, imageAssetPath];
+  List<Object?> get props =>
+      [id, title, description, comingSoon, imageAssetPath];
 }

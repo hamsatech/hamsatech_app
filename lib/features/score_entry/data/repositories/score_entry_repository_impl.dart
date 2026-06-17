@@ -13,8 +13,7 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
 
     if (setup != null) {
       final rangeTypeStr = setup['rangeType'] as String? ?? 'paper';
-      final rangeLabel =
-          rangeTypeStr == 'electronic' ? 'Electronic' : 'Paper';
+      final rangeLabel = rangeTypeStr == 'electronic' ? 'Electronic' : 'Paper';
       final sessionTypeStr = setup['sessionType'] as String?;
       final typeLabel = switch (sessionTypeStr) {
         'scoring' => ' Scoring',
@@ -24,8 +23,7 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
       };
       title = '$rangeLabel$typeLabel Session';
 
-      final plannedShots =
-          (setup['plannedShots'] as num?)?.toInt() ?? 60;
+      final plannedShots = (setup['plannedShots'] as num?)?.toInt() ?? 60;
       totalSeries = (plannedShots / _defaultShotsPerSeries).ceil();
     }
 
@@ -41,8 +39,7 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
     // Represent each series as synthetic per-shot averages so downstream
     // analytics (variance, avg-per-shot, HR charts) remain meaningful.
     final data = totals.asMap().entries.map((e) {
-      final avgShot =
-          shotsPerSeries > 0 ? e.value / shotsPerSeries : 0.0;
+      final avgShot = shotsPerSeries > 0 ? e.value / shotsPerSeries : 0.0;
       final avgStr = avgShot.toStringAsFixed(2);
       return {
         'seriesNumber': e.key + 1,

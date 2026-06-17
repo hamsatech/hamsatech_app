@@ -56,8 +56,7 @@ class _CheckItem extends StatelessWidget {
             item.text,
             style: DSTypography.bodySm.copyWith(
               color: item.isChecked ? DSColors.gray400 : DSColors.black,
-              decoration:
-                  item.isChecked ? TextDecoration.lineThrough : null,
+              decoration: item.isChecked ? TextDecoration.lineThrough : null,
             ),
           ),
         ),

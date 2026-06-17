@@ -155,8 +155,7 @@ class _ReflectViewState extends State<_ReflectView> {
                               _workedController.text.trim()),
                         );
                     context.read<LiveTrainingBloc>().add(
-                          ReflectWhatDidntChanged(
-                              _didntController.text.trim()),
+                          ReflectWhatDidntChanged(_didntController.text.trim()),
                         );
                     context
                         .read<LiveTrainingBloc>()

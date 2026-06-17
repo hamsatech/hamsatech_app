@@ -42,7 +42,8 @@ class SummaryMetricCard extends StatelessWidget {
                 const SizedBox(width: DSSpacing.xs),
                 Text(
                   valueSuffix!,
-                  style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
+                  style: DSTypography.bodySm
+                      .copyWith(color: DSColors.textSecondary),
                 ),
               ],
             ],

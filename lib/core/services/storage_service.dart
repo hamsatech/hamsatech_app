@@ -37,8 +37,7 @@ class StorageService {
     return _prefs.setString('last_route', route);
   }
 
-  static String getLastRoute() =>
-      _prefs.getString('last_route') ?? '/home';
+  static String getLastRoute() => _prefs.getString('last_route') ?? '/home';
 
   // ── User profile ──────────────────────────────────────────────────────────
 
@@ -92,7 +91,8 @@ class StorageService {
 
   static Future<void> saveQuestionnaireProgress(
       int questionIndex, Map<int, int> answers) {
-    debugPrint('[Assessment] SAVE: index=$questionIndex, answered=${answers.length}');
+    debugPrint(
+        '[Assessment] SAVE: index=$questionIndex, answered=${answers.length}');
     return _prefs.setString(
       'questionnaire_progress',
       jsonEncode({
@@ -105,7 +105,8 @@ class StorageService {
   // Returns {'index': int, 'answers': Map<int,int>} or null.
   static Map<String, dynamic>? getQuestionnaireProgress() {
     final str = _prefs.getString('questionnaire_progress');
-    debugPrint('[Assessment] READ: ${str == null ? "null (no progress)" : "found, raw=${str.length}chars"}');
+    debugPrint(
+        '[Assessment] READ: ${str == null ? "null (no progress)" : "found, raw=${str.length}chars"}');
     if (str == null) return null;
     final data = jsonDecode(str) as Map<String, dynamic>;
     final answers = (data['answers'] as Map<String, dynamic>)
@@ -193,8 +194,7 @@ class StorageService {
 
   // ── Journal entries ───────────────────────────────────────────────────────
 
-  static Future<void> saveJournalEntries(
-      List<Map<String, dynamic>> entries) =>
+  static Future<void> saveJournalEntries(List<Map<String, dynamic>> entries) =>
       _prefs.setString('journal_entries', jsonEncode(entries));
 
   static List<Map<String, dynamic>> getJournalEntries() {
@@ -241,8 +241,7 @@ class StorageService {
 
   // ── Score summary ─────────────────────────────────────────────────────────
 
-  static Future<void> saveScoreSummary(
-          List<Map<String, dynamic>> summary) =>
+  static Future<void> saveScoreSummary(List<Map<String, dynamic>> summary) =>
       _prefs.setString('score_summary', jsonEncode(summary));
 
   static List<Map<String, dynamic>>? getScoreSummary() {

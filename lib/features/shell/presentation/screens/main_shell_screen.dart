@@ -9,7 +9,8 @@ class MainShellScreen extends StatelessWidget {
 
   static const _tabs = [
     _TabItem(icon: Icons.home_rounded, label: 'Home', path: '/home'),
-    _TabItem(icon: Icons.gps_fixed_rounded, label: 'Sessions', path: '/sessions'),
+    _TabItem(
+        icon: Icons.gps_fixed_rounded, label: 'Sessions', path: '/sessions'),
     _TabItem(icon: Icons.insights_rounded, label: 'Insight', path: '/insight'),
     _TabItem(icon: Icons.person_rounded, label: 'Profile', path: '/profile'),
   ];
@@ -83,9 +84,8 @@ class _BottomNav extends StatelessWidget {
                           child: Icon(
                             tab.icon,
                             size: 22,
-                            color: isActive
-                                ? DSColors.brand
-                                : DSColors.textMuted,
+                            color:
+                                isActive ? DSColors.brand : DSColors.textMuted,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -93,12 +93,10 @@ class _BottomNav extends StatelessWidget {
                           tab.label,
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: isActive
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: isActive
-                                ? DSColors.brand
-                                : DSColors.textMuted,
+                            fontWeight:
+                                isActive ? FontWeight.w600 : FontWeight.w400,
+                            color:
+                                isActive ? DSColors.brand : DSColors.textMuted,
                           ),
                         ),
                       ],
