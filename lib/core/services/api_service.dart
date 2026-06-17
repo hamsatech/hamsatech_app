@@ -731,6 +731,15 @@ class ApiService {
           List<Map<String, dynamic>> rows) =>
       _dio.post('acc_stream', data: rows);
 
+  // ── Mobile backend — Dashboard Home ─────────────────────────────────────
+
+  /// GET /api/mobile/athletes/{athleteId}/home
+  /// Returns live dashboard summary: athlete name, readiness, streak, insights, weekly stats.
+  Future<Response<dynamic>> getDashboardHome(String athleteId) {
+    debugPrint('[DASHBOARD] GET api/mobile/athletes/$athleteId/home');
+    return _mobileDio.get('api/mobile/athletes/$athleteId/home');
+  }
+
   // ── RPC ───────────────────────────────────────────────────────────────────
 
   /// POST /rest/v1/rpc/get_dashboard_data

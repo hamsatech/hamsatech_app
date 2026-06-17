@@ -13,7 +13,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final nameFromProfile = (profileJson?['name'] as String? ?? '').trim();
     final nameFromUser = (userProfile?['name'] as String? ?? '').trim();
     final rawName = nameFromProfile.isNotEmpty ? nameFromProfile : nameFromUser;
-    final athleteName = rawName.isEmpty ? 'Athlete' : rawName;
+    var athleteName = rawName.isEmpty ? 'Athlete' : rawName;
     final baselineScores = StorageService.getBaselineScores() ?? {};
     final checkIn = StorageService.getTodayCheckIn();
     final sessions = StorageService.getSessions();
@@ -27,19 +27,57 @@ class DashboardRepositoryImpl implements DashboardRepository {
     var insights =
         _generateInsights(readiness, lastSession, performanceHistory);
     final actionPlan = _generateActionPlan(readiness);
-    final weeklyStats = _buildWeeklyStats(sessions);
+    var weeklyStats = _buildWeeklyStats(sessions);
     var coachFeedback = _buildCoachFeedback(lastSession);
-    final streakDays = _calculateStreak(sessions);
+    var streakDays = _calculateStreak(sessions);
     final isPolarConnected = StorageService.isPolarEnabled();
     final todayCheckinCompleted = checkIn != null;
 
-    // ── Augment with Supabase data (non-blocking fallback to local) ───────────
+    // ── Augment with backend data (non-blocking fallback to local) ──────────
     final athleteId = AuthHelper.getCurrentAthleteId();
 
     if (athleteId != null) {
-      final apiInsights = await _fetchApiInsights(athleteId);
-      if (apiInsights != null && apiInsights.isNotEmpty) {
-        insights = apiInsights;
+      // Mobile backend: primary source for dashboard home data
+      final homeData = await _fetchMobileHomeData(athleteId);
+      if (homeData != null) {
+        final backendName = (homeData['athlete_name'] ?? homeData['name'])?.toString().trim();
+        if (backendName != null && backendName.isNotEmpty) {
+          athleteName = backendName;
+        }
+
+        final backendStreak = homeData['streak_days'] ?? homeData['streak'];
+        if (backendStreak is num) streakDays = backendStreak.toInt();
+
+        final rawInsights = homeData['ai_insights'] ?? homeData['insights'] ?? homeData['recommendations'];
+        if (rawInsights is List && rawInsights.isNotEmpty) {
+          final parsed = rawInsights
+              .map((e) => e?.toString() ?? '')
+              .where((s) => s.isNotEmpty)
+              .take(3)
+              .toList();
+          if (parsed.isNotEmpty) insights = parsed;
+        }
+
+        final backendSessionCount = homeData['sessions_this_week'] ?? homeData['weekly_sessions'];
+        final backendAvgScore = homeData['weekly_avg_score'] ?? homeData['avg_score'];
+        if (backendSessionCount is num || backendAvgScore is num) {
+          weeklyStats = WeeklyStats(
+            sessionCount: backendSessionCount is num
+                ? backendSessionCount.toInt()
+                : weeklyStats.sessionCount,
+            averageScore: backendAvgScore is num
+                ? backendAvgScore.toDouble()
+                : weeklyStats.averageScore,
+          );
+        }
+      }
+
+      // Supabase fallback: AI insights (used only if mobile backend had none)
+      if (homeData == null || (homeData['ai_insights'] == null && homeData['insights'] == null && homeData['recommendations'] == null)) {
+        final apiInsights = await _fetchApiInsights(athleteId);
+        if (apiInsights != null && apiInsights.isNotEmpty) {
+          insights = apiInsights;
+        }
       }
 
       final apiCoachFeedback =
@@ -120,6 +158,26 @@ class DashboardRepositoryImpl implements DashboardRepository {
       );
     } catch (e) {
       debugPrint('[DASHBOARD] coach_feedback fetch failed: $e');
+      return null;
+    }
+  }
+
+  // ─── API: Mobile backend home ─────────────────────────────────────────────
+
+  Future<Map<String, dynamic>?> _fetchMobileHomeData(String athleteId) async {
+    try {
+      debugPrint('[DASHBOARD] GET api/mobile/athletes/$athleteId/home');
+      final res = await ApiService.instance.getDashboardHome(athleteId);
+      final data = res.data;
+      if (data is Map<String, dynamic>) return data;
+      // Handle wrapped response: { "data": { ... } }
+      if (data is Map && data['data'] is Map<String, dynamic>) {
+        return data['data'] as Map<String, dynamic>;
+      }
+      debugPrint('[DASHBOARD] home: unexpected response shape: ${data.runtimeType}');
+      return null;
+    } catch (e) {
+      debugPrint('[DASHBOARD] home fetch failed (non-fatal): $e');
       return null;
     }
   }
