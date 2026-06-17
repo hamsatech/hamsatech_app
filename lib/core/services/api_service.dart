@@ -163,6 +163,27 @@ class ApiService {
         },
       );
 
+  // ── Mobile backend — Athlete Registration ────────────────────────────────
+
+  /// POST /api/mobile/athletes/register
+  /// Called after OTP verification to register the athlete on the mobile backend.
+  /// Payload: { athlete_id, phone } — detailed profile is submitted via onboarding steps.
+  Future<Response<dynamic>> registerAthlete({
+    required String athleteId,
+    required String phone,
+    String sport = 'shooting',
+  }) {
+    debugPrint('[ATHLETE REGISTER] POST api/mobile/athletes/register athleteId=$athleteId');
+    return _mobileDio.post(
+      'api/mobile/athletes/register',
+      data: {
+        'athlete_id': athleteId,
+        'phone': phone,
+        'sport': sport,
+      },
+    );
+  }
+
   // ── Mobile backend — OTP auth ─────────────────────────────────────────────
 
   /// POST https://hamsatech-api.onrender.com/api/v1/auth/phone/send-otp

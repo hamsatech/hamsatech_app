@@ -38,6 +38,19 @@ class AuthRepositoryImpl implements AuthRepository {
       await StorageService.saveAthleteId(athleteId);
       debugPrint('[ATHLETE ID SAVED] $athleteId stored as supabase_athlete_id');
 
+      // Fire-and-forget: register athlete on mobile backend (non-blocking).
+      Future(() async {
+        try {
+          await ApiService.instance.registerAthlete(
+            athleteId: athleteId,
+            phone: phoneOrEmail,
+          );
+          debugPrint('[ATHLETE REGISTER] registered athleteId=$athleteId');
+        } catch (e) {
+          debugPrint('[ATHLETE REGISTER] failed (non-fatal): $e');
+        }
+      });
+
       final user = UserModel(
         id: athleteId,
         phoneOrEmail: phoneOrEmail,
