@@ -110,6 +110,36 @@ class _ProfileViewState extends State<_ProfileView> {
     });
   }
 
+  /// Sends current local profile snapshot to the mobile backend via PUT.
+  /// Called after any local profile mutation (e.g., goal edit, future edit screens).
+  void syncProfileUpdate() {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) return;
+    final profile = StorageService.getAthleteProfile() ?? {};
+    Future(() async {
+      try {
+        final age = profile['age'];
+        final pressureSources = profile['pressureSources'];
+        await ApiService.instance.updateMobileAthleteProfile(
+          athleteId: athleteId,
+          name: profile['name'] as String?,
+          age: age is int ? age : (age is num ? age.toInt() : null),
+          sportDomain: profile['sportDomain'] as String?,
+          experienceLevel: profile['experienceLevel'] as String?,
+          familySupport: profile['familySupport'] as String?,
+          pressureSources: pressureSources is List
+              ? List<String>.from(pressureSources)
+              : null,
+          goal30: profile['goal30'] as String?,
+          goal6Month: profile['goal6Month'] as String?,
+        );
+        debugPrint('[PROFILE UPDATE] synced from profile screen');
+      } catch (e) {
+        debugPrint('[PROFILE UPDATE] failed (non-fatal): $e');
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = StorageService.getAthleteProfile();

@@ -739,6 +739,39 @@ class ApiService {
     return _mobileDio.get('api/mobile/athletes/$athleteId/profile');
   }
 
+  /// PUT /api/mobile/athletes/{athleteId}/profile
+  Future<Response<dynamic>> updateMobileAthleteProfile({
+    required String athleteId,
+    String? name,
+    int? age,
+    String? sportDomain,
+    String? experienceLevel,
+    String? familySupport,
+    List<String>? pressureSources,
+    String? goal30,
+    String? goal6Month,
+  }) {
+    debugPrint('[PROFILE UPDATE] PUT api/mobile/athletes/$athleteId/profile');
+    return _mobileDio.put(
+      'api/mobile/athletes/$athleteId/profile',
+      data: {
+        if (name != null && name.isNotEmpty) 'name': name,
+        if (age != null) 'age': age,
+        if (sportDomain != null && sportDomain.isNotEmpty)
+          'sport_domain': sportDomain,
+        if (experienceLevel != null && experienceLevel.isNotEmpty)
+          'experience_level': experienceLevel,
+        if (familySupport != null && familySupport.isNotEmpty)
+          'family_support': familySupport,
+        if (pressureSources != null && pressureSources.isNotEmpty)
+          'pressure_sources': pressureSources,
+        if (goal30 != null && goal30.isNotEmpty) 'goal_30': goal30,
+        if (goal6Month != null && goal6Month.isNotEmpty)
+          'goal_6_month': goal6Month,
+      },
+    );
+  }
+
   // ── Mobile backend — Dashboard Home ─────────────────────────────────────
 
   /// GET /api/mobile/athletes/{athleteId}/home

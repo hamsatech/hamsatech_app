@@ -24,6 +24,33 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     // Athlete row is created by the backend at OTP verify-registration time.
     // Flutter only writes psychology scores here.
     await _syncPsychologyScores(profile.baselineScores);
+
+    // Fire-and-forget: sync full profile to mobile backend (non-blocking).
+    _syncProfileUpdate(profile);
+  }
+
+  void _syncProfileUpdate(AthleteProfileEntity profile) {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) {
+      debugPrint('[PROFILE UPDATE] skipped — no athlete_id');
+      return;
+    }
+    Future(() async {
+      try {
+        final res = await ApiService.instance.updateMobileAthleteProfile(
+          athleteId: athleteId,
+          name: profile.name,
+          age: profile.age,
+          sportDomain: profile.sportDomain,
+          experienceLevel: profile.experienceLevel,
+          familySupport: profile.familySupport,
+          pressureSources: profile.pressureSources,
+        );
+        debugPrint('[PROFILE UPDATE] status=${res.statusCode}');
+      } catch (e) {
+        debugPrint('[PROFILE UPDATE] failed (non-fatal): $e');
+      }
+    });
   }
 
   Future<void> _syncPsychologyScores(Map<String, double> scores) async {
