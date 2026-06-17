@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import 'onboarding_step1_event.dart';
 import 'onboarding_step1_state.dart';
 
@@ -55,12 +58,30 @@ class OnboardingStep1Bloc
     Emitter<OnboardingStep1State> emit,
   ) async {
     final validated = _validate(state);
-    // if (!validated.isValid) {
-    //   emit(validated.copyWith(errorMessage: validated.errorMessage));
-    //   return;
-    // }
-
     emit(validated.copyWith(submissionSuccess: true, errorMessage: null));
+
+    // Fire-and-forget: sync personal details to mobile backend.
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId != null) {
+      Future(() async {
+        try {
+          await ApiService.instance.saveOnboardingPersonalDetails(
+            athleteId: athleteId,
+            fullName: state.name,
+            age: int.tryParse(state.age) ?? 0,
+            gender: state.gender == OnboardingGender.unknown
+                ? ''
+                : state.gender.name,
+            city: state.city,
+          );
+          debugPrint('[ONBOARDING] personal-details synced athleteId=$athleteId');
+        } catch (e) {
+          debugPrint('[ONBOARDING] personal-details sync failed (non-fatal): $e');
+        }
+      });
+    } else {
+      debugPrint('[ONBOARDING] personal-details skipped — no athlete_id yet');
+    }
   }
 
   OnboardingStep1State _validate(OnboardingStep1State s) {

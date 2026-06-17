@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import 'onboarding_step2_event.dart';
 import 'onboarding_step2_state.dart';
 
@@ -70,6 +73,27 @@ class OnboardingStep2Bloc
     }
     emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
     emit(validated.copyWith(submissionSuccess: true));
+
+    // Fire-and-forget: sync shooting profile to mobile backend.
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId != null) {
+      Future(() async {
+        try {
+          await ApiService.instance.saveOnboardingShootingProfile(
+            athleteId: athleteId,
+            discipline: state.discipline,
+            experienceLevel: state.experience,
+            yearsShooting: state.yearsShoot,
+            academyOrClub: state.academy,
+          );
+          debugPrint('[ONBOARDING] shooting-profile synced athleteId=$athleteId');
+        } catch (e) {
+          debugPrint('[ONBOARDING] shooting-profile sync failed (non-fatal): $e');
+        }
+      });
+    } else {
+      debugPrint('[ONBOARDING] shooting-profile skipped — no athlete_id yet');
+    }
   }
 
   OnboardingStep2State _validate(OnboardingStep2State s) {

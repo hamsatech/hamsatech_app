@@ -11,11 +11,17 @@ import '../constants/api_constants.dart';
 //   'App_Sessions'→ auth token sessions (session_token, user_email, expires_at)
 //                   Do NOT write training records to App_Sessions.
 class ApiService {
-  ApiService._() : _dio = _buildDio();
+  ApiService._()
+      : _dio = _buildDio(),
+        _mobileDio = _buildMobileDio();
 
   static final ApiService instance = ApiService._();
 
   final Dio _dio;
+
+  // Separate Dio instance for the custom mobile backend (OTP + registration).
+  // Does NOT carry Supabase schema headers — plain JSON REST.
+  final Dio _mobileDio;
 
   static Dio _buildDio() {
     final dio = Dio(
@@ -39,6 +45,209 @@ class ApiService {
     return dio;
   }
 
+  static Dio _buildMobileDio() {
+    debugPrint('[API BASE URL] mobile backend: ${ApiConstants.mobileApiBaseUrl}');
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: ApiConstants.mobileApiBaseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+    dio.interceptors.add(_ApiLogger());
+    return dio;
+  }
+
+  // ── Mobile backend — Onboarding ───────────────────────────────────────────
+
+  /// POST /api/v1/onboarding/personal-details
+  Future<Response<dynamic>> saveOnboardingPersonalDetails({
+    required String athleteId,
+    required String fullName,
+    required int age,
+    required String gender,
+    required String city,
+  }) =>
+      _mobileDio.post(
+        'api/v1/onboarding/personal-details',
+        data: {
+          'athlete_id': athleteId,
+          'full_name': fullName,
+          'age': age,
+          'gender': gender,
+          'city': city,
+        },
+      );
+
+  /// POST /api/v1/onboarding/shooting-profile
+  Future<Response<dynamic>> saveOnboardingShootingProfile({
+    required String athleteId,
+    required String discipline,
+    required String experienceLevel,
+    required int yearsShooting,
+    String academyOrClub = '',
+  }) =>
+      _mobileDio.post(
+        'api/v1/onboarding/shooting-profile',
+        data: {
+          'athlete_id': athleteId,
+          'discipline': discipline,
+          'experience_level': experienceLevel,
+          'years_shooting': yearsShooting,
+          if (academyOrClub.isNotEmpty) 'academy_or_club': academyOrClub,
+        },
+      );
+
+  /// POST /api/v1/onboarding/current-performance
+  Future<Response<dynamic>> saveOnboardingCurrentPerformance({
+    required String athleteId,
+    required String avgPracticeScore,
+    required String targetScore,
+    List<String> performanceBlockers = const [],
+  }) =>
+      _mobileDio.post(
+        'api/v1/onboarding/current-performance',
+        data: {
+          'athlete_id': athleteId,
+          'avg_practice_score': avgPracticeScore,
+          'target_score': targetScore,
+          'performance_blockers': performanceBlockers,
+        },
+      );
+
+  /// POST /api/v1/onboarding/goals — backend also sets onboarding_complete = true.
+  Future<Response<dynamic>> saveOnboardingGoals({
+    required String athleteId,
+    required String goal30d,
+    required String goal6m,
+  }) =>
+      _mobileDio.post(
+        'api/v1/onboarding/goals',
+        data: {
+          'athlete_id': athleteId,
+          'goal_30d': goal30d,
+          'goal_6m': goal6m,
+        },
+      );
+
+  /// GET /api/v1/onboarding/summary/{athlete_id}
+  Future<Response<dynamic>> getOnboardingSummary(String athleteId) =>
+      _mobileDio.get('api/v1/onboarding/summary/$athleteId');
+
+  // ── Mobile backend — Daily check-in ──────────────────────────────────────
+
+  /// POST /api/v1/checkin/daily
+  Future<Response<dynamic>> saveDailyCheckin({
+    required String athleteId,
+    required int mood,
+    required int energyLevel,
+    required String sleepBand,
+    List<String> tags = const [],
+    String notes = '',
+  }) =>
+      _mobileDio.post(
+        'api/v1/checkin/daily',
+        data: {
+          'athlete_id': athleteId,
+          'mood': mood,
+          'energy_level': energyLevel,
+          'sleep_band': sleepBand,
+          if (tags.isNotEmpty) 'tags': tags,
+          if (notes.isNotEmpty) 'notes': notes,
+        },
+      );
+
+  // ── Mobile backend — OTP auth ─────────────────────────────────────────────
+
+  /// POST https://hamsatech-api.onrender.com/api/v1/auth/phone/send-otp
+  /// Triggers Twilio Verify OTP to the given phone number.
+  Future<Response<dynamic>> sendOtpToBackend(String phone) async {
+    const endpoint = 'api/v1/auth/phone/send-otp';
+    final base = _mobileDio.options.baseUrl;
+    final fullUrl = '$base$endpoint';
+    final body = {'phone': phone};
+
+    debugPrint('──────────────────────────────────────────────');
+    debugPrint('[OTP REQUEST]');
+    debugPrint('POST $fullUrl');
+    debugPrint('BODY: $body');
+    debugPrint('──────────────────────────────────────────────');
+
+    final res = await _mobileDio.post(endpoint, data: body);
+
+    debugPrint('──────────────────────────────────────────────');
+    debugPrint('[OTP RESPONSE]');
+    debugPrint('STATUS: ${res.statusCode}');
+    debugPrint('BODY: ${res.data}');
+    debugPrint('──────────────────────────────────────────────');
+
+    return res;
+  }
+
+  /// POST https://hamsatech-api.onrender.com/api/v1/auth/phone/verify-otp
+  /// Verifies OTP; backend creates/updates hamsatech.users + hamsatech.athletes.
+  /// Returns {"athleteId": "ATH1001"}.
+  /// Profile fields are sent only when already known (non-empty/non-zero).
+  Future<Response<dynamic>> verifyOtpAndRegister({
+    required String phone,
+    required String otp,
+    String fullName = '',
+    int age = 0,
+    String gender = '',
+    String sport = '',
+    String focusArea = '',
+  }) async {
+    const endpoint = 'api/v1/auth/phone/verify-otp';
+    final base = _mobileDio.options.baseUrl;
+    final fullUrl = '$base$endpoint';
+    final body = <String, dynamic>{
+      'phone': phone,
+      'otp': otp,
+      if (fullName.isNotEmpty) 'fullName': fullName,
+      if (age > 0) 'age': age,
+      if (gender.isNotEmpty) 'gender': gender,
+      if (sport.isNotEmpty) 'sport': sport,
+      if (focusArea.isNotEmpty) 'focusArea': focusArea,
+    };
+
+    debugPrint('──────────────────────────────────────────────');
+    debugPrint('[OTP REQUEST]');
+    debugPrint('POST $fullUrl');
+    debugPrint('BODY: $body');
+    debugPrint('──────────────────────────────────────────────');
+
+    final res = await _mobileDio.post(endpoint, data: body);
+
+    debugPrint('──────────────────────────────────────────────');
+    debugPrint('[OTP RESPONSE]');
+    debugPrint('STATUS: ${res.statusCode}');
+    debugPrint('BODY: ${res.data}');
+    debugPrint('──────────────────────────────────────────────');
+
+    return res;
+  }
+
+  // ── Users ─────────────────────────────────────────────────────────────────
+
+  /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid
+  ///
+  /// Called once after OTP verification to resolve the canonical uid from
+  /// hamsatech.users. This uid is stored locally and passed as athlete_id
+  /// in POST /athletes so both tables share the same identifier.
+  Future<Response<dynamic>> getUserByPhone(String phone) =>
+      _dio.get(
+        'users',
+        queryParameters: {
+          'phone_number': 'eq.$phone',
+          'select': 'uid',
+        },
+      );
+
   // ── Athlete ───────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/athletes?athlete_id=eq.{id}&select=*,athlete_details(*),athlete_family(*)
@@ -57,20 +266,24 @@ class ApiService {
   /// Called once after the baseline assessment completes.
   /// Returns the inserted row so the caller can extract `athlete_id`.
   ///
-  /// [gender] is optional — not collected during onboarding, defaults to ''.
+  /// Valid columns: athlete_id, athlete_name, age, contact_number, experience_level.
+  /// [athleteId] is optional — pass the stored UUID on retry to prevent
+  /// duplicate rows; omit on first creation to let the DB auto-generate it.
   Future<Response<dynamic>> createAthleteFromProfile({
     required String athleteName,
     required int age,
-    required String sport,
-    String gender = '',
+    required String contactNumber,
+    required String experienceLevel,
+    String? athleteId,
   }) {
     final body = <String, dynamic>{
+      if (athleteId != null && athleteId.isNotEmpty) 'athlete_id': athleteId,
       'athlete_name': athleteName,
       'age': age,
-      'sport': sport,
-      if (gender.isNotEmpty) 'gender': gender,
+      'contact_number': contactNumber,
+      'experience_level': experienceLevel,
     };
-    debugPrint('[ATHLETE CREATE] POST athletes body=$body');
+    debugPrint('[ATHLETE CREATE] POST /athletes payload=$body');
     return _dio.post(
       'athletes',
       data: body,
@@ -257,6 +470,35 @@ class ApiService {
       );
 
   // ── Psychology module ─────────────────────────────────────────────────────
+
+  /// POST /rest/v1/psychology_scores — inserts ONE row per category.
+  ///
+  /// Actual table schema: athlete_id, category, score, calculation_logic,
+  ///   input_summary (jsonb), interpretation.
+  /// Call once per category: focus, confidence, anxiety, motivation,
+  ///   resilience, composite.
+  Future<Response<dynamic>> createPsychologyScore({
+    required String athleteId,
+    required String category,
+    required double score,
+    int answeredQuestions = 0,
+  }) {
+    final body = <String, dynamic>{
+      'athlete_id': athleteId,
+      'category': category,
+      'score': double.parse(score.toStringAsFixed(2)),
+      'calculation_logic': 'assessment_average',
+      'input_summary': {'answered_questions': answeredQuestions},
+      'interpretation': 'Generated from assessment',
+    };
+    debugPrint('[PSYCH SCORES] POST psychology_scores '
+        'category=$category score=${body['score']} athleteId=$athleteId');
+    return _dio.post(
+      'psychology_scores',
+      data: body,
+      options: Options(headers: {'Prefer': 'return=representation'}),
+    );
+  }
 
   /// GET /rest/v1/psychology_questions?select=*,psychology_question_options(*)
   Future<Response<dynamic>> getPsychologyQuestions() =>

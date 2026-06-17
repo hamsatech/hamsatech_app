@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/session_memory.dart';
+import '../../../../core/services/storage_service.dart';
 import '../domain/repositories/score_entry_repository.dart';
 import 'score_entry_event.dart';
 import 'score_entry_state.dart';
@@ -66,9 +67,11 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
   }
 
   void _syncSessionEnd(ScoreEntryActiveState s) {
-    final supabaseSessionId = SessionMemory.sessionId;
+    // Prefer in-memory value; fall back to SharedPreferences for restart recovery.
+    final supabaseSessionId =
+        SessionMemory.sessionId ?? StorageService.getSessionId();
     if (supabaseSessionId == null) {
-      debugPrint('[SESSION END] skipped — SessionMemory.sessionId is null');
+      debugPrint('[SESSION END] skipped — no session_id in memory or storage');
       return;
     }
 
@@ -115,9 +118,10 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
   }
 
   void _syncPostLog(ScoreEntryActiveState s) {
-    final supabaseSessionId = SessionMemory.sessionId;
+    final supabaseSessionId =
+        SessionMemory.sessionId ?? StorageService.getSessionId();
     if (supabaseSessionId == null) {
-      debugPrint('[POST LOG] skipped — SessionMemory.sessionId is null');
+      debugPrint('[POST LOG] skipped — no session_id in memory or storage');
       return;
     }
 

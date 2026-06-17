@@ -6,6 +6,7 @@ import '../../domain/repositories/onboarding_repository.dart';
 import '../datasources/questions_data.dart';
 import '../models/athlete_profile_model.dart';
 import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 
 class OnboardingRepositoryImpl implements OnboardingRepository {
@@ -14,57 +15,63 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
   @override
   Future<void> saveAthleteProfile(AthleteProfileEntity profile) async {
-    // Always persist locally first — onboarding must succeed even if offline.
+    // Persist locally — onboarding must succeed even if offline.
     final model = AthleteProfileModel.fromEntity(profile);
     await StorageService.saveAthleteProfile(model.toJson());
     await StorageService.saveBaselineScores(profile.baselineScores);
     await StorageService.setOnboardingComplete(true);
 
-    // Await the Supabase POST so athlete_id is guaranteed to be in
-    // SharedPreferences before the BLoC emits success and the router
-    // navigates. The loading state on the assessment screen covers this wait.
-    // Failure is still non-fatal — local save already completed above.
-    await _syncAthleteToSupabase(profile);
+    // Athlete row is created by the backend at OTP verify-registration time.
+    // Flutter only writes psychology scores here.
+    await _syncPsychologyScores(profile.baselineScores);
   }
 
-  Future<void> _syncAthleteToSupabase(AthleteProfileEntity profile) async {
-    debugPrint('[ONBOARDING] POST athletes name=${profile.name} age=${profile.age} sport=${profile.sportDomain}');
-    try {
-      final res = await ApiService.instance.createAthleteFromProfile(
-        athleteName: profile.name,
-        age: profile.age,
-        sport: profile.sportDomain,
-      );
-      debugPrint('[ONBOARDING] athlete POST status=${res.statusCode} data=${res.data}');
-      final athleteId = _extractAthleteId(res.data);
-      if (athleteId != null && athleteId.isNotEmpty) {
-        await StorageService.saveAthleteId(athleteId);
-        debugPrint('[ONBOARDING] athlete_id persisted: $athleteId');
-      } else {
-        debugPrint('[ONBOARDING] WARNING: no athlete_id in response — ${res.data}');
+  Future<void> _syncPsychologyScores(Map<String, double> scores) async {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) {
+      debugPrint('[PSYCH SCORES] skipped — no athlete_id available');
+      return;
+    }
+
+    final focus = scores['focus'] ?? 0;
+    final emotional = scores['emotionalStability'] ?? 0;
+    final decision = scores['decisionStyle'] ?? 0;
+    final motivation = scores['motivation'] ?? 0;
+    final composite =
+        focus * 0.30 + emotional * 0.25 + decision * 0.25 + motivation * 0.20;
+    final totalQuestions = kBaselineQuestions.length;
+
+    // One row per category — matches actual psychology_scores table schema.
+    final categories = <String, double>{
+      'focus': focus,
+      'confidence': emotional,
+      'anxiety': 100 - emotional,
+      'motivation': motivation,
+      'resilience': decision,
+      'composite': composite,
+    };
+
+    for (final entry in categories.entries) {
+      debugPrint('[PSYCH SCORES] POST category=${entry.key} '
+          'score=${entry.value.toStringAsFixed(2)} athleteId=$athleteId');
+      try {
+        final res = await ApiService.instance.createPsychologyScore(
+          athleteId: athleteId,
+          category: entry.key,
+          score: entry.value,
+          answeredQuestions: totalQuestions,
+        );
+        debugPrint('[PSYCH SCORES] ${entry.key} success status=${res.statusCode}');
+      } catch (e) {
+        debugPrint('[PSYCH SCORES] ${entry.key} POST failed (non-fatal): $e');
       }
-    } catch (e) {
-      debugPrint('[ONBOARDING] athlete POST failed (non-fatal): $e');
-      // Local profile already saved; AlexSummaryScreen will retry on "Go to Home".
     }
-  }
-
-  /// Extracts athlete_id from a Supabase POST response.
-  /// Supabase returns an array when Prefer: return=representation is sent.
-  String? _extractAthleteId(dynamic data) {
-    if (data is List && data.isNotEmpty) {
-      return (data.first as Map?)?['athlete_id']?.toString();
-    }
-    if (data is Map) return data['athlete_id']?.toString();
-    return null;
   }
 
   @override
   Future<void> retryAthleteSync() async {
-    if (StorageService.getAthleteId() != null) return; // already succeeded
-    final profile = getAthleteProfile();
-    if (profile == null) return;
-    await _syncAthleteToSupabase(profile);
+    // Athlete creation is handled by the backend at OTP verify-registration time.
+    // The returned athleteId is already persisted in StorageService — no retry needed.
   }
 
   @override

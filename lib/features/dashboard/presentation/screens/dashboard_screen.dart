@@ -176,19 +176,7 @@ class _HomeHeader extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: DSColors.gray100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.notifications_none_rounded,
-                    color: DSColors.textSecondary,
-                    size: 20,
-                  ),
-                ),
+                _HeaderActions(),
                 if (data.streakDays != null && data.streakDays! > 0) ...[
                   const SizedBox(height: 8),
                   Container(
@@ -256,6 +244,299 @@ class _HomeHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+// ─── Header action buttons ────────────────────────────────────────────────────
+
+class _HeaderActions extends StatelessWidget {
+  const _HeaderActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ActionIconButton(
+          icon: Icons.chat_bubble_outline_rounded,
+          label: 'Feedback',
+          onTap: () => _showFeedbackSheet(context),
+        ),
+        const SizedBox(width: 8),
+        _ActionIconButton(
+          icon: Icons.notifications_none_rounded,
+          label: 'Alerts',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('No new notifications'),
+                backgroundColor: DSColors.brand,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
+        _ActionIconButton(
+          icon: Icons.logout_rounded,
+          label: 'Logout',
+          onTap: () => _showLogoutDialog(context),
+          isDestructive: true,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionIconButton extends StatelessWidget {
+  const _ActionIconButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor =
+        isDestructive ? DSColors.error : DSColors.textSecondary;
+    final bgColor = isDestructive
+        ? DSColors.error.withValues(alpha: 0.08)
+        : DSColors.gray100;
+    final borderColor = isDestructive
+        ? DSColors.error.withValues(alpha: 0.18)
+        : DSColors.gray200;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            child: Icon(icon, color: iconColor, size: 19),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: isDestructive
+                  ? DSColors.error
+                  : DSColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Feedback bottom sheet ────────────────────────────────────────────────────
+
+void _showFeedbackSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _FeedbackBottomSheet(),
+  );
+}
+
+class _FeedbackBottomSheet extends StatelessWidget {
+  const _FeedbackBottomSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 28,
+      ),
+      decoration: const BoxDecoration(
+        color: DSColors.appCard,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: DSColors.gray300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Send Feedback',
+            style: DSTypography.headingMd.copyWith(
+              color: DSColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Help us improve Astra by sharing your thoughts.',
+            style: DSTypography.bodySm
+                .copyWith(color: DSColors.textSecondary),
+          ),
+          const SizedBox(height: 20),
+          _FeedbackOption(
+            icon: Icons.thumb_up_outlined,
+            label: 'I love something',
+            color: DSColors.success,
+          ),
+          const SizedBox(height: 10),
+          _FeedbackOption(
+            icon: Icons.bug_report_outlined,
+            label: 'Report a bug',
+            color: DSColors.error,
+          ),
+          const SizedBox(height: 10),
+          _FeedbackOption(
+            icon: Icons.lightbulb_outline_rounded,
+            label: 'Suggest a feature',
+            color: DSColors.brand,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedbackOption extends StatelessWidget {
+  const _FeedbackOption({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pop(context),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: DSTypography.bodyMd.copyWith(
+                  color: DSColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: color.withValues(alpha: 0.7),
+              size: 13,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Logout dialog ────────────────────────────────────────────────────────────
+
+void _showLogoutDialog(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    builder: (dialogCtx) => AlertDialog(
+      backgroundColor: DSColors.appCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: Text(
+        'Logout from Astra?',
+        style: DSTypography.headingMd.copyWith(
+          color: DSColors.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      content: Text(
+        'You will be returned to the login screen.',
+        style:
+            DSTypography.bodyMd.copyWith(color: DSColors.textSecondary),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogCtx),
+          child: Text(
+            'Cancel',
+            style: DSTypography.labelMd
+                .copyWith(color: DSColors.textSecondary),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(dialogCtx);
+            StorageService.clearAuth();
+            context.go('/welcome');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: DSColors.error,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            'Logout',
+            style: DSTypography.labelMd.copyWith(color: Colors.white),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 // ─── Polar empty state ───────────────────────────────────────────────────────

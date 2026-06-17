@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import 'onboarding_step3_event.dart';
 import 'onboarding_step3_state.dart';
 
@@ -54,6 +57,26 @@ class OnboardingStep3Bloc
     }
     emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
     emit(validated.copyWith(submissionSuccess: true));
+
+    // Fire-and-forget: sync current performance to mobile backend.
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId != null) {
+      Future(() async {
+        try {
+          await ApiService.instance.saveOnboardingCurrentPerformance(
+            athleteId: athleteId,
+            avgPracticeScore: state.avgScore,
+            targetScore: state.targetScore,
+            performanceBlockers: state.selectedFactors,
+          );
+          debugPrint('[ONBOARDING] current-performance synced athleteId=$athleteId');
+        } catch (e) {
+          debugPrint('[ONBOARDING] current-performance sync failed (non-fatal): $e');
+        }
+      });
+    } else {
+      debugPrint('[ONBOARDING] current-performance skipped — no athlete_id yet');
+    }
   }
 
   OnboardingStep3State _validate(OnboardingStep3State s) {
