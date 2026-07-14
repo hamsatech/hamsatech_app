@@ -251,6 +251,39 @@ class StorageService {
   }
 
   static Future<void> clearAll() => _prefs.clear();
+
+  // ── Academic profile (Step 4 — local-only, no backend endpoint yet) ──────
+
+  static Future<void> saveAcademicProfile(Map<String, dynamic> profile) =>
+      _prefs.setString('academic_profile', jsonEncode(profile));
+
+  static Map<String, dynamic>? getAcademicProfile() {
+    final str = _prefs.getString('academic_profile');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
+
+  // ── Lifestyle & wellness (Step 5 — local-only, no backend endpoint yet) ──
+
+  static Future<void> saveLifestyleWellness(Map<String, dynamic> profile) =>
+      _prefs.setString('lifestyle_wellness', jsonEncode(profile));
+
+  static Map<String, dynamic>? getLifestyleWellness() {
+    final str = _prefs.getString('lifestyle_wellness');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
+
+  // ── Mental & social profile (Step 6 — local-only, no backend endpoint yet)
+
+  static Future<void> saveMentalSocialProfile(Map<String, dynamic> profile) =>
+      _prefs.setString('mental_social_profile', jsonEncode(profile));
+
+  static Map<String, dynamic>? getMentalSocialProfile() {
+    final str = _prefs.getString('mental_social_profile');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
 }
 
 class DateTimeHelper {

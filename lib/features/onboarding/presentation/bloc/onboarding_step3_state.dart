@@ -29,18 +29,18 @@ class OnboardingStep3State extends Equatable {
   final bool submissionSuccess;
 
   const OnboardingStep3State({
-    this.stepTitle = 'STEP 3 OF 4',
-    this.progress = 0.6,
-    this.title = 'Where are you now?',
+    this.stepTitle = 'STEP 3 OF 6',
+    this.progress = 3 / 6,
+    this.title = 'Track Your Performance',
     this.subtitle =
-        'Let\'s understand your baseline.\n\nTell us about your current performance and what you want to improve.',
-    this.avgScoreLabel = 'Average practice score:',
-    this.avgScoreHint = '150',
+        'Share your current scores and what\'s getting in the way of your best performance.',
+    this.avgScoreLabel = 'Avg. Practice Score',
+    this.avgScoreHint = 'e.g. 580',
     this.avgScore = '',
-    this.targetScoreLabel = 'Target score:',
-    this.targetScoreHint = '580',
+    this.targetScoreLabel = 'Target Score',
+    this.targetScoreHint = 'e.g. 620',
     this.targetScore = '',
-    this.factorTitle = 'What\'s getting in the way? (Select up to 3)',
+    this.factorTitle = 'Performance Blockers (Select up to 3)',
     this.factorSubtitle = '',
     this.factorOptions = const [
       PerformanceFactorModel(

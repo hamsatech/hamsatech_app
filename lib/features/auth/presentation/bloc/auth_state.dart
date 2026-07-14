@@ -43,3 +43,18 @@ class AuthFailure extends AuthState {
 class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
+
+class AuthProfileLoading extends AuthState {
+  const AuthProfileLoading();
+}
+
+class AuthProfileLoaded extends AuthState {
+  const AuthProfileLoaded(this.profile);
+  final Map<String, dynamic> profile;
+  @override
+  List<Object?> get props => [profile];
+}
+
+class AuthProfileUpdateSuccess extends AuthState {
+  const AuthProfileUpdateSuccess();
+}

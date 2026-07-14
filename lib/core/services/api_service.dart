@@ -45,6 +45,12 @@ class ApiService {
     return dio;
   }
 
+  /// Updates the Bearer token sent with every mobile backend request.
+  /// Call immediately after a successful OTP verification and on app startup.
+  /// Pass null to clear the token (e.g. after logout).
+  static void setMobileAuthToken(String? token) =>
+      _MobileAuthInterceptor.setToken(token);
+
   static Dio _buildMobileDio() {
     debugPrint(
         '[API BASE URL] mobile backend: ${ApiConstants.mobileApiBaseUrl}');
@@ -60,6 +66,9 @@ class ApiService {
         },
       ),
     );
+    // Auth interceptor must run before the logger so logged requests already
+    // carry the Authorization header.
+    dio.interceptors.add(_MobileAuthInterceptor());
     dio.interceptors.add(_ApiLogger());
     return dio;
   }
@@ -166,20 +175,33 @@ class ApiService {
   // ── Mobile backend — Athlete Registration ────────────────────────────────
 
   /// POST /api/mobile/athletes/register
-  /// Called after OTP verification to register the athlete on the mobile backend.
-  /// Payload: { athlete_id, phone } — detailed profile is submitted via onboarding steps.
+  /// Matches MobileAthleteRegistrationInput exactly: fullName, email, age,
+  /// gender, phone are required by the live schema; athleteId, sport and
+  /// focusArea are optional. Passing an existing [athleteId] attaches to
+  /// that row instead of minting a new athlete (confirmed against the live
+  /// backend — omitting it creates a duplicate athlete every time).
   Future<Response<dynamic>> registerAthlete({
-    required String athleteId,
+    required String fullName,
+    required String email,
+    required int age,
+    required String gender,
     required String phone,
-    String sport = 'shooting',
+    String? athleteId,
+    String? sport,
+    String? focusArea,
   }) {
     debugPrint('[ATHLETE REGISTER] POST api/mobile/athletes/register athleteId=$athleteId');
     return _mobileDio.post(
       'api/mobile/athletes/register',
       data: {
-        'athlete_id': athleteId,
+        if (athleteId != null && athleteId.isNotEmpty) 'athleteId': athleteId,
+        'fullName': fullName,
+        'email': email,
+        'age': age,
+        'gender': gender,
         'phone': phone,
-        'sport': sport,
+        if (sport != null && sport.isNotEmpty) 'sport': sport,
+        if (focusArea != null && focusArea.isNotEmpty) 'focusArea': focusArea,
       },
     );
   }
@@ -212,17 +234,12 @@ class ApiService {
   }
 
   /// POST https://hamsatech-api.onrender.com/api/v1/auth/phone/verify-otp
-  /// Verifies OTP; backend creates/updates hamsatech.users + hamsatech.athletes.
-  /// Returns {"athleteId": "ATH1001"}.
-  /// Profile fields are sent only when already known (non-empty/non-zero).
+  /// Matches PhoneOtpVerifyRequest exactly: { phone, otp } only — the live
+  /// schema has no fullName/age/gender/sport/focusArea fields.
+  /// Returns PhoneOtpVerifyResponse: { athleteId, success }.
   Future<Response<dynamic>> verifyOtpAndRegister({
     required String phone,
     required String otp,
-    String fullName = '',
-    int age = 0,
-    String gender = '',
-    String sport = '',
-    String focusArea = '',
   }) async {
     const endpoint = 'api/v1/auth/phone/verify-otp';
     final base = _mobileDio.options.baseUrl;
@@ -230,28 +247,35 @@ class ApiService {
     final body = <String, dynamic>{
       'phone': phone,
       'otp': otp,
-      if (fullName.isNotEmpty) 'fullName': fullName,
-      if (age > 0) 'age': age,
-      if (gender.isNotEmpty) 'gender': gender,
-      if (sport.isNotEmpty) 'sport': sport,
-      if (focusArea.isNotEmpty) 'focusArea': focusArea,
     };
 
-    debugPrint('──────────────────────────────────────────────');
-    debugPrint('[OTP REQUEST]');
+    debugPrint('══════════════════════════════════════════════');
+    debugPrint('[OTP VERIFY — REQUEST]');
     debugPrint('POST $fullUrl');
-    debugPrint('BODY: $body');
-    debugPrint('──────────────────────────────────────────────');
+    debugPrint('BODY (raw)  : $body');
+    debugPrint('phone value : "$phone"');
+    debugPrint(
+        'otp value   : "$otp"  (length=${otp.length}, codeUnits=${otp.codeUnits})');
+    debugPrint('══════════════════════════════════════════════');
 
-    final res = await _mobileDio.post(endpoint, data: body);
-
-    debugPrint('──────────────────────────────────────────────');
-    debugPrint('[OTP RESPONSE]');
-    debugPrint('STATUS: ${res.statusCode}');
-    debugPrint('BODY: ${res.data}');
-    debugPrint('──────────────────────────────────────────────');
-
-    return res;
+    // try/catch here is instrumentation only — the exception is rethrown
+    // unchanged so calling code sees identical behavior to before.
+    try {
+      final res = await _mobileDio.post(endpoint, data: body);
+      debugPrint('══════════════════════════════════════════════');
+      debugPrint('[OTP VERIFY — RESPONSE] SUCCESS');
+      debugPrint('STATUS: ${res.statusCode}');
+      debugPrint('BODY  : ${res.data}');
+      debugPrint('══════════════════════════════════════════════');
+      return res;
+    } on DioException catch (e) {
+      debugPrint('══════════════════════════════════════════════');
+      debugPrint('[OTP VERIFY — RESPONSE] ERROR');
+      debugPrint('STATUS: ${e.response?.statusCode}');
+      debugPrint('BODY  : ${e.response?.data}');
+      debugPrint('══════════════════════════════════════════════');
+      rethrow;
+    }
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────
@@ -772,6 +796,60 @@ class ApiService {
     );
   }
 
+  // ── Mobile backend — Baseline HR ─────────────────────────────────────────
+
+  /// POST /api/mobile/athletes/{athleteId}/baseline
+  /// Saves the resting HR captured by the Polar sensor during the baseline screen.
+  Future<Response<dynamic>> saveBaselineHR({
+    required String athleteId,
+    required int restingHr,
+  }) {
+    debugPrint('[BASELINE] POST api/mobile/athletes/$athleteId/baseline resting_hr=$restingHr');
+    return _mobileDio.post(
+      'api/mobile/athletes/$athleteId/baseline',
+      data: {'resting_hr': restingHr},
+    );
+  }
+
+  // ── Mobile backend — Intake questions ────────────────────────────────────
+
+  /// GET /api/v1/intake/questions
+  /// Fetches the assessment questionnaire from the backend for future use.
+  Future<Response<dynamic>> getIntakeQuestions() {
+    debugPrint('[INTAKE] GET api/v1/intake/questions');
+    return _mobileDio.get('api/v1/intake/questions');
+  }
+
+  /// POST /api/v1/intake/submit
+  /// Submits completed assessment answers and computed scores to mobile backend.
+  Future<Response<dynamic>> submitIntakeAnswers({
+    required String athleteId,
+    required List<Map<String, dynamic>> answers,
+    Map<String, double>? scores,
+  }) {
+    debugPrint('[INTAKE] POST api/v1/intake/submit answers=${answers.length}');
+    return _mobileDio.post(
+      'api/v1/intake/submit',
+      data: {
+        'athlete_id': athleteId,
+        'answers': answers,
+        if (scores != null && scores.isNotEmpty) 'scores': scores,
+      },
+    );
+  }
+
+  // ── Mobile backend — Session Summary ─────────────────────────────────────
+
+  /// GET /api/mobile/athletes/{athleteId}/sessions/{sessionId}/summary
+  Future<Response<dynamic>> getSessionSummary({
+    required String athleteId,
+    required String sessionId,
+  }) {
+    debugPrint('[SESSION SUMMARY] GET api/mobile/athletes/$athleteId/sessions/$sessionId/summary');
+    return _mobileDio.get(
+        'api/mobile/athletes/$athleteId/sessions/$sessionId/summary');
+  }
+
   // ── Mobile backend — Dashboard Home ─────────────────────────────────────
 
   /// GET /api/mobile/athletes/{athleteId}/home
@@ -790,6 +868,22 @@ class ApiService {
         'rpc/get_dashboard_data',
         data: {'p_athlete_id': athleteId},
       );
+}
+
+// ── Mobile backend auth token injector ───────────────────────────────────────
+
+class _MobileAuthInterceptor extends Interceptor {
+  static String? _token;
+
+  static void setToken(String? token) => _token = token;
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    if (_token != null && _token!.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $_token';
+    }
+    handler.next(options);
+  }
 }
 
 // ── Request / response logger ─────────────────────────────────────────────────

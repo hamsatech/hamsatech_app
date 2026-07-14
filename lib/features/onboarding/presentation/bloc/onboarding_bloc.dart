@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/athlete_profile_entity.dart';
 import '../../domain/repositories/onboarding_repository.dart';
@@ -53,6 +55,16 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     OnboardingAssessmentStarted event,
     Emitter<OnboardingState> emit,
   ) {
+    // Fire-and-forget: prefetch intake questions from backend for future cache.
+    Future(() async {
+      try {
+        await ApiService.instance.getIntakeQuestions();
+        debugPrint('[INTAKE] questions prefetched from backend');
+      } catch (e) {
+        debugPrint('[INTAKE] questions prefetch failed (non-fatal): $e');
+      }
+    });
+
     // Restore saved progress from a previous cold-start session if present.
     final saved = StorageService.getQuestionnaireProgress();
     debugPrint(
@@ -130,6 +142,29 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       );
       await _repository.saveAthleteProfile(profile);
       await StorageService.clearQuestionnaireProgress();
+
+      // Fire-and-forget: submit raw answers + computed scores to mobile backend.
+      final athleteId = AuthHelper.getCurrentAthleteId();
+      if (athleteId != null) {
+        final rawAnswers = state.answers;
+        final computedScores = scores;
+        Future(() async {
+          try {
+            final answers = rawAnswers.entries
+                .map((e) => {'question_id': e.key, 'option_index': e.value})
+                .toList();
+            await ApiService.instance.submitIntakeAnswers(
+              athleteId: athleteId,
+              answers: answers,
+              scores: computedScores,
+            );
+            debugPrint('[INTAKE] answers submitted athleteId=$athleteId');
+          } catch (e) {
+            debugPrint('[INTAKE] submit failed (non-fatal): $e');
+          }
+        });
+      }
+
       emit(state.copyWith(
         baselineScores: scores,
         step: OnboardingStep.complete,

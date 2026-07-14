@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../polar/presentation/bloc/polar_bloc.dart';
 import '../../../polar/presentation/bloc/polar_state.dart';
@@ -80,6 +82,20 @@ class _BaselineResultView extends StatelessWidget {
                 ),
                 _ResultFooter(
                   onPressed: () async {
+                    final athleteId = AuthHelper.getCurrentAthleteId();
+                    if (athleteId != null) {
+                      Future(() async {
+                        try {
+                          await ApiService.instance.saveBaselineHR(
+                            athleteId: athleteId,
+                            restingHr: bpm,
+                          );
+                          debugPrint('[BASELINE] resting HR=$bpm saved');
+                        } catch (e) {
+                          debugPrint('[BASELINE] save failed (non-fatal): $e');
+                        }
+                      });
+                    }
                     await StorageService.setOnboardingComplete(true);
                     if (context.mounted) context.go('/alex-summary');
                   },

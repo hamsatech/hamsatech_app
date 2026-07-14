@@ -8,6 +8,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSendOtpRequested>(_onSendOtp);
     on<AuthVerifyOtpRequested>(_onVerifyOtp);
     on<AuthLogoutRequested>(_onLogout);
+    on<AuthGetProfileRequested>(_onGetProfile);
+    on<AuthUpdateProfileRequested>(_onUpdateProfile);
   }
 
   final AuthRepository _repository;
@@ -21,7 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _repository.sendOtp(event.phoneOrEmail);
       emit(AuthOtpSent(event.phoneOrEmail));
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      emit(AuthFailure(_clean(e)));
     }
   }
 
@@ -34,7 +36,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final user = await _repository.verifyOtp(event.phoneOrEmail, event.otp);
       emit(AuthAuthenticated(user));
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      emit(AuthFailure(_clean(e)));
     }
   }
 
@@ -45,4 +47,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await _repository.logout();
     emit(const AuthUnauthenticated());
   }
+
+  Future<void> _onGetProfile(
+    AuthGetProfileRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthProfileLoading());
+    try {
+      final profile = await _repository.getAthleteProfile(event.athleteId);
+      emit(AuthProfileLoaded(profile));
+    } catch (e) {
+      emit(AuthFailure(_clean(e)));
+    }
+  }
+
+  Future<void> _onUpdateProfile(
+    AuthUpdateProfileRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthProfileLoading());
+    try {
+      await _repository.updateAthleteProfile(event.athleteId, event.updates);
+      emit(const AuthProfileUpdateSuccess());
+    } catch (e) {
+      emit(AuthFailure(_clean(e)));
+    }
+  }
+
+  /// Strips the Dart "Exception: " prefix that toString() prepends so that
+  /// only the backend's human-readable message reaches the UI.
+  static String _clean(Object e) =>
+      e.toString().replaceFirst('Exception: ', '');
 }

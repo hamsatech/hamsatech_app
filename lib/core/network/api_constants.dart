@@ -1,14 +1,15 @@
+import '../config/app_config.dart';
+
 class ApiConstants {
   ApiConstants._();
 
   // ── Supabase credentials ──────────────────────────────────────────────────
-  static const String supabaseUrl = 'https://pjjkjnofislpdckjixtg.supabase.co';
-  static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqamtqbm9maXNscGRja2ppeHRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNDIxNzUsImV4cCI6MjA5MDcxODE3NX0.7MgVLFScjw0xY5j8c3Uug74MG1WYhzoC5_F_ccPqOiU';
+  static const String supabaseUrl = AppConfig.supabaseUrl;
+  static const String supabaseAnonKey = AppConfig.supabaseAnonKey;
 
   // ── Base URLs ─────────────────────────────────────────────────────────────
-  static const String baseUrl = '$supabaseUrl/rest/v1/';
-  static const String rpcBaseUrl = '$supabaseUrl/rest/v1/rpc/';
+  static const String baseUrl = AppConfig.supabaseRestBaseUrl;
+  static const String rpcBaseUrl = '${AppConfig.supabaseUrl}/rest/v1/rpc/';
 
   // ── Timeouts ──────────────────────────────────────────────────────────────
   static const Duration connectTimeout = Duration(seconds: 30);

@@ -1,5 +1,10 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_summary_entity.dart';
 import '../../domain/repositories/session_summary_repository.dart';
@@ -83,14 +88,53 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
       }
     }
 
+    // ── Augment with mobile backend summary (non-blocking) ───────────────────
+    var finalTotal = grandTotal;
+    var finalDurationMins = durationMins;
+    var finalTitle = sessionTitle;
+
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (sessionId != null && athleteId != null) {
+      try {
+        final res = await ApiService.instance.getSessionSummary(
+          athleteId: athleteId,
+          sessionId: sessionId,
+        );
+        final data = res.data is Map<String, dynamic>
+            ? res.data as Map<String, dynamic>
+            : (res.data is Map && res.data['data'] is Map<String, dynamic>
+                ? res.data['data'] as Map<String, dynamic>
+                : null);
+        if (data != null) {
+          final apiTotal = data['total_score'] ?? data['total'];
+          if (apiTotal is num) finalTotal = apiTotal.toDouble();
+
+          final apiDur = data['duration_minutes'] ?? data['duration'];
+          if (apiDur is num) finalDurationMins = apiDur.toInt();
+
+          final apiTitle = data['session_title'] ?? data['title'];
+          if (apiTitle is String && apiTitle.isNotEmpty) finalTitle = apiTitle;
+
+          debugPrint('[SESSION SUMMARY] augmented from API sessionId=$sessionId');
+        }
+      } catch (e) {
+        debugPrint('[SESSION SUMMARY] API fetch failed (non-fatal): $e');
+      }
+    }
+
+    final finalMaxPossible = maxPossible > 0 ? maxPossible : finalTotal;
+    final finalEfficiency =
+        finalMaxPossible > 0 ? (finalTotal / finalMaxPossible) * 100 : efficiency;
+
     return SessionSummaryEntity(
-      sessionTitle: sessionTitle,
+      sessionTitle: finalTitle,
       totalShots: totalShots,
-      duration: _formatDuration(durationMins),
-      total: grandTotal,
-      maxPossible: maxPossible,
-      averagePerShot: avg,
-      efficiency: efficiency,
+      duration: _formatDuration(finalDurationMins),
+      total: finalTotal,
+      maxPossible: finalMaxPossible,
+      averagePerShot: totalShots > 0 ? finalTotal / totalShots : avg,
+      efficiency: finalEfficiency,
       bestShot: bestShot,
       worstShot: worstShot,
       bestSeriesLabel: 'S${bestSeries.number}: ${_fmt(bestSeries.total)}',

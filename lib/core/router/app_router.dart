@@ -9,7 +9,9 @@ import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step1_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step2_screen.dart';
 import '../../features/onboarding/presentation/view/onboarding_step3_screen.dart';
-import '../../features/onboarding/presentation/view/onboarding_step4_screen.dart';
+import '../../features/onboarding/presentation/view/academic_profile_screen.dart';
+import '../../features/onboarding/presentation/view/lifestyle_wellness_screen.dart';
+import '../../features/onboarding/presentation/view/mental_social_profile_screen.dart';
 import '../../features/onboarding/presentation/screens/alex_summary_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_result_screen.dart';
@@ -49,9 +51,11 @@ import '../../features/saarthi/presentation/screens/saarthi_chat_screen.dart';
 //   /splash → /welcome → /signup or /login → /otp
 //
 // ONBOARDING (after OTP success)
-//   /onboarding/step1 → /onboarding/step2 → /onboarding/step3
-//   → /onboarding/step4 → /questions → /permissions
-//   → /polar → /heartrate → /baseline → /baseline/result
+//   /onboarding/step1 → /onboarding/step2 → /onboarding/step3 (scores,
+//   blockers, and Goals — Goals UI reuses OnboardingStep4Bloc/API unchanged)
+//   → /onboarding/step4 (Academic Profile) → /onboarding/step5 (Lifestyle &
+//   Wellness) → /onboarding/step6 (Mental & Social Profile) → /questions
+//   → /permissions → /polar → /heartrate → /baseline → /baseline/result
 //   → /alex-summary → /home
 //
 // NAVIGATION CALLS — use context.go() everywhere (replaces stack, no back-stack leak)
@@ -62,8 +66,11 @@ import '../../features/saarthi/presentation/screens/saarthi_chat_screen.dart';
 //   OtpScreen           → context.go('/onboarding/step1')
 //   Step1               → context.go('/onboarding/step2')
 //   Step2               → context.go('/onboarding/step3')
-//   Step3               → context.go('/onboarding/step4')
-//   Step4               → context.go('/questions')
+//   Step3               → context.go('/onboarding/step4') (also fires the
+//                          reused Goals submit — see onboarding_step3_screen.dart)
+//   Step4 (Academic)    → context.go('/onboarding/step5')
+//   Step5 (Lifestyle)   → context.go('/onboarding/step6')
+//   Step6 (Mental)      → context.go('/questions')
 //   Questions           → context.go('/permissions')
 //   PermissionsScreen   → context.go('/polar')
 //   PolarDeviceScreen   → context.go('/heartrate')
@@ -85,6 +92,8 @@ class AppRouter {
     '/onboarding/step2',
     '/onboarding/step3',
     '/onboarding/step4',
+    '/onboarding/step5',
+    '/onboarding/step6',
     '/questions',
     '/permissions',
     '/polar',
@@ -96,7 +105,7 @@ class AppRouter {
 
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/splash',
+    initialLocation: '/onboarding/step1',
     redirect: (context, state) {
       final loc = state.matchedLocation;
       if (_onboardingRoutes.contains(loc)) {
@@ -147,7 +156,15 @@ class AppRouter {
       ),
       GoRoute(
         path: '/onboarding/step4',
-        builder: (_, __) => const OnboardingStep4Screen(),
+        builder: (_, __) => const AcademicProfileScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step5',
+        builder: (_, __) => const LifestyleWellnessScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/step6',
+        builder: (_, __) => const MentalSocialProfileScreen(),
       ),
 
       // ── BASELINE ──────────────────────────────────────────────────────────

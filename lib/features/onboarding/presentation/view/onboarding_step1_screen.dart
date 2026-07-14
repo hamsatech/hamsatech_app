@@ -30,21 +30,19 @@ class _OnboardingStep1View extends StatefulWidget {
 
 class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
   late final TextEditingController _nameController;
-  late final TextEditingController _ageController;
   late final TextEditingController _cityController;
+  DateTime? _selectedDob;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _ageController = TextEditingController();
     _cityController = TextEditingController();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
     _cityController.dispose();
     super.dispose();
   }
@@ -62,9 +60,6 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
       listener: (context, state) {
         if (_nameController.text != state.name) {
           _nameController.text = state.name;
-        }
-        if (_ageController.text != state.age) {
-          _ageController.text = state.age;
         }
         if (_cityController.text != state.city) {
           _cityController.text = state.city;
@@ -215,15 +210,14 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                 ),
                 const SizedBox(height: 18),
 
-                // ── Age ─────────────────────────────────────────────────
+                // ── DOB ─────────────────────────────────────────────────
                 _fieldLabel(state.ageLabel),
                 const SizedBox(height: 7),
-                _inputField(
-                  controller: _ageController,
+                _dobField(
+                  context: context,
                   hint: state.ageHint,
-                  keyboardType: TextInputType.number,
                   isInvalid: _isAgeInvalid(state),
-                  onChanged: (v) => bloc.add(OnAgeChanged(v)),
+                  onPicked: (age) => bloc.add(OnAgeChanged(age.toString())),
                 ),
                 const SizedBox(height: 18),
 
@@ -381,6 +375,74 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
             color: borderColor,
             width: 1,
           ),
+        ),
+      ),
+    );
+  }
+
+  // ── DOB Field ────────────────────────────────────────────────────────────
+  Widget _dobField({
+    required BuildContext context,
+    required String hint,
+    required bool isInvalid,
+    required ValueChanged<int> onPicked,
+  }) {
+    final borderColor =
+        isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE);
+    final dob = _selectedDob;
+    final label = dob == null
+        ? hint
+        : '${dob.day.toString().padLeft(2, '0')} / '
+            '${dob.month.toString().padLeft(2, '0')} / '
+            '${dob.year}';
+
+    return GestureDetector(
+      onTap: () async {
+        final now = DateTime.now();
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: _selectedDob ?? DateTime(now.year - 18, now.month, now.day),
+          firstDate: DateTime(now.year - 120),
+          lastDate: now,
+        );
+        if (picked == null) return;
+        setState(() => _selectedDob = picked);
+
+        var age = now.year - picked.year;
+        final beforeBirthday = now.month < picked.month ||
+            (now.month == picked.month && now.day < picked.day);
+        if (beforeBirthday) age -= 1;
+        onPicked(age);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: dob == null
+                      ? const Color(0x66000F12)
+                      : const Color(0xFF000F12),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 18,
+              color: Color(0x66000F12),
+            ),
+          ],
         ),
       ),
     );
