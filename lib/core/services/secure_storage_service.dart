@@ -13,6 +13,7 @@ class SecureStorageService {
 
   static const _kAthleteId = 'sec_athlete_id';
   static const _kAuthToken = 'sec_auth_token';
+  static const _kRefreshToken = 'sec_refresh_token';
   static const _kPhone = 'sec_phone';
 
   // ── Write ─────────────────────────────────────────────────────────────────
@@ -23,6 +24,9 @@ class SecureStorageService {
   static Future<void> saveAuthToken(String token) =>
       _store.write(key: _kAuthToken, value: token);
 
+  static Future<void> saveRefreshToken(String token) =>
+      _store.write(key: _kRefreshToken, value: token);
+
   static Future<void> savePhone(String phone) =>
       _store.write(key: _kPhone, value: phone);
 
@@ -32,6 +36,8 @@ class SecureStorageService {
 
   static Future<String?> getAuthToken() => _store.read(key: _kAuthToken);
 
+  static Future<String?> getRefreshToken() => _store.read(key: _kRefreshToken);
+
   static Future<String?> getPhone() => _store.read(key: _kPhone);
 
   // ── Delete ────────────────────────────────────────────────────────────────
@@ -39,6 +45,7 @@ class SecureStorageService {
   static Future<void> clearAll() async {
     await _store.delete(key: _kAthleteId);
     await _store.delete(key: _kAuthToken);
+    await _store.delete(key: _kRefreshToken);
     await _store.delete(key: _kPhone);
   }
 }

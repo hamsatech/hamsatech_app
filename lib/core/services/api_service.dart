@@ -208,10 +208,10 @@ class ApiService {
 
   // ── Mobile backend — OTP auth ─────────────────────────────────────────────
 
-  /// POST https://hamsatech-api.onrender.com/api/v1/auth/phone/send-otp
+  /// POST https://hamsatech-api.onrender.com/api/v2/auth/phone/send-otp
   /// Triggers Twilio Verify OTP to the given phone number.
   Future<Response<dynamic>> sendOtpToBackend(String phone) async {
-    const endpoint = 'api/v1/auth/phone/send-otp';
+    const endpoint = 'api/v2/auth/phone/send-otp';
     final base = _mobileDio.options.baseUrl;
     final fullUrl = '$base$endpoint';
     final body = {'phone': phone};
@@ -233,20 +233,20 @@ class ApiService {
     return res;
   }
 
-  /// POST https://hamsatech-api.onrender.com/api/v1/auth/phone/verify-otp
-  /// Matches PhoneOtpVerifyRequest exactly: { phone, otp } only — the live
-  /// schema has no fullName/age/gender/sport/focusArea fields.
-  /// Returns PhoneOtpVerifyResponse: { athleteId, success }.
+  /// POST https://hamsatech-api.onrender.com/api/v2/auth/phone/verify-otp
+  /// Matches VerifyOTPRequest exactly: { phone_number, otp_code }.
+  /// Returns AuthResponse: { access_token, refresh_token, token_type,
+  /// expires_in, user_id, is_new_user, next_step }.
   Future<Response<dynamic>> verifyOtpAndRegister({
     required String phone,
     required String otp,
   }) async {
-    const endpoint = 'api/v1/auth/phone/verify-otp';
+    const endpoint = 'api/v2/auth/phone/verify-otp';
     final base = _mobileDio.options.baseUrl;
     final fullUrl = '$base$endpoint';
     final body = <String, dynamic>{
-      'phone': phone,
-      'otp': otp,
+      'phone_number': phone,
+      'otp_code': otp,
     };
 
     debugPrint('══════════════════════════════════════════════');
@@ -764,6 +764,11 @@ class ApiService {
   }
 
   /// PUT /api/mobile/athletes/{athleteId}/profile
+  /// Wire payload matches the live `MobileAthleteProfileUpsertInput` schema —
+  /// fullName/discipline/experienceLevel/goal30Days/goal6Months, camelCase.
+  /// [familySupport] and [pressureSources] have no server-side field under
+  /// any name and are intentionally not sent; the parameters are kept so
+  /// existing callers (profile screen, onboarding repository) don't break.
   Future<Response<dynamic>> updateMobileAthleteProfile({
     required String athleteId,
     String? name,
@@ -779,19 +784,15 @@ class ApiService {
     return _mobileDio.put(
       'api/mobile/athletes/$athleteId/profile',
       data: {
-        if (name != null && name.isNotEmpty) 'name': name,
+        if (name != null && name.isNotEmpty) 'fullName': name,
         if (age != null) 'age': age,
         if (sportDomain != null && sportDomain.isNotEmpty)
-          'sport_domain': sportDomain,
+          'discipline': sportDomain,
         if (experienceLevel != null && experienceLevel.isNotEmpty)
-          'experience_level': experienceLevel,
-        if (familySupport != null && familySupport.isNotEmpty)
-          'family_support': familySupport,
-        if (pressureSources != null && pressureSources.isNotEmpty)
-          'pressure_sources': pressureSources,
-        if (goal30 != null && goal30.isNotEmpty) 'goal_30': goal30,
+          'experienceLevel': experienceLevel,
+        if (goal30 != null && goal30.isNotEmpty) 'goal30Days': goal30,
         if (goal6Month != null && goal6Month.isNotEmpty)
-          'goal_6_month': goal6Month,
+          'goal6Months': goal6Month,
       },
     );
   }

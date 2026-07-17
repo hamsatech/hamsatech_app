@@ -105,7 +105,7 @@ class AppRouter {
 
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/onboarding/step1',
+    initialLocation: '/splash',
     redirect: (context, state) {
       final loc = state.matchedLocation;
       if (_onboardingRoutes.contains(loc)) {

@@ -30,37 +30,39 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       debugPrint('[OTP VERIFY] raw response: ${res.data}');
 
+      if (res.data is! Map<String, dynamic>) {
+        throw Exception('Unexpected response from server.');
+      }
       final parsed = AuthResponseModel.fromJson(
-        res.data is Map<String, dynamic>
-            ? res.data as Map<String, dynamic>
-            : <String, dynamic>{},
+        res.data as Map<String, dynamic>,
       );
 
-      if (!parsed.success || parsed.athleteId.isEmpty) {
-        throw Exception(
-            'Verification failed — no athlete ID returned from server.');
-      }
-
-      debugPrint('[OTP VERIFY] success athleteId=${parsed.athleteId}');
-
-      // The live PhoneOtpVerifyResponse has no token field — athleteId is
-      // the only identifier the backend gives us, so it doubles as the
-      // bearer value for subsequent mobile backend calls.
-      final token = parsed.athleteId;
+      debugPrint('[OTP VERIFY] success userId=${parsed.userId} '
+          'isNewUser=${parsed.isNewUser} nextStep=${parsed.nextStep}');
 
       // Persist to secure storage (Keychain / Keystore) — authoritative store.
-      await SecureStorageService.saveAthleteId(parsed.athleteId);
+      await SecureStorageService.saveAthleteId(parsed.userId);
       await SecureStorageService.savePhone(phoneOrEmail);
-      await SecureStorageService.saveAuthToken(token);
+      await SecureStorageService.saveAuthToken(parsed.accessToken);
+      await SecureStorageService.saveRefreshToken(parsed.refreshToken);
 
       // Mirror into SharedPreferences so all synchronous StorageService
       // reads continue to work without refactoring call-sites.
-      await StorageService.saveAthleteId(parsed.athleteId);
-      await StorageService.saveAuthToken(token);
+      await StorageService.saveAthleteId(parsed.userId);
+      await StorageService.saveAuthToken(parsed.accessToken);
 
       // Prime the in-memory token cache so the very next mobile backend
       // request already carries the Authorization header.
-      ApiService.setMobileAuthToken(token);
+      ApiService.setMobileAuthToken(parsed.accessToken);
+
+      final nextStep = AuthNextStep.fromApi(parsed.nextStep);
+
+      // Seed the local onboarding_complete flag straight from the backend's
+      // next_step so a later cold start (splash screen) routes correctly
+      // without re-deriving completion status locally.
+      await StorageService.setOnboardingComplete(
+        nextStep == AuthNextStep.home,
+      );
 
       // registerAthlete() is intentionally NOT called from here. The live
       // MobileAthleteRegistrationInput requires fullName/email/age/gender,
@@ -71,9 +73,11 @@ class AuthRepositoryImpl implements AuthRepository {
       // where those fields get collected (see task report).
 
       final user = UserModel(
-        id: parsed.athleteId,
+        id: parsed.userId,
         phoneOrEmail: phoneOrEmail,
-        token: token,
+        token: parsed.accessToken,
+        isNewUser: parsed.isNewUser,
+        nextStep: nextStep,
       );
       await StorageService.saveUserProfile(user.toJson());
       return user;
@@ -143,11 +147,20 @@ class AuthRepositoryImpl implements AuthRepository {
   // ── Private helpers ───────────────────────────────────────────────────────
 
   /// Extracts a human-readable error message from a DioException.
-  /// Handles FastAPI's { "detail": "..." } shape and common variants.
+  /// Prefers the live `ErrorResponse{ error: { code, message, details } }`
+  /// envelope (send-otp/verify-otp 422/429/400/500), falling back to
+  /// FastAPI's older `{ "detail": ... }` shape used by other endpoints.
   static String _extractErrorMessage(DioException e) {
     final data = e.response?.data;
 
     if (data is Map<String, dynamic>) {
+      // Live ErrorResponse: { error: { code, message, details } }
+      final error = data['error'];
+      if (error is Map) {
+        final message = error['message'];
+        if (message is String && message.isNotEmpty) return message;
+      }
+
       // FastAPI HTTP exception: { "detail": "message" }
       final detail = data['detail'];
       if (detail is String && detail.isNotEmpty) return detail;
@@ -161,7 +174,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       // Custom error shapes
-      final msg = data['message'] ?? data['error'];
+      final msg = data['message'];
       if (msg is String && msg.isNotEmpty) return msg;
     }
 

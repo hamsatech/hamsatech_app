@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../../../core/di/injection.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../domain/entities/user_entity.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -79,12 +79,11 @@ class _OtpViewState extends State<_OtpView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          if (StorageService.isOnboardingComplete()) {
-            context.go('/home');
-          } else {
-            final step = StorageService.getOnboardingStep();
-            context.go(step.isNotEmpty ? step : '/onboarding/step1');
-          }
+          // Trust the backend's next_step verbatim — it is the single
+          // source of truth for existing-user-vs-new-user routing.
+          context.go(state.user.nextStep == AuthNextStep.home
+              ? '/home'
+              : '/onboarding/step1');
         } else if (state is AuthFailure) {
           setState(() {
             _otp = '';
