@@ -278,6 +278,36 @@ class ApiService {
     }
   }
 
+  // ── Mobile backend — Onboarding (V2) ───────────────────────────────────────
+
+  /// GET api/v2/onboarding
+  /// Returns the authenticated athlete's onboarding status
+  /// (OnboardingStatusResponse) — current step, completion flag, and
+  /// whichever Steps 1-6 fields have already been saved. Requires the
+  /// Bearer token set via [setMobileAuthToken].
+  Future<Response<dynamic>> getOnboardingStatus() =>
+      _mobileDio.get('api/v2/onboarding');
+
+  /// PUT api/v2/onboarding/step-1
+  /// Matches OnboardingStep1Request exactly: { fullName, dateOfBirth,
+  /// gender, city }. [dateOfBirth] must be an ISO 8601 date ("YYYY-MM-DD").
+  /// Returns OnboardingStatusResponse.
+  Future<Response<dynamic>> saveOnboardingStep1({
+    required String fullName,
+    required String dateOfBirth,
+    required String gender,
+    required String city,
+  }) =>
+      _mobileDio.put(
+        'api/v2/onboarding/step-1',
+        data: {
+          'fullName': fullName,
+          'dateOfBirth': dateOfBirth,
+          'gender': gender,
+          'city': city,
+        },
+      );
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid

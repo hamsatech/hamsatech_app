@@ -5,6 +5,7 @@ enum OnboardingGender { male, female, other, unknown }
 class OnboardingStep1State extends Equatable {
   final String name;
   final String age;
+  final DateTime? dateOfBirth;
   final OnboardingGender gender;
   final String city;
   // UI text / labels must come from state (no hardcoded UI strings)
@@ -36,6 +37,7 @@ class OnboardingStep1State extends Equatable {
   const OnboardingStep1State({
     this.name = '',
     this.age = '',
+    this.dateOfBirth,
     this.gender = OnboardingGender.unknown,
     this.city = '',
     this.stepTitle = 'STEP 1 OF 6',
@@ -61,6 +63,7 @@ class OnboardingStep1State extends Equatable {
   OnboardingStep1State copyWith({
     String? name,
     String? age,
+    DateTime? dateOfBirth,
     OnboardingGender? gender,
     String? city,
     String? stepTitle,
@@ -84,6 +87,7 @@ class OnboardingStep1State extends Equatable {
     return OnboardingStep1State(
       name: name ?? this.name,
       age: age ?? this.age,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       city: city ?? this.city,
       stepTitle: stepTitle ?? this.stepTitle,
@@ -110,6 +114,7 @@ class OnboardingStep1State extends Equatable {
   List<Object?> get props => [
         name,
         age,
+        dateOfBirth,
         gender,
         city,
         stepTitle,

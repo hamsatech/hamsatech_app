@@ -38,6 +38,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
     super.initState();
     _nameController = TextEditingController();
     _cityController = TextEditingController();
+    context.read<OnboardingStep1Bloc>().add(const OnLoadOnboarding());
   }
 
   @override
@@ -55,6 +56,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
           previous.errorMessage != current.errorMessage ||
           previous.name != current.name ||
           previous.age != current.age ||
+          previous.dateOfBirth != current.dateOfBirth ||
           previous.city != current.city ||
           previous.gender != current.gender,
       listener: (context, state) {
@@ -63,6 +65,9 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
         }
         if (_cityController.text != state.city) {
           _cityController.text = state.city;
+        }
+        if (state.dateOfBirth != null && _selectedDob != state.dateOfBirth) {
+          setState(() => _selectedDob = state.dateOfBirth);
         }
 
         if (state.submissionSuccess) {
@@ -218,6 +223,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
                   hint: state.ageHint,
                   isInvalid: _isAgeInvalid(state),
                   onPicked: (age) => bloc.add(OnAgeChanged(age.toString())),
+                  onDobPicked: (dob) => bloc.add(OnDobSelected(dob)),
                 ),
                 const SizedBox(height: 18),
 
@@ -386,6 +392,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
     required String hint,
     required bool isInvalid,
     required ValueChanged<int> onPicked,
+    required ValueChanged<DateTime> onDobPicked,
   }) {
     final borderColor =
         isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE);
@@ -413,6 +420,7 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
             (now.month == picked.month && now.day < picked.day);
         if (beforeBirthday) age -= 1;
         onPicked(age);
+        onDobPicked(picked);
       },
       behavior: HitTestBehavior.opaque,
       child: Container(
