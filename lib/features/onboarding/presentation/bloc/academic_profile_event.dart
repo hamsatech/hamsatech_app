@@ -31,6 +31,13 @@ class OnAcademicPerformanceChanged extends AcademicProfileEvent {
   List<Object?> get props => [value];
 }
 
+/// Fetches the athlete's saved onboarding progress so Step 4 fields can be
+/// prefilled (GET /api/v2/onboarding). Dispatched once when the screen
+/// opens, mirroring OnboardingStep3Bloc's OnLoadOnboarding.
+class OnLoadOnboarding extends AcademicProfileEvent {
+  const OnLoadOnboarding();
+}
+
 class OnAcademicProfileSubmit extends AcademicProfileEvent {
   const OnAcademicProfileSubmit();
 }

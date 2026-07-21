@@ -26,6 +26,7 @@ class AcademicProfileState extends Equatable {
   final bool isValid;
   final String? errorMessage;
   final bool submissionSuccess;
+  final bool isSubmitting;
 
   const AcademicProfileState({
     this.className = '',
@@ -45,6 +46,7 @@ class AcademicProfileState extends Equatable {
     this.isValid = false,
     this.errorMessage,
     this.submissionSuccess = false,
+    this.isSubmitting = false,
   });
 
   AcademicProfileState copyWith({
@@ -65,6 +67,7 @@ class AcademicProfileState extends Equatable {
     bool? isValid,
     String? errorMessage,
     bool? submissionSuccess,
+    bool? isSubmitting,
   }) {
     return AcademicProfileState(
       className: className ?? this.className,
@@ -86,6 +89,7 @@ class AcademicProfileState extends Equatable {
       isValid: isValid ?? this.isValid,
       errorMessage: errorMessage ?? this.errorMessage,
       submissionSuccess: submissionSuccess ?? this.submissionSuccess,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }
 
@@ -108,5 +112,6 @@ class AcademicProfileState extends Equatable {
         isValid,
         errorMessage,
         submissionSuccess,
+        isSubmitting,
       ];
 }

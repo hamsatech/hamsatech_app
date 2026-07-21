@@ -36,6 +36,7 @@ class _AcademicProfileViewState extends State<_AcademicProfileView> {
     _classController = TextEditingController();
     _schoolNameController = TextEditingController();
     _academicPerformanceController = TextEditingController();
+    context.read<AcademicProfileBloc>().add(const OnLoadOnboarding());
   }
 
   @override

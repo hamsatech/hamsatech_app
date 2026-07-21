@@ -362,6 +362,24 @@ class ApiService {
         },
       );
 
+  /// PUT api/v2/onboarding/step-4
+  /// Matches OnboardingStep4Request exactly: { class, schoolName,
+  /// academicPerformance }. [schoolClass] maps to the JSON key `class`
+  /// (a reserved word in Dart). Returns OnboardingStatusResponse.
+  Future<Response<dynamic>> saveOnboardingStep4({
+    required String schoolClass,
+    required String schoolName,
+    required String academicPerformance,
+  }) =>
+      _mobileDio.put(
+        'api/v2/onboarding/step-4',
+        data: {
+          'class': schoolClass,
+          'schoolName': schoolName,
+          'academicPerformance': academicPerformance,
+        },
+      );
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid

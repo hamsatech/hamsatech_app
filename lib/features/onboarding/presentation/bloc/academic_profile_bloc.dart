@@ -1,5 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/api_service.dart';
 import 'academic_profile_event.dart';
 import 'academic_profile_state.dart';
 
@@ -9,6 +10,7 @@ class AcademicProfileBloc
     on<OnClassChanged>(_onClassChanged);
     on<OnSchoolNameChanged>(_onSchoolNameChanged);
     on<OnAcademicPerformanceChanged>(_onAcademicPerformanceChanged);
+    on<OnLoadOnboarding>(_onLoadOnboarding);
     on<OnAcademicProfileSubmit>(_onSubmit);
   }
 
@@ -39,6 +41,36 @@ class AcademicProfileBloc
     emit(_validate(next));
   }
 
+  Future<void> _onLoadOnboarding(
+    OnLoadOnboarding event,
+    Emitter<AcademicProfileState> emit,
+  ) async {
+    try {
+      final res = await ApiService.instance.getOnboardingStatus();
+      final data = res.data as Map<String, dynamic>;
+
+      final schoolClass = data['school_class'] as String?;
+      final schoolName = data['school_name'] as String?;
+      final academicPerformance = data['academic_performance'] as String?;
+
+      if (schoolClass == null &&
+          schoolName == null &&
+          academicPerformance == null) {
+        return;
+      }
+
+      final next = state.copyWith(
+        className: schoolClass ?? state.className,
+        schoolName: schoolName ?? state.schoolName,
+        academicPerformance: academicPerformance ?? state.academicPerformance,
+      );
+      emit(_validate(next));
+      debugPrint('[ACADEMIC PROFILE] prefilled from GET /onboarding');
+    } catch (e) {
+      debugPrint('[ACADEMIC PROFILE] GET onboarding failed (non-fatal): $e');
+    }
+  }
+
   Future<void> _onSubmit(
     OnAcademicProfileSubmit event,
     Emitter<AcademicProfileState> emit,
@@ -49,17 +81,22 @@ class AcademicProfileBloc
       return;
     }
 
-    // No backend endpoint exists yet for this screen — store locally only.
-    // TODO(onboarding-flow): wire to a real API once backend/product decide
-    // where this screen sits in the onboarding sequence.
-    await StorageService.saveAcademicProfile({
-      'class': validated.className,
-      'school_name': validated.schoolName,
-      'academic_performance': validated.academicPerformance,
-    });
+    emit(validated.copyWith(isSubmitting: true, errorMessage: null));
 
-    emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
-    emit(validated.copyWith(submissionSuccess: true));
+    try {
+      await ApiService.instance.saveOnboardingStep4(
+        schoolClass: validated.className,
+        schoolName: validated.schoolName,
+        academicPerformance: validated.academicPerformance,
+      );
+      emit(validated.copyWith(isSubmitting: false, submissionSuccess: true));
+    } catch (e) {
+      debugPrint('[ACADEMIC PROFILE] PUT step-4 failed: $e');
+      emit(validated.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Something went wrong. Please try again.',
+      ));
+    }
   }
 
   AcademicProfileState _validate(AcademicProfileState s) {
