@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/api_service.dart';
-import '../../../../core/services/auth_helper.dart';
 import 'onboarding_step3_event.dart';
 import 'onboarding_step3_state.dart';
 
@@ -11,6 +10,7 @@ class OnboardingStep3Bloc
     on<OnAvgScoreChanged>(_onAvgScoreChanged);
     on<OnTargetScoreChanged>(_onTargetScoreChanged);
     on<OnFactorToggled>(_onFactorToggled);
+    on<OnLoadOnboarding>(_onLoadOnboarding);
     on<OnStep3Submit>(_onSubmit);
   }
 
@@ -49,6 +49,41 @@ class OnboardingStep3Bloc
         state.copyWith(selectedFactors: current, errorMessage: null)));
   }
 
+  Future<void> _onLoadOnboarding(
+    OnLoadOnboarding event,
+    Emitter<OnboardingStep3State> emit,
+  ) async {
+    try {
+      final res = await ApiService.instance.getOnboardingStatus();
+      final data = res.data as Map<String, dynamic>;
+
+      final avgPracticeScore = data['average_practice_score'];
+      final targetScore = data['target_score'];
+      final performanceBlockers = data['performance_blockers'] as List<dynamic>?;
+
+      if (avgPracticeScore == null &&
+          targetScore == null &&
+          performanceBlockers == null) {
+        return;
+      }
+
+      final next = state.copyWith(
+        avgScore: avgPracticeScore != null
+            ? avgPracticeScore.toString()
+            : state.avgScore,
+        targetScore:
+            targetScore != null ? targetScore.toString() : state.targetScore,
+        selectedFactors: performanceBlockers != null
+            ? performanceBlockers.cast<String>()
+            : state.selectedFactors,
+      );
+      emit(_validate(next));
+      debugPrint('[ONBOARDING STEP3] prefilled from GET /onboarding');
+    } catch (e) {
+      debugPrint('[ONBOARDING STEP3] GET onboarding failed (non-fatal): $e');
+    }
+  }
+
   Future<void> _onSubmit(
     OnStep3Submit event,
     Emitter<OnboardingStep3State> emit,
@@ -58,30 +93,24 @@ class OnboardingStep3Bloc
       emit(validated.copyWith(errorMessage: validated.errorMessage));
       return;
     }
-    emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
-    emit(validated.copyWith(submissionSuccess: true));
 
-    // Fire-and-forget: sync current performance to mobile backend.
-    final athleteId = AuthHelper.getCurrentAthleteId();
-    if (athleteId != null) {
-      Future(() async {
-        try {
-          await ApiService.instance.saveOnboardingCurrentPerformance(
-            athleteId: athleteId,
-            avgPracticeScore: state.avgScore,
-            targetScore: state.targetScore,
-            performanceBlockers: state.selectedFactors,
-          );
-          debugPrint(
-              '[ONBOARDING] current-performance synced athleteId=$athleteId');
-        } catch (e) {
-          debugPrint(
-              '[ONBOARDING] current-performance sync failed (non-fatal): $e');
-        }
-      });
-    } else {
-      debugPrint(
-          '[ONBOARDING] current-performance skipped — no athlete_id yet');
+    emit(validated.copyWith(isSubmitting: true, errorMessage: null));
+
+    try {
+      await ApiService.instance.saveOnboardingStep3(
+        averagePracticeScore: num.parse(validated.avgScore),
+        targetScore: num.parse(validated.targetScore),
+        performanceBlockers: validated.selectedFactors,
+        goal30Day: event.goal30Day,
+        goal6Month: event.goal6Month,
+      );
+      emit(validated.copyWith(isSubmitting: false, submissionSuccess: true));
+    } catch (e) {
+      debugPrint('[ONBOARDING STEP3] PUT step-3 failed: $e');
+      emit(validated.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Something went wrong. Please try again.',
+      ));
     }
   }
 

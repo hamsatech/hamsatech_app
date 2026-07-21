@@ -340,6 +340,28 @@ class ApiService {
         },
       );
 
+  /// PUT api/v2/onboarding/step-3
+  /// Matches OnboardingStep3Request exactly: { averagePracticeScore,
+  /// targetScore, performanceBlockers, goal30Day, goal6Month }.
+  /// Returns OnboardingStatusResponse.
+  Future<Response<dynamic>> saveOnboardingStep3({
+    required num averagePracticeScore,
+    required num targetScore,
+    required List<String> performanceBlockers,
+    required String goal30Day,
+    required String goal6Month,
+  }) =>
+      _mobileDio.put(
+        'api/v2/onboarding/step-3',
+        data: {
+          'averagePracticeScore': averagePracticeScore,
+          'targetScore': targetScore,
+          'performanceBlockers': performanceBlockers,
+          'goal30Day': goal30Day,
+          'goal6Month': goal6Month,
+        },
+      );
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid

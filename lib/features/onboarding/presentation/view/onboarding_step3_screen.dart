@@ -47,6 +47,7 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
     _targetScoreController = TextEditingController();
     _goal30Controller = TextEditingController();
     _goal6MonthController = TextEditingController();
+    context.read<OnboardingStep3Bloc>().add(const OnLoadOnboarding());
   }
 
   @override
@@ -350,7 +351,10 @@ class _OnboardingStep3ViewState extends State<_OnboardingStep3View> {
                   child: ElevatedButton(
                     onPressed: canContinue
                         ? () {
-                            bloc.add(const OnStep3Submit());
+                            bloc.add(OnStep3Submit(
+                              goal30Day: goalsState.goal30Value,
+                              goal6Month: goalsState.goal6MonthValue,
+                            ));
                             goalsBloc.add(const OnStep4Submit());
                           }
                         : null,
