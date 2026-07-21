@@ -81,9 +81,29 @@ class _OtpViewState extends State<_OtpView> {
         if (state is AuthAuthenticated) {
           // Trust the backend's next_step verbatim — it is the single
           // source of truth for existing-user-vs-new-user routing.
-          context.go(state.user.nextStep == AuthNextStep.home
-              ? '/home'
-              : '/onboarding/step1');
+          switch (state.user.nextStep) {
+            case AuthNextStep.home:
+              context.go('/home');
+              break;
+            case AuthNextStep.onboardingStep1:
+              context.go('/onboarding/step1');
+              break;
+            case AuthNextStep.onboardingStep2:
+              context.go('/onboarding/step2');
+              break;
+            case AuthNextStep.onboardingStep3:
+              context.go('/onboarding/step3');
+              break;
+            case AuthNextStep.onboardingStep4:
+              context.go('/onboarding/step4');
+              break;
+            case AuthNextStep.onboardingStep5:
+              context.go('/onboarding/step5');
+              break;
+            case AuthNextStep.onboardingStep6:
+              context.go('/onboarding/step6');
+              break;
+          }
         } else if (state is AuthFailure) {
           setState(() {
             _otp = '';

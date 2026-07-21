@@ -308,6 +308,38 @@ class ApiService {
         },
       );
 
+  /// GET api/v2/academies
+  /// Returns every academy the athlete can choose from during onboarding
+  /// Step 2 (a list of AcademyResponse: { academyId, academyName,
+  /// location }). Never 404s — an empty list means none exist yet.
+  /// Uses a longer per-call receive timeout: this endpoint has been
+  /// observed to exceed the default 30s under Render.com cold starts,
+  /// which silently emptied the picker (request aborted before the
+  /// response arrived, not a parsing bug).
+  Future<Response<dynamic>> getAcademies() => _mobileDio.get(
+        'api/v2/academies',
+        options: Options(receiveTimeout: const Duration(seconds: 60)),
+      );
+
+  /// PUT api/v2/onboarding/step-2
+  /// Matches OnboardingStep2Request exactly: { discipline, experienceLevel,
+  /// yearsShooting, academyId }. Returns OnboardingStatusResponse.
+  Future<Response<dynamic>> saveOnboardingStep2({
+    required String discipline,
+    required String experienceLevel,
+    required int yearsShooting,
+    required String academyId,
+  }) =>
+      _mobileDio.put(
+        'api/v2/onboarding/step-2',
+        data: {
+          'discipline': discipline,
+          'experienceLevel': experienceLevel,
+          'yearsShooting': yearsShooting,
+          'academyId': academyId,
+        },
+      );
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid

@@ -1,10 +1,25 @@
 import 'package:equatable/equatable.dart';
 
+/// A single academy option for the Step 2 picker, as returned by
+/// GET /api/v2/academies (AcademyResponse: academyId, academyName).
+class AcademyOption extends Equatable {
+  final String id;
+  final String name;
+
+  const AcademyOption({required this.id, required this.name});
+
+  @override
+  List<Object?> get props => [id, name];
+}
+
 class OnboardingStep2State extends Equatable {
   final String discipline;
   final String experience;
   final int yearsShoot;
   final String academy;
+  final String? academyId;
+  final List<AcademyOption> academies;
+  final bool isSubmitting;
 
   final String stepTitle;
   final double progress;
@@ -36,6 +51,9 @@ class OnboardingStep2State extends Equatable {
     this.experience = '',
     this.yearsShoot = 0,
     this.academy = '',
+    this.academyId,
+    this.academies = const [],
+    this.isSubmitting = false,
     this.stepTitle = 'STEP 2 OF 6',
     this.progress = 2 / 6,
     this.heading = 'Your Athletic Background',
@@ -71,6 +89,9 @@ class OnboardingStep2State extends Equatable {
     String? experience,
     int? yearsShoot,
     String? academy,
+    String? academyId,
+    List<AcademyOption>? academies,
+    bool? isSubmitting,
     String? stepTitle,
     double? progress,
     String? heading,
@@ -95,6 +116,9 @@ class OnboardingStep2State extends Equatable {
       experience: experience ?? this.experience,
       yearsShoot: yearsShoot ?? this.yearsShoot,
       academy: academy ?? this.academy,
+      academyId: academyId ?? this.academyId,
+      academies: academies ?? this.academies,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
       stepTitle: stepTitle ?? this.stepTitle,
       progress: progress ?? this.progress,
       heading: heading ?? this.heading,
@@ -122,6 +146,9 @@ class OnboardingStep2State extends Equatable {
         experience,
         yearsShoot,
         academy,
+        academyId,
+        academies,
+        isSubmitting,
         stepTitle,
         progress,
         heading,

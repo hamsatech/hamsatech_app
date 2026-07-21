@@ -26,18 +26,11 @@ class _OnboardingStep2View extends StatefulWidget {
 }
 
 class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
-  late final TextEditingController _academyController;
-
   @override
   void initState() {
     super.initState();
-    _academyController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _academyController.dispose();
-    super.dispose();
+    context.read<OnboardingStep2Bloc>().add(const OnLoadAcademies());
+    context.read<OnboardingStep2Bloc>().add(const OnLoadOnboarding());
   }
 
   @override
@@ -45,12 +38,8 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
     return BlocConsumer<OnboardingStep2Bloc, OnboardingStep2State>(
       listenWhen: (previous, current) =>
           previous.submissionSuccess != current.submissionSuccess ||
-          previous.errorMessage != current.errorMessage ||
-          previous.academy != current.academy,
+          previous.errorMessage != current.errorMessage,
       listener: (context, state) {
-        if (_academyController.text != state.academy) {
-          _academyController.text = state.academy;
-        }
         if (state.submissionSuccess) {
           context.go('/onboarding/step3');
         }
@@ -238,11 +227,11 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _inputField(
-                  controller: _academyController,
-                  hint: state.academyHint,
-                  keyboardType: TextInputType.text,
-                  onChanged: (v) => bloc.add(OnAcademyChanged(v)),
+                _academyDropdown(
+                  context: context,
+                  state: state,
+                  bloc: bloc,
+                  isInvalid: _isAcademyInvalid(state),
                 ),
                 const SizedBox(height: 32),
               ],
@@ -258,7 +247,7 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                 height: 52,
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: state.isValid
+                  onPressed: state.isValid && !state.isSubmitting
                       ? () => bloc.add(const OnStep2Submit())
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -299,6 +288,10 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
     return state.errorMessage == 'Please select your experience level';
   }
 
+  bool _isAcademyInvalid(OnboardingStep2State state) {
+    return state.errorMessage == 'Please select an academy';
+  }
+
   // ── Field Label ──────────────────────────────────────────────────────────
   Widget _fieldLabel(String label) {
     return Text(
@@ -307,51 +300,6 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
         fontSize: 13,
         fontWeight: FontWeight.w500,
         color: const Color(0x99000F12),
-      ),
-    );
-  }
-
-  // ── Input Field ──────────────────────────────────────────────────────────
-  Widget _inputField({
-    required TextEditingController controller,
-    required String hint,
-    required TextInputType keyboardType,
-    required ValueChanged<String> onChanged,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      onChanged: onChanged,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: Color(0xFF000F12),
-      ),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: const Color(0x66000F12),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 13,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFCAE8EE), width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF2F7E8F), width: 1.5),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFCAE8EE), width: 1),
-        ),
       ),
     );
   }
@@ -601,6 +549,144 @@ class _OnboardingStep2ViewState extends State<_OnboardingStep2View> {
                             Expanded(
                               child: Text(
                                 opt,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? const Color(0xFF2F7E8F)
+                                      : const Color(0xFF000F12),
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_rounded,
+                                size: 18,
+                                color: Color(0xFF2F7E8F),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Academy Dropdown ─────────────────────────────────────────────────────
+  Widget _academyDropdown({
+    required BuildContext context,
+    required OnboardingStep2State state,
+    required OnboardingStep2Bloc bloc,
+    required bool isInvalid,
+  }) {
+    final hasValue = state.academy.isNotEmpty;
+    final borderColor =
+        isInvalid ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE);
+
+    return GestureDetector(
+      onTap: () => _showAcademyPicker(context, state, bloc),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                hasValue ? state.academy : state.academyHint,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: hasValue
+                      ? const Color(0xFF000F12)
+                      : const Color(0xFF7FB8C4),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: Color(0x66000F12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAcademyPicker(
+    BuildContext context,
+    OnboardingStep2State state,
+    OnboardingStep2Bloc bloc,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFFF5FDFF),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCAE8EE),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: Text(
+                  state.academyLabel,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF000F12),
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFCAE8EE)),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: state.academies.length,
+                  itemBuilder: (_, i) {
+                    final opt = state.academies[i];
+                    final isSelected = state.academyId == opt.id;
+                    return InkWell(
+                      onTap: () {
+                        bloc.add(OnAcademySelected(opt));
+                        sheetCtx.pop();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                opt.name,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: isSelected
