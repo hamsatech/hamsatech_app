@@ -39,6 +39,7 @@ class _LifestyleWellnessViewState extends State<_LifestyleWellnessView> {
     _outsideFoodFrequencyController = TextEditingController();
     _sleepTimeController = TextEditingController();
     _wakeTimeController = TextEditingController();
+    context.read<LifestyleWellnessBloc>().add(const OnLoadOnboarding());
   }
 
   @override

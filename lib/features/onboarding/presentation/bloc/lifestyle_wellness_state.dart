@@ -29,6 +29,7 @@ class LifestyleWellnessState extends Equatable {
   final bool isValid;
   final String? errorMessage;
   final bool submissionSuccess;
+  final bool isSubmitting;
 
   const LifestyleWellnessState({
     this.dietType = '',
@@ -51,6 +52,7 @@ class LifestyleWellnessState extends Equatable {
     this.isValid = false,
     this.errorMessage,
     this.submissionSuccess = false,
+    this.isSubmitting = false,
   });
 
   LifestyleWellnessState copyWith({
@@ -74,6 +76,7 @@ class LifestyleWellnessState extends Equatable {
     bool? isValid,
     String? errorMessage,
     bool? submissionSuccess,
+    bool? isSubmitting,
   }) {
     return LifestyleWellnessState(
       dietType: dietType ?? this.dietType,
@@ -99,6 +102,7 @@ class LifestyleWellnessState extends Equatable {
       isValid: isValid ?? this.isValid,
       errorMessage: errorMessage ?? this.errorMessage,
       submissionSuccess: submissionSuccess ?? this.submissionSuccess,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }
 
@@ -124,5 +128,6 @@ class LifestyleWellnessState extends Equatable {
         isValid,
         errorMessage,
         submissionSuccess,
+        isSubmitting,
       ];
 }

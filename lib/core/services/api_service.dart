@@ -380,6 +380,26 @@ class ApiService {
         },
       );
 
+  /// PUT api/v2/onboarding/step-5
+  /// Matches OnboardingStep5Request exactly: { dietType,
+  /// outsideFoodFrequency, sleepTime, wakeTime }.
+  /// Returns OnboardingStatusResponse.
+  Future<Response<dynamic>> saveOnboardingStep5({
+    required String dietType,
+    required String outsideFoodFrequency,
+    required String sleepTime,
+    required String wakeTime,
+  }) =>
+      _mobileDio.put(
+        'api/v2/onboarding/step-5',
+        data: {
+          'dietType': dietType,
+          'outsideFoodFrequency': outsideFoodFrequency,
+          'sleepTime': sleepTime,
+          'wakeTime': wakeTime,
+        },
+      );
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid

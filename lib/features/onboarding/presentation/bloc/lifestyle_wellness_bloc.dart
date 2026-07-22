@@ -1,5 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/api_service.dart';
 import 'lifestyle_wellness_event.dart';
 import 'lifestyle_wellness_state.dart';
 
@@ -10,6 +11,7 @@ class LifestyleWellnessBloc
     on<OnOutsideFoodFrequencyChanged>(_onOutsideFoodFrequencyChanged);
     on<OnSleepTimeChanged>(_onSleepTimeChanged);
     on<OnWakeTimeChanged>(_onWakeTimeChanged);
+    on<OnLoadOnboarding>(_onLoadOnboarding);
     on<OnLifestyleWellnessSubmit>(_onSubmit);
   }
 
@@ -49,6 +51,39 @@ class LifestyleWellnessBloc
     emit(_validate(next));
   }
 
+  Future<void> _onLoadOnboarding(
+    OnLoadOnboarding event,
+    Emitter<LifestyleWellnessState> emit,
+  ) async {
+    try {
+      final res = await ApiService.instance.getOnboardingStatus();
+      final data = res.data as Map<String, dynamic>;
+
+      final dietType = data['diet_type'] as String?;
+      final outsideFoodFrequency = data['outside_food_frequency'] as String?;
+      final sleepTime = data['sleep_time'] as String?;
+      final wakeTime = data['wake_time'] as String?;
+
+      if (dietType == null &&
+          outsideFoodFrequency == null &&
+          sleepTime == null &&
+          wakeTime == null) {
+        return;
+      }
+
+      final next = state.copyWith(
+        dietType: dietType ?? state.dietType,
+        outsideFoodFrequency: outsideFoodFrequency ?? state.outsideFoodFrequency,
+        sleepTime: sleepTime ?? state.sleepTime,
+        wakeTime: wakeTime ?? state.wakeTime,
+      );
+      emit(_validate(next));
+      debugPrint('[LIFESTYLE WELLNESS] prefilled from GET /onboarding');
+    } catch (e) {
+      debugPrint('[LIFESTYLE WELLNESS] GET onboarding failed (non-fatal): $e');
+    }
+  }
+
   Future<void> _onSubmit(
     OnLifestyleWellnessSubmit event,
     Emitter<LifestyleWellnessState> emit,
@@ -59,18 +94,23 @@ class LifestyleWellnessBloc
       return;
     }
 
-    // No backend endpoint exists yet for this screen — store locally only.
-    // TODO(onboarding-flow): wire to a real API once backend/product decide
-    // where this screen sits in the onboarding sequence.
-    await StorageService.saveLifestyleWellness({
-      'diet_type': validated.dietType,
-      'outside_food_frequency': validated.outsideFoodFrequency,
-      'sleep_time': validated.sleepTime,
-      'wake_time': validated.wakeTime,
-    });
+    emit(validated.copyWith(isSubmitting: true, errorMessage: null));
 
-    emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
-    emit(validated.copyWith(submissionSuccess: true));
+    try {
+      await ApiService.instance.saveOnboardingStep5(
+        dietType: validated.dietType,
+        outsideFoodFrequency: validated.outsideFoodFrequency,
+        sleepTime: validated.sleepTime,
+        wakeTime: validated.wakeTime,
+      );
+      emit(validated.copyWith(isSubmitting: false, submissionSuccess: true));
+    } catch (e) {
+      debugPrint('[LIFESTYLE WELLNESS] PUT step-5 failed: $e');
+      emit(validated.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Something went wrong. Please try again.',
+      ));
+    }
   }
 
   LifestyleWellnessState _validate(LifestyleWellnessState s) {

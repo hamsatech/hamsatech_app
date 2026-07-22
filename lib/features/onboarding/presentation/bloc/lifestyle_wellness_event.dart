@@ -39,6 +39,13 @@ class OnWakeTimeChanged extends LifestyleWellnessEvent {
   List<Object?> get props => [value];
 }
 
+/// Fetches the athlete's saved onboarding progress so Step 5 fields can be
+/// prefilled (GET /api/v2/onboarding). Dispatched once when the screen
+/// opens, mirroring AcademicProfileBloc's OnLoadOnboarding.
+class OnLoadOnboarding extends LifestyleWellnessEvent {
+  const OnLoadOnboarding();
+}
+
 class OnLifestyleWellnessSubmit extends LifestyleWellnessEvent {
   const OnLifestyleWellnessSubmit();
 }
