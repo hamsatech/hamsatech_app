@@ -47,6 +47,13 @@ class OnAthleteGoalChanged extends MentalSocialProfileEvent {
   List<Object?> get props => [value];
 }
 
+/// Fetches the athlete's saved onboarding progress so Step 6 fields can be
+/// prefilled (GET /api/v2/onboarding). Dispatched once when the screen
+/// opens, mirroring LifestyleWellnessBloc's OnLoadOnboarding.
+class OnLoadOnboarding extends MentalSocialProfileEvent {
+  const OnLoadOnboarding();
+}
+
 class OnMentalSocialProfileSubmit extends MentalSocialProfileEvent {
   const OnMentalSocialProfileSubmit();
 }

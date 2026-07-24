@@ -400,6 +400,28 @@ class ApiService {
         },
       );
 
+  /// PUT api/v2/onboarding/step-6
+  /// Matches OnboardingStep6Request exactly: { friendCircle, angerPattern,
+  /// sadnessPattern, reasonForShooting, athleteGoal }.
+  /// Returns OnboardingStatusResponse.
+  Future<Response<dynamic>> saveOnboardingStep6({
+    required String friendCircle,
+    required String angerPattern,
+    required String sadnessPattern,
+    required String reasonForShooting,
+    required String athleteGoal,
+  }) =>
+      _mobileDio.put(
+        'api/v2/onboarding/step-6',
+        data: {
+          'friendCircle': friendCircle,
+          'angerPattern': angerPattern,
+          'sadnessPattern': sadnessPattern,
+          'reasonForShooting': reasonForShooting,
+          'athleteGoal': athleteGoal,
+        },
+      );
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid

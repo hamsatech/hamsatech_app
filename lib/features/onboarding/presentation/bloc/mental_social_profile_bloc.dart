@@ -1,5 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/api_service.dart';
 import 'mental_social_profile_event.dart';
 import 'mental_social_profile_state.dart';
 
@@ -11,6 +12,7 @@ class MentalSocialProfileBloc
     on<OnSadnessPatternChanged>(_onSadnessPatternChanged);
     on<OnReasonForShootingChanged>(_onReasonForShootingChanged);
     on<OnAthleteGoalChanged>(_onAthleteGoalChanged);
+    on<OnLoadOnboarding>(_onLoadOnboarding);
     on<OnMentalSocialProfileSubmit>(_onSubmit);
   }
 
@@ -59,6 +61,43 @@ class MentalSocialProfileBloc
     emit(_validate(next));
   }
 
+  Future<void> _onLoadOnboarding(
+    OnLoadOnboarding event,
+    Emitter<MentalSocialProfileState> emit,
+  ) async {
+    try {
+      final res = await ApiService.instance.getOnboardingStatus();
+      final data = res.data as Map<String, dynamic>;
+
+      final friendCircle = data['friend_circle'] as String?;
+      final angerPattern = data['anger_pattern'] as String?;
+      final sadnessPattern = data['sadness_pattern'] as String?;
+      final reasonForShooting = data['reason_for_shooting'] as String?;
+      final athleteGoal = data['athlete_goal'] as String?;
+
+      if (friendCircle == null &&
+          angerPattern == null &&
+          sadnessPattern == null &&
+          reasonForShooting == null &&
+          athleteGoal == null) {
+        return;
+      }
+
+      final next = state.copyWith(
+        friendCircle: friendCircle ?? state.friendCircle,
+        angerPattern: angerPattern ?? state.angerPattern,
+        sadnessPattern: sadnessPattern ?? state.sadnessPattern,
+        reasonForShooting: reasonForShooting ?? state.reasonForShooting,
+        athleteGoal: athleteGoal ?? state.athleteGoal,
+      );
+      emit(_validate(next));
+      debugPrint('[MENTAL SOCIAL PROFILE] prefilled from GET /onboarding');
+    } catch (e) {
+      debugPrint(
+          '[MENTAL SOCIAL PROFILE] GET onboarding failed (non-fatal): $e');
+    }
+  }
+
   Future<void> _onSubmit(
     OnMentalSocialProfileSubmit event,
     Emitter<MentalSocialProfileState> emit,
@@ -69,21 +108,24 @@ class MentalSocialProfileBloc
       return;
     }
 
-    // No backend endpoint exists yet for this screen — store locally only.
-    // Onboarding-completion logic is untouched: it fires from Step 3 (reused
-    // OnboardingStep4Bloc → ApiService.saveOnboardingGoals) earlier in the
-    // flow. This Submit only persists this screen's own fields and advances
-    // to /questions.
-    await StorageService.saveMentalSocialProfile({
-      'friend_circle': validated.friendCircle,
-      'anger_pattern': validated.angerPattern,
-      'sadness_pattern': validated.sadnessPattern,
-      'reason_for_shooting': validated.reasonForShooting,
-      'athlete_goal': validated.athleteGoal,
-    });
+    emit(validated.copyWith(isSubmitting: true, errorMessage: null));
 
-    emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
-    emit(validated.copyWith(submissionSuccess: true));
+    try {
+      await ApiService.instance.saveOnboardingStep6(
+        friendCircle: validated.friendCircle,
+        angerPattern: validated.angerPattern,
+        sadnessPattern: validated.sadnessPattern,
+        reasonForShooting: validated.reasonForShooting,
+        athleteGoal: validated.athleteGoal,
+      );
+      emit(validated.copyWith(isSubmitting: false, submissionSuccess: true));
+    } catch (e) {
+      debugPrint('[MENTAL SOCIAL PROFILE] PUT step-6 failed: $e');
+      emit(validated.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Something went wrong. Please try again.',
+      ));
+    }
   }
 
   MentalSocialProfileState _validate(MentalSocialProfileState s) {

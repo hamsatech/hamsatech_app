@@ -41,6 +41,7 @@ class _MentalSocialProfileViewState extends State<_MentalSocialProfileView> {
     _sadnessPatternController = TextEditingController();
     _reasonForShootingController = TextEditingController();
     _athleteGoalController = TextEditingController();
+    context.read<MentalSocialProfileBloc>().add(const OnLoadOnboarding());
   }
 
   @override
