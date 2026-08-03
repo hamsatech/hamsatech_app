@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../dashboard/presentation/bloc/dashboard_bloc.dart';
-import '../../../dashboard/presentation/bloc/dashboard_event.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -50,18 +48,11 @@ class _AssessmentViewState extends State<_AssessmentView> {
       builder: (_) => _SkipBottomSheet(
         onContinueLater: () async {
           Navigator.of(context).pop();
-          final state = context.read<OnboardingBloc>().state;
-          final currentQuestion = state.currentQuestion;
-          final hasAnsweredCurrent = currentQuestion != null &&
-              state.answers.containsKey(currentQuestion.id);
-          final lastIndex = state.questions.length - 1;
-          final resumeIndex = hasAnsweredCurrent
-              ? (state.currentQuestionIndex + 1).clamp(0, lastIndex)
-              : state.currentQuestionIndex.clamp(0, lastIndex);
-          await StorageService.saveQuestionnaireProgress(
-            resumeIndex,
-            state.answers,
-          );
+          // Any answer already confirmed via "Next"/"Complete" is already
+          // persisted server-side (POST /api/v2/psychology-assessment/answers
+          // upserts per question) — GET /api/v2/psychology-assessment resumes
+          // correctly from the true server frontier next time, so no local
+          // progress needs to be saved here.
           await StorageService.saveAssessmentSkippedFlag();
           if (context.mounted) context.go('/permissions');
         },
@@ -75,12 +66,10 @@ class _AssessmentViewState extends State<_AssessmentView> {
     return BlocConsumer<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.complete) {
-          if (StorageService.isOnboardingComplete()) {
-            getIt<DashboardBloc>().add(const DashboardRefreshRequested());
-            context.go('/home');
-          } else {
-            context.go('/permissions');
-          }
+          context.go('/assessment-result', extra: {
+            'categoryScores': state.categoryScores,
+            'insights': state.insights,
+          });
         } else if (state.status == OnboardingStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -100,7 +89,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
 
         final question = state.currentQuestion!;
         final selectedIndex = state.answers[question.id];
-        final total = state.questions.length;
+        final total = state.totalQuestions;
         final current = state.currentQuestionIndex + 1;
 
         // Reset explanation field when question changes
@@ -297,7 +286,11 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                   : DSPrimaryButton(
                                       label: 'Next',
                                       color: DSColors.terracotta,
-                                      onPressed: selectedIndex != null
+                                      isLoading:
+                                          state.status == OnboardingStatus.loading,
+                                      onPressed: (selectedIndex != null &&
+                                              state.status !=
+                                                  OnboardingStatus.loading)
                                           ? () => context
                                               .read<OnboardingBloc>()
                                               .add(

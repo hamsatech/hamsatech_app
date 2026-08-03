@@ -119,7 +119,11 @@ class _DashboardContent extends StatelessWidget {
           _PolarConnectCard(onTap: () => context.push('/polar')),
           const SizedBox(height: 16),
         ],
-        const _AssessmentReminderCard(),
+        _AssessmentReminderCard(
+          answeredCount: data.assessmentAnsweredCount,
+          totalQuestions: data.assessmentTotalQuestions,
+          isComplete: data.assessmentIsComplete,
+        ),
         _MetricsGrid(data: data),
         const SizedBox(height: 16),
         _SessionActionCard(onTap: () => context.push('/checkin')),
@@ -981,39 +985,35 @@ class _CoachSummaryCard extends StatelessWidget {
 // ─── Assessment reminder card ─────────────────────────────────────────────────
 
 class _AssessmentReminderCard extends StatelessWidget {
-  const _AssessmentReminderCard();
+  const _AssessmentReminderCard({
+    required this.answeredCount,
+    required this.totalQuestions,
+    required this.isComplete,
+  });
+
+  final int answeredCount;
+  final int totalQuestions;
+  final bool isComplete;
 
   static const _kTeal = Color(0xFF2F7E8F);
-  static const _totalQuestions = 25;
 
   @override
   Widget build(BuildContext context) {
-    final progress = StorageService.getQuestionnaireProgress();
-    if (progress == null) {
-      debugPrint(
-        '[HomeAssessmentReminder] currentQuestionIndex=null '
-        'questionsCompleted=false answeredQuestions=0 reminderVisible=false',
-      );
-      return const SizedBox.shrink();
-    }
-
-    final currentQuestionIndex = progress['index'] as int? ?? 0;
-    final answers = progress['answers'] as Map<int, int>;
-    final questionsCompleted = answers.length >= _totalQuestions;
-    final shouldShowReminder =
-        !questionsCompleted && currentQuestionIndex < _totalQuestions;
+    // Driven by GET /api/v2/psychology-assessment (via DashboardDataEntity) —
+    // totalQuestions == 0 means the status hasn't been fetched successfully
+    // yet (no athlete_id, or a non-fatal API failure), so stay hidden.
+    final shouldShowReminder = !isComplete && totalQuestions > 0;
 
     debugPrint(
-      '[HomeAssessmentReminder] currentQuestionIndex=$currentQuestionIndex '
-      'questionsCompleted=$questionsCompleted '
-      'answeredQuestions=${answers.length} '
+      '[HomeAssessmentReminder] answeredCount=$answeredCount '
+      'totalQuestions=$totalQuestions isComplete=$isComplete '
       'reminderVisible=$shouldShowReminder',
     );
 
     if (!shouldShowReminder) return const SizedBox.shrink();
 
     final remaining =
-        (_totalQuestions - answers.length).clamp(1, _totalQuestions).toInt();
+        (totalQuestions - answeredCount).clamp(1, totalQuestions).toInt();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -1063,7 +1063,17 @@ class _AssessmentReminderCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             TextButton(
-              onPressed: () => context.push('/questions'),
+              onPressed: () async {
+                await context.push('/questions');
+                // Refresh the live DashboardBloc instance this widget is
+                // already listening to — the assessment flow may have
+                // advanced or completed progress server-side while away.
+                if (context.mounted) {
+                  context
+                      .read<DashboardBloc>()
+                      .add(const DashboardRefreshRequested());
+                }
+              },
               style: TextButton.styleFrom(
                 backgroundColor: _kTeal,
                 foregroundColor: Colors.white,

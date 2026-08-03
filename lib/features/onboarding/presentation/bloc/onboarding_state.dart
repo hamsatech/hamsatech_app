@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/assessment_result_entity.dart';
 import '../../domain/entities/baseline_question_entity.dart';
 
 class OnboardingState extends Equatable {
@@ -16,6 +17,10 @@ class OnboardingState extends Equatable {
     this.baselineScores = const {},
     this.status = OnboardingStatus.initial,
     this.errorMessage,
+    this.totalQuestions = 0,
+    this.answeredCount = 0,
+    this.categoryScores = const [],
+    this.insights = const [],
   });
 
   final OnboardingStep step;
@@ -32,13 +37,26 @@ class OnboardingState extends Equatable {
   final OnboardingStatus status;
   final String? errorMessage;
 
+  // Populated from GET/POST /api/v2/psychology-assessment* — [questions] only
+  // holds the questions fetched so far this session (server serves one at a
+  // time), so "last question"/"progress" must be derived from these server
+  // counts rather than questions.length.
+  final int totalQuestions;
+  final int answeredCount;
+  final List<CategoryScoreEntity> categoryScores;
+  final List<AssessmentInsightEntity> insights;
+
   BaselineQuestionEntity? get currentQuestion =>
       questions.isNotEmpty ? questions[currentQuestionIndex] : null;
 
-  bool get isLastQuestion => currentQuestionIndex == questions.length - 1;
+  bool get isLastQuestion =>
+      questions.isNotEmpty &&
+      currentQuestionIndex == questions.length - 1 &&
+      totalQuestions > 0 &&
+      answeredCount == totalQuestions - 1;
 
   double get assessmentProgress =>
-      questions.isEmpty ? 0 : (currentQuestionIndex + 1) / questions.length;
+      totalQuestions == 0 ? 0 : (currentQuestionIndex + 1) / totalQuestions;
 
   OnboardingState copyWith({
     OnboardingStep? step,
@@ -54,6 +72,10 @@ class OnboardingState extends Equatable {
     Map<String, double>? baselineScores,
     OnboardingStatus? status,
     String? errorMessage,
+    int? totalQuestions,
+    int? answeredCount,
+    List<CategoryScoreEntity>? categoryScores,
+    List<AssessmentInsightEntity>? insights,
   }) =>
       OnboardingState(
         step: step ?? this.step,
@@ -69,6 +91,10 @@ class OnboardingState extends Equatable {
         baselineScores: baselineScores ?? this.baselineScores,
         status: status ?? this.status,
         errorMessage: errorMessage,
+        totalQuestions: totalQuestions ?? this.totalQuestions,
+        answeredCount: answeredCount ?? this.answeredCount,
+        categoryScores: categoryScores ?? this.categoryScores,
+        insights: insights ?? this.insights,
       );
 
   @override
@@ -85,6 +111,10 @@ class OnboardingState extends Equatable {
         baselineScores,
         status,
         errorMessage,
+        totalQuestions,
+        answeredCount,
+        categoryScores,
+        insights,
       ];
 }
 

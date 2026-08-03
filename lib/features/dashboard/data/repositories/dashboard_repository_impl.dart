@@ -36,7 +36,17 @@ class DashboardRepositoryImpl implements DashboardRepository {
     // ── Augment with backend data (non-blocking fallback to local) ──────────
     final athleteId = AuthHelper.getCurrentAthleteId();
 
+    var assessmentAnsweredCount = 0;
+    var assessmentTotalQuestions = 0;
+    var assessmentIsComplete = true;
+
     if (athleteId != null) {
+      final assessmentStatus = await _fetchAssessmentStatus();
+      if (assessmentStatus != null) {
+        assessmentAnsweredCount = assessmentStatus.answeredCount;
+        assessmentTotalQuestions = assessmentStatus.totalQuestions;
+        assessmentIsComplete = assessmentStatus.isComplete;
+      }
       // Mobile backend: primary source for dashboard home data
       final homeData = await _fetchMobileHomeData(athleteId);
       if (homeData != null) {
@@ -106,7 +116,39 @@ class DashboardRepositoryImpl implements DashboardRepository {
       lastSession: lastSession,
       performanceHistory: performanceHistory,
       actionPlan: actionPlan,
+      assessmentAnsweredCount: assessmentAnsweredCount,
+      assessmentTotalQuestions: assessmentTotalQuestions,
+      assessmentIsComplete: assessmentIsComplete,
     );
+  }
+
+  // ─── API: Psychology Assessment status ─────────────────────────────────────
+
+  Future<
+      ({
+        int answeredCount,
+        int totalQuestions,
+        bool isComplete
+      })?> _fetchAssessmentStatus() async {
+    try {
+      debugPrint('[DASHBOARD] fetching psychology-assessment status');
+      final res = await ApiService.instance.getPsychologyAssessmentStatus();
+      final data = res.data as Map<String, dynamic>;
+      final answeredCount = data['answeredCount'] as int? ?? 0;
+      final totalQuestions = data['totalQuestions'] as int? ?? 0;
+      final isComplete = data['isComplete'] as bool? ?? true;
+      debugPrint(
+          '[DASHBOARD] psychology-assessment status answered=$answeredCount '
+          'total=$totalQuestions isComplete=$isComplete');
+      return (
+        answeredCount: answeredCount,
+        totalQuestions: totalQuestions,
+        isComplete: isComplete,
+      );
+    } catch (e) {
+      debugPrint('[DASHBOARD] psychology-assessment status fetch failed (non-fatal): $e');
+      return null;
+    }
   }
 
   // ─── API: AI Insights ──────────────────────────────────────────────────────

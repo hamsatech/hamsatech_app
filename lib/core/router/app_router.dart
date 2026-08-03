@@ -13,6 +13,7 @@ import '../../features/onboarding/presentation/view/academic_profile_screen.dart
 import '../../features/onboarding/presentation/view/lifestyle_wellness_screen.dart';
 import '../../features/onboarding/presentation/view/mental_social_profile_screen.dart';
 import '../../features/onboarding/presentation/screens/alex_summary_screen.dart';
+import '../../features/onboarding/presentation/screens/assessment_result_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_assessment_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_result_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_screen.dart';
@@ -55,6 +56,7 @@ import '../../features/saarthi/presentation/screens/saarthi_chat_screen.dart';
 //   blockers, and Goals — Goals UI reuses OnboardingStep4Bloc/API unchanged)
 //   → /onboarding/step4 (Academic Profile) → /onboarding/step5 (Lifestyle &
 //   Wellness) → /onboarding/step6 (Mental & Social Profile) → /questions
+//   → /assessment-result (Psychology Assessment category scores/insights)
 //   → /permissions → /polar → /heartrate → /baseline → /baseline/result
 //   → /alex-summary → /home
 //
@@ -71,7 +73,9 @@ import '../../features/saarthi/presentation/screens/saarthi_chat_screen.dart';
 //   Step4 (Academic)    → context.go('/onboarding/step5')
 //   Step5 (Lifestyle)   → context.go('/onboarding/step6')
 //   Step6 (Mental)      → context.go('/questions')
-//   Questions           → context.go('/permissions')
+//   Questions           → context.go('/assessment-result')
+//   AssessmentResult    → context.go('/home') if onboarding already complete
+//                          locally, else context.go('/permissions')
 //   PermissionsScreen   → context.go('/polar')
 //   PolarDeviceScreen   → context.go('/heartrate')
 //   HeartRateScreen     → context.go('/baseline')
@@ -95,6 +99,7 @@ class AppRouter {
     '/onboarding/step5',
     '/onboarding/step6',
     '/questions',
+    '/assessment-result',
     '/permissions',
     '/polar',
     '/heartrate',
@@ -171,6 +176,12 @@ class AppRouter {
       GoRoute(
         path: '/questions',
         builder: (_, __) => const BaselineAssessmentScreen(),
+      ),
+      GoRoute(
+        path: '/assessment-result',
+        builder: (_, state) => AssessmentResultScreen(
+          extra: state.extra as Map<String, dynamic>?,
+        ),
       ),
       GoRoute(
         path: '/baseline',

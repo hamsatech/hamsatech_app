@@ -422,6 +422,42 @@ class ApiService {
         },
       );
 
+  // ── Mobile backend — Psychology Assessment (V2) ─────────────────────────────
+
+  /// GET api/v2/psychology-assessment
+  /// Returns AssessmentStatusResponse — totalQuestions, answeredCount,
+  /// isComplete, and nextQuestion (the next unanswered question, or null
+  /// once complete). Serves Start, Get Progress, Get Next Question, and
+  /// Resume — all the same derived read server-side.
+  Future<Response<dynamic>> getPsychologyAssessmentStatus() =>
+      _mobileDio.get('api/v2/psychology-assessment');
+
+  /// POST api/v2/psychology-assessment/answers
+  /// Matches SaveAnswerRequest exactly: { questionNumber, optionCode,
+  /// answerText }. Creates or updates the answer for [questionNumber] in
+  /// place. Returns AssessmentProgressResponse (totalQuestions,
+  /// answeredCount, isComplete only — fetch the next question via
+  /// [getPsychologyAssessmentStatus]).
+  Future<Response<dynamic>> saveAssessmentAnswer({
+    required int questionNumber,
+    required String optionCode,
+    String? answerText,
+  }) =>
+      _mobileDio.post(
+        'api/v2/psychology-assessment/answers',
+        data: {
+          'questionNumber': questionNumber,
+          'optionCode': optionCode,
+          if (answerText != null) 'answerText': answerText,
+        },
+      );
+
+  /// POST api/v2/psychology-assessment/complete
+  /// Requires all 25 questions to already be answered. Returns
+  /// AssessmentCompletionResponse — isComplete, categoryScores, insights.
+  Future<Response<dynamic>> completeAssessment() =>
+      _mobileDio.post('api/v2/psychology-assessment/complete');
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   /// GET /rest/v1/users?phone_number=eq.{phone}&select=uid

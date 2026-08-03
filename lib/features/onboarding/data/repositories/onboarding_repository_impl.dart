@@ -21,10 +21,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     await StorageService.saveBaselineScores(profile.baselineScores);
     await StorageService.setOnboardingComplete(true);
 
-    // Athlete row is created by the backend at OTP verify-registration time.
-    // Flutter only writes psychology scores here.
-    await _syncPsychologyScores(profile.baselineScores);
-
     // Fire-and-forget: sync full profile to mobile backend (non-blocking).
     _syncProfileUpdate(profile);
   }
@@ -51,49 +47,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         debugPrint('[PROFILE UPDATE] failed (non-fatal): $e');
       }
     });
-  }
-
-  Future<void> _syncPsychologyScores(Map<String, double> scores) async {
-    final athleteId = AuthHelper.getCurrentAthleteId();
-    if (athleteId == null) {
-      debugPrint('[PSYCH SCORES] skipped — no athlete_id available');
-      return;
-    }
-
-    final focus = scores['focus'] ?? 0;
-    final emotional = scores['emotionalStability'] ?? 0;
-    final decision = scores['decisionStyle'] ?? 0;
-    final motivation = scores['motivation'] ?? 0;
-    final composite =
-        focus * 0.30 + emotional * 0.25 + decision * 0.25 + motivation * 0.20;
-    final totalQuestions = kBaselineQuestions.length;
-
-    // One row per category — matches actual psychology_scores table schema.
-    final categories = <String, double>{
-      'focus': focus,
-      'confidence': emotional,
-      'anxiety': 100 - emotional,
-      'motivation': motivation,
-      'resilience': decision,
-      'composite': composite,
-    };
-
-    for (final entry in categories.entries) {
-      debugPrint('[PSYCH SCORES] POST category=${entry.key} '
-          'score=${entry.value.toStringAsFixed(2)} athleteId=$athleteId');
-      try {
-        final res = await ApiService.instance.createPsychologyScore(
-          athleteId: athleteId,
-          category: entry.key,
-          score: entry.value,
-          answeredQuestions: totalQuestions,
-        );
-        debugPrint(
-            '[PSYCH SCORES] ${entry.key} success status=${res.statusCode}');
-      } catch (e) {
-        debugPrint('[PSYCH SCORES] ${entry.key} POST failed (non-fatal): $e');
-      }
-    }
   }
 
   @override
