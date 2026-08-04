@@ -2,11 +2,18 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import '../../domain/models/hr_reading.dart';
 
-enum PolarDeviceStatus { found, connecting, connected, disconnected }
+enum PolarDeviceStatus {
+  found,
+  connecting,
+  connected,
+  disconnected,
+  bluetoothOff,
+}
 
 class PolarDeviceEvent {
   final PolarDeviceStatus status;
-  final String deviceId;
+  // Null for events not tied to a specific device (e.g. bluetoothOff).
+  final String? deviceId;
   final String? name;
   final String? deviceType;
 
@@ -50,6 +57,13 @@ class PolarBleService {
             PolarDeviceEvent(
                 PolarDeviceStatus.disconnected, call.arguments as String),
           );
+        case 'blePowerStateChanged':
+          final powered = call.arguments as bool;
+          if (!powered) {
+            _deviceEventController.add(
+              const PolarDeviceEvent(PolarDeviceStatus.bluetoothOff, null),
+            );
+          }
       }
     });
   }

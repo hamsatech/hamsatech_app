@@ -20,21 +20,39 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     on<PolarHrReceivedEvent>(_onHrReceived);
     on<PolarHrErrorEvent>(_onHrError);
     on<PolarDemoConnectRequested>(_onDemoConnect);
+    on<PolarBluetoothOffEvent>(_onBluetoothOff);
 
     _deviceSubscription = _service.deviceEvents.listen((event) {
       switch (event.status) {
         case PolarDeviceStatus.found:
+          assert(
+            event.deviceId != null,
+            'PolarDeviceStatus.found must carry a non-null deviceId',
+          );
+          if (event.deviceId == null) return;
           add(PolarDeviceFoundEvent(
-            deviceId: event.deviceId,
-            name: event.name ?? event.deviceId,
+            deviceId: event.deviceId!,
+            name: event.name ?? event.deviceId!,
             deviceType: event.deviceType,
           ));
         case PolarDeviceStatus.connected:
-          add(PolarDeviceConnectedEvent(event.deviceId));
+          assert(
+            event.deviceId != null,
+            'PolarDeviceStatus.connected must carry a non-null deviceId',
+          );
+          if (event.deviceId == null) return;
+          add(PolarDeviceConnectedEvent(event.deviceId!));
         case PolarDeviceStatus.disconnected:
-          add(PolarDeviceDisconnectedEvent(event.deviceId));
+          assert(
+            event.deviceId != null,
+            'PolarDeviceStatus.disconnected must carry a non-null deviceId',
+          );
+          if (event.deviceId == null) return;
+          add(PolarDeviceDisconnectedEvent(event.deviceId!));
         case PolarDeviceStatus.connecting:
           break;
+        case PolarDeviceStatus.bluetoothOff:
+          add(const PolarBluetoothOffEvent());
       }
     });
   }
@@ -192,6 +210,25 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     emit(state.copyWith(
       connectionStatus: PolarConnectionStatus.disconnected,
       isStreaming: false,
+    ));
+  }
+
+  Future<void> _onBluetoothOff(
+    PolarBluetoothOffEvent event,
+    Emitter<PolarState> emit,
+  ) async {
+    _demoHrTimer?.cancel();
+    _demoHrTimer = null;
+    await _hrSubscription?.cancel();
+    _hrSubscription = null;
+    try {
+      await _service.stopHrStream();
+    } catch (_) {}
+    emit(state.copyWith(
+      connectionStatus: PolarConnectionStatus.error,
+      discoveredDevices: const [],
+      isStreaming: false,
+      errorMessage: 'Bluetooth is turned off',
     ));
   }
 

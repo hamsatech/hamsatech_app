@@ -63,6 +63,10 @@ class PolarDeviceDisconnectedEvent extends PolarEvent {
   List<Object?> get props => [deviceId];
 }
 
+class PolarBluetoothOffEvent extends PolarEvent {
+  const PolarBluetoothOffEvent();
+}
+
 class PolarHrReceivedEvent extends PolarEvent {
   const PolarHrReceivedEvent(this.reading);
   final HrReading reading;
