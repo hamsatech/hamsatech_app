@@ -7,11 +7,30 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/astra_logo.dart';
 import '../../../../core/widgets/saarthi_avatar.dart';
+import '../../../polar/presentation/bloc/polar_bloc.dart';
+import '../../../polar/presentation/bloc/polar_state.dart';
 import '../../domain/entities/dashboard_data_entity.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
 import '../bloc/dashboard_state.dart';
 import '../widgets/metric_card.dart';
+
+// Combines the persisted "has ever paired" flag (DashboardBloc/StorageService)
+// with PolarBloc's live connection state, so a Bluetooth-off/disconnect this
+// session immediately overrides a stale "connected" flag. `initial` is left
+// untouched deliberately — a user who hasn't visited /polar this session
+// shouldn't have their persisted pairing status overridden.
+bool _isPolarLiveConnected(DashboardDataEntity data, PolarState polarState) {
+  return data.isPolarConnected &&
+      polarState.connectionStatus != PolarConnectionStatus.error &&
+      polarState.connectionStatus != PolarConnectionStatus.disconnected;
+}
+
+// PolarState changes on every HR sample (~1/sec while streaming); only
+// connectionStatus affects _isPolarLiveConnected's output, so gate rebuilds
+// on that field alone rather than the default "rebuild on every emission".
+bool _polarConnectionStatusChanged(PolarState previous, PolarState current) =>
+    previous.connectionStatus != current.connectionStatus;
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -115,10 +134,22 @@ class _DashboardContent extends StatelessWidget {
         const SizedBox(height: DSSpacing.lg),
         _HomeHeader(data: data),
         const SizedBox(height: 16),
-        if (!data.isPolarConnected) ...[
-          _PolarConnectCard(onTap: () => context.push('/polar')),
-          const SizedBox(height: 16),
-        ],
+        BlocBuilder<PolarBloc, PolarState>(
+          bloc: getIt<PolarBloc>(),
+          buildWhen: _polarConnectionStatusChanged,
+          builder: (context, polarState) {
+            if (_isPolarLiveConnected(data, polarState)) {
+              return const SizedBox.shrink();
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PolarConnectCard(onTap: () => context.push('/polar')),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
+        ),
         _AssessmentReminderCard(
           answeredCount: data.assessmentAnsweredCount,
           totalQuestions: data.assessmentTotalQuestions,
@@ -212,39 +243,52 @@ class _HomeHeader extends StatelessWidget {
             ),
           ],
         ),
-        if (data.isPolarConnected) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: DSColors.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-              border:
-                  Border.all(color: DSColors.success.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+        BlocBuilder<PolarBloc, PolarState>(
+          bloc: getIt<PolarBloc>(),
+          buildWhen: _polarConnectionStatusChanged,
+          builder: (context, polarState) {
+            if (!_isPolarLiveConnected(data, polarState)) {
+              return const SizedBox.shrink();
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 10),
                 Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: DSColors.success,
-                    shape: BoxShape.circle,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: DSColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: DSColors.success.withValues(alpha: 0.3)),
                   ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'Polar connected',
-                  style: DSTypography.caption.copyWith(
-                    color: DSColors.success,
-                    fontWeight: FontWeight.w500,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: DSColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Polar connected',
+                        style: DSTypography.caption.copyWith(
+                          color: DSColors.success,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ],
     );
   }

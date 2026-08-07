@@ -120,6 +120,11 @@ void setupDI() {
   getIt.registerFactory<SessionReportBloc>(
       () => SessionReportBloc(repository: getIt()));
 
-  getIt.registerLazySingleton<PolarBleService>(() => PolarBleService());
+  getIt.registerLazySingleton<PolarBleService>(() {
+    // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+    // ignore: avoid_print
+    print('[PolarDebug] GetIt factory constructing PolarBleService at ${DateTime.now()}');
+    return PolarBleService();
+  });
   getIt.registerLazySingleton<PolarBloc>(() => PolarBloc(getIt()));
 }

@@ -8,6 +8,7 @@ import com.polar.sdk.api.errors.PolarInvalidArgument
 import com.polar.sdk.api.model.PolarDeviceInfo
 import com.polar.sdk.api.model.PolarHealthThermometerData
 import com.polar.sdk.api.model.PolarHrData
+import android.util.Log
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -66,6 +67,8 @@ class PolarPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
         api.setApiCallback(object : PolarBleApiCallback() {
             override fun deviceConnected(polarDeviceInfo: PolarDeviceInfo) {
+                // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+                Log.d("PolarDebug", "deviceConnected fired on thread=${Thread.currentThread().name}")
                 methodChannel.invokeMethod("deviceConnected", polarDeviceInfo.deviceId)
             }
             override fun deviceConnecting(polarDeviceInfo: PolarDeviceInfo) {
@@ -75,7 +78,18 @@ class PolarPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 methodChannel.invokeMethod("deviceDisconnected", polarDeviceInfo.deviceId)
             }
             override fun blePowerStateChanged(powered: Boolean) {
-                methodChannel.invokeMethod("blePowerStateChanged", powered)
+                // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+                Log.d(
+                    "PolarDebug",
+                    "[1] blePowerStateChanged callback entered: powered=$powered thread=${Thread.currentThread().name}"
+                )
+                try {
+                    Log.d("PolarDebug", "[2] blePowerStateChanged: before invokeMethod")
+                    methodChannel.invokeMethod("blePowerStateChanged", powered)
+                    Log.d("PolarDebug", "[3] blePowerStateChanged: after invokeMethod (completed without throwing)")
+                } catch (e: Exception) {
+                    Log.e("PolarDebug", "blePowerStateChanged: invokeMethod THREW: ${e.javaClass.simpleName}: ${e.message}", e)
+                }
             }
             override fun disInformationReceived(identifier: String, disInfo: DisInfo) {}
             override fun htsNotificationReceived(identifier: String, data: PolarHealthThermometerData) {}

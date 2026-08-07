@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../../domain/models/hr_reading.dart';
 
@@ -32,7 +33,13 @@ class PolarBleService {
   final _deviceEventController = StreamController<PolarDeviceEvent>.broadcast();
 
   PolarBleService() {
+    // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+    debugPrint(
+        '[PolarDebug] PolarBleService() constructor running, instance=${identityHashCode(this)}, channel=${_methodChannel.name}, at ${DateTime.now()}');
     _methodChannel.setMethodCallHandler((call) async {
+      // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+      debugPrint(
+          '[PolarDebug] handler(instance=${identityHashCode(this)}) received native call: method=${call.method} args=${call.arguments} at ${DateTime.now()}');
       switch (call.method) {
         case 'deviceFound':
           final args = call.arguments as Map<dynamic, dynamic>;
@@ -59,13 +66,19 @@ class PolarBleService {
           );
         case 'blePowerStateChanged':
           final powered = call.arguments as bool;
+          // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+          debugPrint('[PolarDebug] blePowerStateChanged case reached, powered=$powered');
           if (!powered) {
             _deviceEventController.add(
               const PolarDeviceEvent(PolarDeviceStatus.bluetoothOff, null),
             );
+            debugPrint('[PolarDebug] bluetoothOff PolarDeviceEvent added to controller');
           }
       }
     });
+    // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+    debugPrint(
+        '[PolarDebug] setMethodCallHandler registration call completed, instance=${identityHashCode(this)}');
   }
 
   Stream<PolarDeviceEvent> get deviceEvents => _deviceEventController.stream;

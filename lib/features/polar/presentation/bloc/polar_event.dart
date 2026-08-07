@@ -67,6 +67,14 @@ class PolarBluetoothOffEvent extends PolarEvent {
   const PolarBluetoothOffEvent();
 }
 
+class PolarConnectTimedOutEvent extends PolarEvent {
+  const PolarConnectTimedOutEvent();
+}
+
+class PolarDisconnectTimedOutEvent extends PolarEvent {
+  const PolarDisconnectTimedOutEvent();
+}
+
 class PolarHrReceivedEvent extends PolarEvent {
   const PolarHrReceivedEvent(this.reading);
   final HrReading reading;

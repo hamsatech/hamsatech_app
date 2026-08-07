@@ -147,6 +147,9 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
       backgroundColor: _kBg,
       body: BlocConsumer<PolarBloc, PolarState>(
         listener: (context, state) {
+          // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+          debugPrint(
+              '[PolarDebug] PolarDeviceScreen listener: connectionStatus=${state.connectionStatus} errorMessage=${state.errorMessage}');
           if (state.connectionStatus == PolarConnectionStatus.error &&
               state.errorMessage != null) {
             _scanTimeoutTimer?.cancel();
