@@ -935,6 +935,14 @@ class ApiService {
           List<Map<String, dynamic>> rows) =>
       _dio.post('acc_stream', data: rows);
 
+  /// POST /api/v2/heart-rate/samples — batch upload of buffered live-training
+  /// HR samples. Payload: { samples: [{ sessionId, recordedAt, heartRate,
+  /// rrInterval }] }.
+  Future<Response<dynamic>> uploadHrSamples(Map<String, dynamic> payload) {
+    debugPrint('[HR UPLOAD] POST api/v2/heart-rate/samples');
+    return _mobileDio.post('api/v2/heart-rate/samples', data: payload);
+  }
+
   // ── Mobile backend — Athlete Profile ─────────────────────────────────────
 
   /// GET /api/mobile/athletes/{athleteId}/profile
@@ -1056,14 +1064,35 @@ class ApiService {
 class _MobileAuthInterceptor extends Interceptor {
   static String? _token;
 
-  static void setToken(String? token) => _token = token;
+  static void setToken(String? token) {
+    // TEMPORARY DEBUG (auth trace) — remove after diagnosis.
+    debugPrint('[AuthDebug] setToken called — '
+        'was: ${_preview(_token)} | now: ${_preview(token)} | '
+        'changed: ${_token != token}');
+    _token = token;
+  }
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (_token != null && _token!.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $_token';
     }
+    // TEMPORARY DEBUG (auth trace) — remove after diagnosis.
+    debugPrint('[AuthDebug] ${options.method} ${options.path} — '
+        'token isNull: ${_token == null} | length: ${_token?.length ?? 0} | '
+        'first20: ${_preview(_token)} | '
+        'Authorization header present: '
+        '${options.headers.containsKey('Authorization')}');
     handler.next(options);
+  }
+
+  // TEMPORARY DEBUG (auth trace) — remove after diagnosis.
+  // Never prints the full token — null-safe first-20-chars preview only.
+  static String _preview(String? token) {
+    if (token == null) return 'null';
+    if (token.isEmpty) return '(empty)';
+    final cut = token.length < 20 ? token.length : 20;
+    return '${token.substring(0, cut)}… (len=${token.length})';
   }
 }
 

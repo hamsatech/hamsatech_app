@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../polar/presentation/bloc/polar_bloc.dart';
+import '../../../polar/presentation/bloc/polar_event.dart';
 import '../../bloc/live_training_bloc.dart';
 import '../../bloc/live_training_event.dart';
 import '../../bloc/live_training_state.dart';
@@ -38,7 +39,22 @@ class _LiveSessionViewState extends State<_LiveSessionView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<LiveTrainingBloc>().add(const LiveTrainingStartRequested());
+      _startPolarHrStreamIfConnected();
     });
+  }
+
+  // Live Training assumes a Polar device may already be connected from an
+  // earlier pairing/baseline screen — it doesn't scan or connect itself,
+  // it only (re)starts HR streaming on the existing connection, if any.
+  void _startPolarHrStreamIfConnected() {
+    final polarBloc = context.read<PolarBloc>();
+    final polarState = polarBloc.state;
+    if (polarState.connectedDeviceId != null && polarState.isConnected) {
+      debugPrint('[PolarLiveTraining] Starting HR stream');
+      polarBloc.add(const PolarStartHrStreamRequested());
+    } else {
+      debugPrint('[PolarLiveTraining] No connected Polar device');
+    }
   }
 
   @override

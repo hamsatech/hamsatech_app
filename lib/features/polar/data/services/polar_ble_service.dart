@@ -83,9 +83,18 @@ class PolarBleService {
 
   Stream<PolarDeviceEvent> get deviceEvents => _deviceEventController.stream;
 
-  Stream<HrReading> get hrStream => _hrEventChannel
+  // Computed once and cached: EventChannel.receiveBroadcastStream() performs
+  // a fresh native 'listen' registration on every call, and the native side
+  // (PolarPlugin.kt) holds only a single EventSink reference — a second
+  // registration silently replaces the first, starving whichever listener
+  // subscribed earlier. Caching this Stream lets multiple independent
+  // .listen() calls (PolarBloc, HrTelemetryService) share one underlying
+  // broadcast controller and one native registration instead.
+  late final Stream<HrReading> _hrStream = _hrEventChannel
       .receiveBroadcastStream()
       .map((event) => HrReading.fromMap(event as Map<dynamic, dynamic>));
+
+  Stream<HrReading> get hrStream => _hrStream;
 
   Future<void> scanForDevices() => _methodChannel.invokeMethod('scan');
 

@@ -41,19 +41,25 @@ class AuthRepositoryImpl implements AuthRepository {
           'isNewUser=${parsed.isNewUser} nextStep=${parsed.nextStep}');
 
       // Persist to secure storage (Keychain / Keystore) — authoritative store.
-      await SecureStorageService.saveAthleteId(parsed.userId);
       await SecureStorageService.savePhone(phoneOrEmail);
       await SecureStorageService.saveAuthToken(parsed.accessToken);
       await SecureStorageService.saveRefreshToken(parsed.refreshToken);
 
       // Mirror into SharedPreferences so all synchronous StorageService
       // reads continue to work without refactoring call-sites.
-      await StorageService.saveAthleteId(parsed.userId);
       await StorageService.saveAuthToken(parsed.accessToken);
 
       // Prime the in-memory token cache so the very next mobile backend
       // request already carries the Authorization header.
       ApiService.setMobileAuthToken(parsed.accessToken);
+
+      // parsed.userId is hamsatech.users.id (a UUID) — a distinct identifier
+      // from hamsatech.athletes.athlete_id (e.g. "ASA059") on a different
+      // table — it must never be persisted as the athlete_id. Resolve the
+      // real athlete_id via the existing JWT-authenticated onboarding-status
+      // endpoint (which already returns it for any authenticated account)
+      // and persist that instead.
+      await _syncAthleteId();
 
       final nextStep = AuthNextStep.fromApi(parsed.nextStep);
 
@@ -145,6 +151,29 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
+
+  /// Resolves the real `hamsatech.athletes.athlete_id` (e.g. "ASA059") via
+  /// the existing JWT-authenticated onboarding-status endpoint and persists
+  /// it. Non-fatal: a failure here must not fail login — callers of
+  /// `AuthHelper.getCurrentAthleteId()` already handle a still-missing
+  /// athlete_id gracefully (no-op / skip).
+  static Future<void> _syncAthleteId() async {
+    try {
+      final res = await ApiService.instance.getOnboardingStatus();
+      final data = res.data;
+      final athleteId =
+          data is Map<String, dynamic> ? data['athlete_id'] as String? : null;
+      if (athleteId == null || athleteId.isEmpty) {
+        debugPrint('[OTP VERIFY] athlete_id sync skipped — none in response');
+        return;
+      }
+      await SecureStorageService.saveAthleteId(athleteId);
+      await StorageService.saveAthleteId(athleteId);
+      debugPrint('[OTP VERIFY] athlete_id synced: $athleteId');
+    } catch (e) {
+      debugPrint('[OTP VERIFY] athlete_id sync failed (non-fatal): $e');
+    }
+  }
 
   /// Extracts a human-readable error message from a DioException.
   /// Prefers the live `ErrorResponse{ error: { code, message, details } }`

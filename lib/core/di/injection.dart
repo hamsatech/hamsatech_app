@@ -40,6 +40,7 @@ import '../../features/pre_session_ritual/domain/repositories/ritual_repository.
 import '../../features/pre_session_ritual/bloc/ritual_bloc.dart';
 
 import '../../features/live_training/data/repositories/live_training_repository_impl.dart';
+import '../../features/live_training/data/services/hr_telemetry_service.dart';
 import '../../features/live_training/domain/repositories/live_training_repository.dart';
 import '../../features/live_training/bloc/live_training_bloc.dart';
 
@@ -101,7 +102,7 @@ void setupDI() {
   getIt.registerLazySingleton<RitualBloc>(() => RitualBloc(getIt()));
 
   getIt.registerLazySingleton<LiveTrainingRepository>(
-      () => LiveTrainingRepositoryImpl());
+      () => LiveTrainingRepositoryImpl(getIt()));
   getIt
       .registerLazySingleton<LiveTrainingBloc>(() => LiveTrainingBloc(getIt()));
 
@@ -127,4 +128,11 @@ void setupDI() {
     return PolarBleService();
   });
   getIt.registerLazySingleton<PolarBloc>(() => PolarBloc(getIt()));
+
+  // Eagerly instantiated (not lazy) so it starts buffering HR samples from
+  // app launch, independent of whether the Live Training screen has been
+  // opened yet.
+  getIt.registerLazySingleton<HrTelemetryService>(
+      () => HrTelemetryService(getIt()));
+  getIt<HrTelemetryService>();
 }

@@ -39,6 +39,30 @@ Future<void> _restoreSecureSession() async {
   final token = await SecureStorageService.getAuthToken();
   if (token != null && token.isNotEmpty) {
     ApiService.setMobileAuthToken(token);
+
+    // Self-healing, non-blocking: an already-authenticated session may
+    // have an athlete_id persisted before the auth flow correctly
+    // resolved it (see AuthRepositoryImpl._syncAthleteId). Refresh it from
+    // the existing JWT-authenticated onboarding-status endpoint in the
+    // background — intentionally not awaited, so it never delays startup.
+    _syncStoredAthleteId();
+  }
+}
+
+/// Refreshes the persisted athlete_id from the existing onboarding-status
+/// endpoint. Non-fatal: on any failure the next successful login or app
+/// restart will retry.
+Future<void> _syncStoredAthleteId() async {
+  try {
+    final res = await ApiService.instance.getOnboardingStatus();
+    final data = res.data;
+    final athleteId =
+        data is Map<String, dynamic> ? data['athlete_id'] as String? : null;
+    if (athleteId == null || athleteId.isEmpty) return;
+    await SecureStorageService.saveAthleteId(athleteId);
+    await StorageService.saveAthleteId(athleteId);
+  } catch (_) {
+    // Non-fatal — see doc comment above.
   }
 }
 
