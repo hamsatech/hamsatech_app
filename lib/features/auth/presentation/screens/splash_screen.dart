@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/services/api_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/astra_logo.dart';
 
@@ -54,19 +53,13 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _ctrl.forward();
-    _navigate();
-
-    // TODO: remove after confirming Supabase connection
-    ApiService.instance.getAthletes().then((res) {
-      debugPrint('[API TEST] athletes response: ${res.data}');
-    }).catchError((Object e) {
-      debugPrint('[API TEST] error: $e');
-    });
+    _navigate(_ctrl.forward());
   }
 
-  Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 2400));
+  /// Waits for the entrance animation to finish (not an arbitrary delay)
+  /// before routing, so the splash still plays out as designed.
+  Future<void> _navigate(TickerFuture animation) async {
+    await animation;
     if (!mounted) return;
 
     // Restore app-default status bar style before leaving.

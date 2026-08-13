@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/live_training_config.dart';
 import '../../domain/entities/session_mood.dart';
@@ -101,6 +103,10 @@ class LiveTrainingRepositoryImpl implements LiveTrainingRepository {
     required String whatWorked,
     required String whatDidnt,
   }) async {
+    // Stop accepting new HR samples before anything else, so none are
+    // buffered while the backend call below is in flight.
+    _hrTelemetryService.setActiveSessionId(null);
+
     final sessions = StorageService.getSessions();
     final idx = sessions.indexWhere((s) => s['id'] == sessionId);
     if (idx == -1) return;
@@ -116,6 +122,22 @@ class LiveTrainingRepositoryImpl implements LiveTrainingRepository {
       },
     };
     await StorageService.saveSessions(sessions);
-    _hrTelemetryService.setActiveSessionId(null);
+
+    // `sessionId` is the real backend session_id whenever one exists (see
+    // startSession above). Non-fatal: a network/API failure here must not
+    // affect the local completion state already saved above.
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId != null) {
+      try {
+        await ApiService.instance.completeMobileSession(
+          athleteId: athleteId,
+          sessionId: sessionId,
+          durationMinutes: durationMinutes,
+          performanceRating: mood?.rating,
+        );
+      } catch (e) {
+        debugPrint('[SESSION COMPLETE] backend call failed: $e');
+      }
+    }
   }
 }

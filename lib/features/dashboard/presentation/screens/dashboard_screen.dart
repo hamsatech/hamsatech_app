@@ -15,15 +15,13 @@ import '../bloc/dashboard_event.dart';
 import '../bloc/dashboard_state.dart';
 import '../widgets/metric_card.dart';
 
-// Combines the persisted "has ever paired" flag (DashboardBloc/StorageService)
-// with PolarBloc's live connection state, so a Bluetooth-off/disconnect this
-// session immediately overrides a stale "connected" flag. `initial` is left
-// untouched deliberately — a user who hasn't visited /polar this session
-// shouldn't have their persisted pairing status overridden.
-bool _isPolarLiveConnected(DashboardDataEntity data, PolarState polarState) {
-  return data.isPolarConnected &&
-      polarState.connectionStatus != PolarConnectionStatus.error &&
-      polarState.connectionStatus != PolarConnectionStatus.disconnected;
+// "Connected" must reflect only the actual current PolarBloc BLE state —
+// the persisted "has ever paired" flag (`data.isPolarConnected`) previously
+// caused a false-positive "Connected" badge on cold start, since PolarBloc
+// starts at `initial` (not a live connection) and nothing re-verifies the
+// real BLE link at startup.
+bool _isPolarLiveConnected(PolarState polarState) {
+  return polarState.connectionStatus == PolarConnectionStatus.connected;
 }
 
 // PolarState changes on every HR sample (~1/sec while streaming); only
@@ -138,7 +136,7 @@ class _DashboardContent extends StatelessWidget {
           bloc: getIt<PolarBloc>(),
           buildWhen: _polarConnectionStatusChanged,
           builder: (context, polarState) {
-            if (_isPolarLiveConnected(data, polarState)) {
+            if (_isPolarLiveConnected(polarState)) {
               return const SizedBox.shrink();
             }
             return Column(
@@ -247,7 +245,7 @@ class _HomeHeader extends StatelessWidget {
           bloc: getIt<PolarBloc>(),
           buildWhen: _polarConnectionStatusChanged,
           builder: (context, polarState) {
-            if (!_isPolarLiveConnected(data, polarState)) {
+            if (!_isPolarLiveConnected(polarState)) {
               return const SizedBox.shrink();
             }
             return Column(
