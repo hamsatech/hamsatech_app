@@ -1039,6 +1039,20 @@ class ApiService {
         'api/mobile/athletes/$athleteId/sessions/$sessionId/summary');
   }
 
+  // ── Mobile backend — Session Heart Rate ──────────────────────────────────
+
+  /// GET /api/mobile/athletes/{athleteId}/sessions/{sessionId}/heart-rate
+  /// Returns aggregated, chart-ready HR for a session: sample_count,
+  /// avg_hr/min_hr/max_hr (null if no samples), and a downsampled points list.
+  Future<Response<dynamic>> getSessionHeartRate({
+    required String athleteId,
+    required String sessionId,
+  }) {
+    debugPrint('[SESSION HR] GET api/mobile/athletes/$athleteId/sessions/$sessionId/heart-rate');
+    return _mobileDio.get(
+        'api/mobile/athletes/$athleteId/sessions/$sessionId/heart-rate');
+  }
+
   // ── Mobile backend — Dashboard Home ─────────────────────────────────────
 
   /// GET /api/mobile/athletes/{athleteId}/home

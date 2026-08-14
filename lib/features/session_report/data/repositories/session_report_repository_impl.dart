@@ -1,5 +1,6 @@
-import 'dart:math';
-
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_report_entity.dart';
 import '../../domain/repositories/session_report_repository.dart';
@@ -31,7 +32,6 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final grandTotal = seriesList.fold(0.0, (sum, s) => sum + s.total);
     final shotsPerSeries = seriesList.first.shots.length;
     final maxSeriesTotal = shotsPerSeries * 10.0;
-    final isPolarConnected = StorageService.isPolarEnabled();
 
     final bestSeries = seriesList.reduce((a, b) => a.total > b.total ? a : b);
 
@@ -49,6 +49,12 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final dateLabel = _formatDate(now);
     final timeLabel = _formatTime(now);
 
+    // ── Real HR (backend hr_stream, via the current session's real ────────────
+    // backend session_id) — never fabricated. sample_count == 0 (no data,
+    // API failure, or no session_id available) means a clean no-data state.
+
+    final realHr = await _fetchSessionHr();
+
     // ── Physiology ────────────────────────────────────────────────────────────
 
     final avgScore = grandTotal / allShots.length;
@@ -56,11 +62,9 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
             .map((v) => (v - avgScore) * (v - avgScore))
             .reduce((a, b) => a + b) /
         allShots.length;
-    final generatedAvgHr = 60 + (avgScore * 2.5).round();
-    final generatedPeakHr =
-        generatedAvgHr + 15 + (variance * 0.5).round().clamp(0, 20);
-    final avgHr = isPolarConnected ? generatedAvgHr : 0;
-    final peakHr = isPolarConnected ? generatedPeakHr : 0;
+
+    final avgHr = realHr?.avgHr ?? 0;
+    final peakHr = realHr?.maxHr ?? 0;
 
     final (fatigueLabel, fatigueColor) = _fatigueLevel(variance);
     final (recoveryLabel, recoveryColor) = _recoveryLevel(last, avgScore);
@@ -75,57 +79,46 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     );
 
     // ── Series rows ───────────────────────────────────────────────────────────
+    // Real HR is a single session-wide time series with no per-shot/per-series
+    // correlation available (no shot-timing data exists) — every row shows the
+    // real overall session average rather than fabricating per-series variance.
 
-    final rng = Random(42);
-    final seriesHrMap = <int, int>{};
-    final seriesRows = seriesList.map((s) {
-      final seriesHr = isPolarConnected
-          ? (generatedAvgHr + rng.nextInt(10) - 5).clamp(50, 130)
-          : 0;
-      seriesHrMap[s.number] = seriesHr;
-      return ReportSeriesRowEntity(
-        seriesNumber: s.number,
-        total: s.total,
-        maxTotal: maxSeriesTotal,
-        avgHr: seriesHr,
-        isBest: s.number == bestSeries.number,
-      );
-    }).toList();
+    final seriesRows = seriesList
+        .map((s) => ReportSeriesRowEntity(
+              seriesNumber: s.number,
+              total: s.total,
+              maxTotal: maxSeriesTotal,
+              avgHr: avgHr,
+              isBest: s.number == bestSeries.number,
+            ))
+        .toList();
 
-    // ── HR chart (simulated with spike + boundary markers) ────────────────────
+    // ── HR chart (real, server-downsampled hr_stream points) ───────────────────
 
-    final totalPoints = seriesList.length * shotsPerSeries;
     int spikeCount = 0;
-    final hrPoints = isPolarConnected
-        ? List.generate(totalPoints, (i) {
-            final seriesIdx = i ~/ shotsPerSeries;
-            final shotInSeries = i % shotsPerSeries;
-            final seriesHr =
-                seriesHrMap[seriesList[seriesIdx].number] ?? generatedAvgHr;
-            final noise = (rng.nextDouble() - 0.5) * 14;
-            final bpm = (seriesHr + noise).clamp(50.0, 145.0);
-            final isSpike = bpm > _spikeThreshold;
+    final hrPoints = realHr == null
+        ? const <HrChartPoint>[]
+        : List.generate(realHr.points.length, (i) {
+            final point = realHr.points[i];
+            final isSpike = point.heartRate > _spikeThreshold;
             if (isSpike) spikeCount++;
             return HrChartPoint(
               index: i,
-              bpm: bpm,
+              bpm: point.heartRate.toDouble(),
               isSpike: isSpike,
-              isSeriesBoundary: shotInSeries == shotsPerSeries - 1 &&
-                  seriesIdx < seriesList.length - 1,
+              // No real shot/series-timing correlation exists for HR
+              // samples — never fabricate boundary markers.
+              isSeriesBoundary: false,
             );
-          })
-        : <HrChartPoint>[];
+          });
 
-    final hrMin =
-        isPolarConnected ? hrPoints.map((p) => p.bpm).reduce(min).round() : 0;
-    final hrPeak =
-        isPolarConnected ? hrPoints.map((p) => p.bpm).reduce(max).round() : 0;
-    final hrAvg = isPolarConnected
-        ? (hrPoints.map((p) => p.bpm).reduce((a, b) => a + b) / hrPoints.length)
-            .round()
-        : 0;
-    final avgPreShotHr =
-        isPolarConnected ? (generatedAvgHr - 3).clamp(50, 130) : 0;
+    final hrMin = realHr?.minHr ?? 0;
+    final hrPeak = realHr?.maxHr ?? 0;
+    final hrAvg = realHr?.avgHr ?? 0;
+    // No per-shot timing exists to compute a true pre-shot HR average from
+    // real data — the overall session average is the honest best-effort
+    // substitute rather than a fabricated offset.
+    final avgPreShotHr = hrAvg;
 
     final hrMetrics = HrMetricsEntity(
       avgHr: hrAvg,
@@ -182,6 +175,54 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
       recommendations: recs,
       coachFeedback: coach,
     );
+  }
+
+  // ── Real HR fetch ────────────────────────────────────────────────────────
+
+  /// Fetches real aggregated HR for the current session from the backend
+  /// (`hr_stream`, via the real backend session_id already persisted by the
+  /// existing session flow — never a local bookkeeping id, never a newly
+  /// generated one). Returns `null` on any failure or when no session/athlete
+  /// id is available — callers must treat `null` as "no data", never fall
+  /// back to fabricating values.
+  static Future<_SessionHrData?> _fetchSessionHr() async {
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (sessionId == null || athleteId == null) return null;
+
+    try {
+      final res = await ApiService.instance.getSessionHeartRate(
+        athleteId: athleteId,
+        sessionId: sessionId,
+      );
+      final data = res.data;
+      if (data is! Map<String, dynamic>) return null;
+
+      final sampleCount = (data['sample_count'] as num?)?.toInt() ?? 0;
+      if (sampleCount == 0) return null;
+
+      final avgHr = (data['avg_hr'] as num?)?.round();
+      final minHr = (data['min_hr'] as num?)?.round();
+      final maxHr = (data['max_hr'] as num?)?.round();
+      if (avgHr == null || minHr == null || maxHr == null) return null;
+
+      final rawPoints = (data['points'] as List?) ?? const [];
+      final points = rawPoints
+          .cast<Map<String, dynamic>>()
+          .map((p) => _SessionHrPoint(
+                heartRate: (p['heart_rate'] as num).round(),
+              ))
+          .toList();
+
+      return _SessionHrData(
+        avgHr: avgHr,
+        minHr: minHr,
+        maxHr: maxHr,
+        points: points,
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -413,4 +454,25 @@ class _SeriesData {
   final int number;
   final List<double> shots;
   final double total;
+}
+
+/// Real, backend-sourced HR aggregate for one session — never fabricated.
+class _SessionHrData {
+  const _SessionHrData({
+    required this.avgHr,
+    required this.minHr,
+    required this.maxHr,
+    required this.points,
+  });
+
+  final int avgHr;
+  final int minHr;
+  final int maxHr;
+  final List<_SessionHrPoint> points;
+}
+
+class _SessionHrPoint {
+  const _SessionHrPoint({required this.heartRate});
+
+  final int heartRate;
 }
