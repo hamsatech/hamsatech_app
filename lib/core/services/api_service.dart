@@ -561,6 +561,28 @@ class ApiService {
     );
   }
 
+  /// POST /api/mobile/athletes/{athleteId}/sessions/{sessionId}/score
+  /// Persists the session-level score summary (hamsatech.shooting_session_log)
+  /// through the authenticated backend — upsert, safe to retry.
+  Future<Response<dynamic>> saveScore({
+    required String athleteId,
+    required String sessionId,
+    required int totalShots,
+    required double avgScore,
+    required double bestSeriesScore,
+  }) {
+    debugPrint(
+        '[SCORE SAVE] POST api/mobile/athletes/$athleteId/sessions/$sessionId/score');
+    return _mobileDio.post(
+      'api/mobile/athletes/$athleteId/sessions/$sessionId/score',
+      data: {
+        'total_shots': totalShots,
+        'avg_score': avgScore,
+        'best_series_score': bestSeriesScore,
+      },
+    );
+  }
+
   /// POST /api/mobile/athletes/{athleteId}/sessions/{sessionId}/complete
   /// Signals session completion to the mobile backend with optional score summary.
   /// All fields except athleteId and sessionId are optional — pass what's available.

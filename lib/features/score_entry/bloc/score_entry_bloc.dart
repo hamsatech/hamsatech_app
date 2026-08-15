@@ -154,24 +154,25 @@ class ScoreEntryBloc extends Bloc<ScoreEntryEvent, ScoreEntryState> {
         // continue to write shooting log even if end_time patch fails
       }
 
-      // Step 3: write score summary to shooting_session_log (Supabase)
+      // Step 3: persist the score summary through the authenticated backend
+      // (hamsatech.shooting_session_log) — replaces the direct Supabase write.
       if (athleteId != null) {
         try {
-          final logRes = await ApiService.instance.createShootingSessionLog(
-            sessionId: supabaseSessionId,
+          final scoreRes = await ApiService.instance.saveScore(
             athleteId: athleteId,
+            sessionId: supabaseSessionId,
             totalShots: totalShots,
             avgScore: avgScore,
             bestSeriesScore: bestSeries,
           );
           debugPrint(
-              '[SHOOTING LOG SUCCESS] status=${logRes.statusCode} data=${logRes.data}');
+              '[SCORE SAVE SUCCESS] status=${scoreRes.statusCode} data=${scoreRes.data}');
         } catch (e) {
-          _logApiError('SHOOTING LOG', e);
+          _logApiError('SCORE SAVE', e);
         }
       } else {
         debugPrint(
-            '[SHOOTING LOG] skipped — no athlete_id (onboarding incomplete)');
+            '[SCORE SAVE] skipped — no athlete_id (onboarding incomplete)');
       }
     });
   }
