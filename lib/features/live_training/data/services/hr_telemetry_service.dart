@@ -42,6 +42,9 @@ class HrTelemetryService {
   late final StreamSubscription<HrReading> _hrSubscription;
   Timer? _flushTimer;
   bool _isUploading = false;
+  // Tracks the most recently started upload so flushNow() can await an
+  // already-in-flight upload instead of racing/duplicating it.
+  Future<void>? _currentUpload;
 
   final List<HrTelemetrySample> _buffer = [];
   int _flushedUpTo = 0; // index into _buffer already uploaded successfully
@@ -133,7 +136,38 @@ class HrTelemetryService {
         'samples: ${pending.length}');
     debugPrint('[HrTelemetry] payload: ${jsonEncode(payload)}');
 
-    unawaited(_uploadBatch(pending, payload));
+    final upload = _uploadBatch(pending, payload);
+    _currentUpload = upload;
+    unawaited(upload);
+  }
+
+  /// Awaits any in-flight upload, then sends whatever remains pending —
+  /// used at session end so already-buffered samples are sent immediately
+  /// rather than waiting for the next periodic tick. Never starts a second
+  /// upload while one from [_flush] is already running.
+  Future<void> flushNow() async {
+    if (pendingCount == 0) return;
+
+    final inFlight = _currentUpload;
+    if (_isUploading && inFlight != null) {
+      await inFlight;
+    }
+
+    if (pendingCount == 0) return;
+
+    final pending = _buffer.sublist(_flushedUpTo);
+    if (pending.isEmpty) return;
+
+    final payload = _buildPayload(pending);
+
+    // TEMPORARY DEBUG (Phase 5 upload) — remove once this ships.
+    debugPrint('[HrTelemetry] FLUSH TRIGGERED — reason: final flush (session end) | '
+        'samples: ${pending.length}');
+    debugPrint('[HrTelemetry] payload: ${jsonEncode(payload)}');
+
+    final upload = _uploadBatch(pending, payload);
+    _currentUpload = upload;
+    await upload;
   }
 
   Future<void> _uploadBatch(

@@ -140,4 +140,14 @@ class LiveTrainingRepositoryImpl implements LiveTrainingRepository {
       }
     }
   }
+
+  @override
+  void stopHrTelemetry() {
+    _hrTelemetryService.setActiveSessionId(null);
+  }
+
+  @override
+  Future<void> flushHrTelemetry() {
+    return _hrTelemetryService.flushNow();
+  }
 }
