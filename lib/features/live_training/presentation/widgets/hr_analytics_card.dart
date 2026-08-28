@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/services/storage_service.dart';
 import '../../../../features/polar/presentation/bloc/polar_bloc.dart';
 import '../../../../features/polar/presentation/bloc/polar_state.dart';
 
@@ -22,6 +23,48 @@ class HrAnalyticsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<PolarBloc, PolarState>(
       builder: (context, polarState) {
+        // When user explicitly skipped Polar and no device is active, show
+        // the "not connected" placeholder rather than simulated data.
+        final polarSkipped = !StorageService.isPolarEnabled();
+        if (polarSkipped && !polarState.isConnected) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF7FA),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCAE8EE),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.favorite_border_rounded,
+                    color: Color(0xFF2F7E8F),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Polar not connected yet',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2F7E8F),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         // Prefer real Polar data; fall back to bloc-driven simulation.
         final polarHr = polarState.latestReading?.bpm;
         final currentHr = polarHr ?? simulatedHr;
@@ -196,9 +239,36 @@ class _HrBarChart extends StatelessWidget {
 
   // Naturalistic rising pattern shown before any readings arrive.
   static const _placeholderHeights = [
-    0.28, 0.32, 0.30, 0.35, 0.38, 0.36, 0.40, 0.44, 0.42, 0.48,
-    0.50, 0.47, 0.52, 0.56, 0.53, 0.58, 0.62, 0.59, 0.66, 0.70,
-    0.68, 0.73, 0.70, 0.76, 0.74, 0.80, 0.76, 0.82, 0.79, 0.74,
+    0.28,
+    0.32,
+    0.30,
+    0.35,
+    0.38,
+    0.36,
+    0.40,
+    0.44,
+    0.42,
+    0.48,
+    0.50,
+    0.47,
+    0.52,
+    0.56,
+    0.53,
+    0.58,
+    0.62,
+    0.59,
+    0.66,
+    0.70,
+    0.68,
+    0.73,
+    0.70,
+    0.76,
+    0.74,
+    0.80,
+    0.76,
+    0.82,
+    0.79,
+    0.74,
   ];
 
   @override
@@ -243,9 +313,7 @@ class _HrBarChart extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 1.0),
         height: _maxHeight * heightFraction.clamp(0.08, 1.0),
         decoration: BoxDecoration(
-          color: isPlaceholder
-              ? _barColor.withValues(alpha: 0.22)
-              : _barColor,
+          color: isPlaceholder ? _barColor.withValues(alpha: 0.22) : _barColor,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(2),
           ),

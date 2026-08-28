@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-
 import '../../../../core/di/injection.dart';
 import '../../domain/entities/session_entity.dart';
 import '../bloc/session_bloc.dart';
@@ -17,8 +16,7 @@ class SessionsListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          getIt<SessionBloc>()..add(const SessionsLoadRequested()),
+      create: (_) => getIt<SessionBloc>()..add(const SessionsLoadRequested()),
       child: const _SessionsListView(),
     );
   }
@@ -57,8 +55,7 @@ class _SessionsListView extends StatelessWidget {
                   const Icon(Icons.fitness_center_rounded,
                       size: 64, color: DSColors.textMuted),
                   const SizedBox(height: 16),
-                  Text('No sessions yet',
-                      style: DSTypography.headingMedium),
+                  Text('No sessions yet', style: DSTypography.headingMedium),
                   const SizedBox(height: 8),
                   Text(
                     'Start a session from the dashboard to\nbuild your training history.',
@@ -89,8 +86,7 @@ class _SessionsListView extends StatelessWidget {
         onPressed: () => context.push('/session/pre'),
         backgroundColor: DSColors.brand,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('New Session',
-            style: TextStyle(color: Colors.white)),
+        label: const Text('New Session', style: TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -162,8 +158,8 @@ class _SessionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               post!.wentWell,
-              style:
-                  DSTypography.bodySmall.copyWith(color: DSColors.textSecondary),
+              style: DSTypography.bodySmall
+                  .copyWith(color: DSColors.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -195,8 +191,7 @@ class _Chip extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: c),
           const SizedBox(width: 4),
-          Text(label,
-              style: DSTypography.caption.copyWith(color: c)),
+          Text(label, style: DSTypography.caption.copyWith(color: c)),
         ],
       ),
     );

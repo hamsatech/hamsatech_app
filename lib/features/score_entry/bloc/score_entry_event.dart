@@ -13,6 +13,26 @@ class ScoreEntryStartRequested extends ScoreEntryEvent {
   const ScoreEntryStartRequested();
 }
 
+// User submits the total score for one series
+class SeriesTotalSubmitted extends ScoreEntryEvent {
+  const SeriesTotalSubmitted(this.total);
+
+  final double total;
+
+  @override
+  List<Object?> get props => [total];
+}
+
+class ScoreEntryUndoLast extends ScoreEntryEvent {
+  const ScoreEntryUndoLast();
+}
+
+class ScoreEntryFinalConfirmed extends ScoreEntryEvent {
+  const ScoreEntryFinalConfirmed();
+}
+
+// ── Legacy events — no longer dispatched in the active flow ───────────────────
+
 class ScoreScoreSelected extends ScoreEntryEvent {
   const ScoreScoreSelected(this.score);
 
@@ -20,10 +40,6 @@ class ScoreScoreSelected extends ScoreEntryEvent {
 
   @override
   List<Object?> get props => [score];
-}
-
-class ScoreEntryUndoLast extends ScoreEntryEvent {
-  const ScoreEntryUndoLast();
 }
 
 class ScoreEntrySeriesConfirmed extends ScoreEntryEvent {
@@ -34,11 +50,6 @@ class ScoreEntryEditRequested extends ScoreEntryEvent {
   const ScoreEntryEditRequested();
 }
 
-class ScoreEntryFinalConfirmed extends ScoreEntryEvent {
-  const ScoreEntryFinalConfirmed();
-}
-
-// Placeholder for future voice input integration
 class ScoreEntryVoiceInputRequested extends ScoreEntryEvent {
   const ScoreEntryVoiceInputRequested();
 }

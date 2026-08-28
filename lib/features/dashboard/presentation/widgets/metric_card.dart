@@ -28,7 +28,8 @@ class MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: DSSpacing.lg, vertical: 20),
+      padding:
+          const EdgeInsets.symmetric(horizontal: DSSpacing.lg, vertical: 20),
       decoration: BoxDecoration(
         color: DSColors.appCard,
         borderRadius: BorderRadius.circular(14),
@@ -186,7 +187,8 @@ class _MetricCardSkeletonState extends State<MetricCardSkeleton>
       builder: (_, __) => Opacity(
         opacity: _opacity.value,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: DSSpacing.lg, vertical: 20),
+          padding: const EdgeInsets.symmetric(
+              horizontal: DSSpacing.lg, vertical: 20),
           decoration: BoxDecoration(
             color: DSColors.gray50,
             borderRadius: BorderRadius.circular(14),

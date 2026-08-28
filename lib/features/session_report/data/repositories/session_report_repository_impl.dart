@@ -1,5 +1,6 @@
-import 'dart:math';
-
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_report_entity.dart';
 import '../../domain/repositories/session_report_repository.dart';
@@ -17,10 +18,8 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     // ── Parse series ────────────────────────────────────────────────────────
 
     final seriesList = rawSummary.map((s) {
-      final shots = (s['shots'] as List)
-          .cast<String>()
-          .map(_parseScore)
-          .toList();
+      final shots =
+          (s['shots'] as List).cast<String>().map(_parseScore).toList();
       final total = (s['total'] as num).toDouble();
       final number = (s['seriesNumber'] as num).toInt();
       return _SeriesData(number: number, shots: shots, total: total);
@@ -34,14 +33,12 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final shotsPerSeries = seriesList.first.shots.length;
     final maxSeriesTotal = shotsPerSeries * 10.0;
 
-    final bestSeries =
-        seriesList.reduce((a, b) => a.total > b.total ? a : b);
+    final bestSeries = seriesList.reduce((a, b) => a.total > b.total ? a : b);
 
     // ── Session metadata ─────────────────────────────────────────────────────
 
     final setup = StorageService.getSessionSetup();
-    final sessionTitle =
-        setup != null ? _buildTitle(setup) : 'Session Report';
+    final sessionTitle = setup != null ? _buildTitle(setup) : 'Session Report';
 
     final sessions = StorageService.getSessions();
     final completed =
@@ -52,6 +49,12 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final dateLabel = _formatDate(now);
     final timeLabel = _formatTime(now);
 
+    // ── Real HR (backend hr_stream, via the current session's real ────────────
+    // backend session_id) — never fabricated. sample_count == 0 (no data,
+    // API failure, or no session_id available) means a clean no-data state.
+
+    final realHr = await _fetchSessionHr();
+
     // ── Physiology ────────────────────────────────────────────────────────────
 
     final avgScore = grandTotal / allShots.length;
@@ -59,12 +62,12 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
             .map((v) => (v - avgScore) * (v - avgScore))
             .reduce((a, b) => a + b) /
         allShots.length;
-    final avgHr = 60 + (avgScore * 2.5).round();
-    final peakHr = avgHr + 15 + (variance * 0.5).round().clamp(0, 20);
+
+    final avgHr = realHr?.avgHr ?? 0;
+    final peakHr = realHr?.maxHr ?? 0;
 
     final (fatigueLabel, fatigueColor) = _fatigueLevel(variance);
-    final (recoveryLabel, recoveryColor) =
-        _recoveryLevel(last, avgScore);
+    final (recoveryLabel, recoveryColor) = _recoveryLevel(last, avgScore);
 
     final physiology = PhysiologyMetricsEntity(
       avgHr: avgHr,
@@ -76,49 +79,46 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     );
 
     // ── Series rows ───────────────────────────────────────────────────────────
+    // Real HR is a single session-wide time series with no per-shot/per-series
+    // correlation available (no shot-timing data exists) — every row shows the
+    // real overall session average rather than fabricating per-series variance.
 
-    final rng = Random(42);
-    final seriesHrMap = <int, int>{};
-    final seriesRows = seriesList.map((s) {
-      final seriesHr = (avgHr + rng.nextInt(10) - 5).clamp(50, 130);
-      seriesHrMap[s.number] = seriesHr;
-      return ReportSeriesRowEntity(
-        seriesNumber: s.number,
-        total: s.total,
-        maxTotal: maxSeriesTotal,
-        avgHr: seriesHr,
-        isBest: s.number == bestSeries.number,
-      );
-    }).toList();
+    final seriesRows = seriesList
+        .map((s) => ReportSeriesRowEntity(
+              seriesNumber: s.number,
+              total: s.total,
+              maxTotal: maxSeriesTotal,
+              avgHr: avgHr,
+              isBest: s.number == bestSeries.number,
+            ))
+        .toList();
 
-    // ── HR chart (simulated with spike + boundary markers) ────────────────────
+    // ── HR chart (real, server-downsampled hr_stream points) ───────────────────
 
-    final totalPoints = seriesList.length * shotsPerSeries;
     int spikeCount = 0;
-    final hrPoints = List.generate(totalPoints, (i) {
-      final seriesIdx = i ~/ shotsPerSeries;
-      final shotInSeries = i % shotsPerSeries;
-      final seriesHr = seriesHrMap[seriesList[seriesIdx].number] ?? avgHr;
-      final noise = (rng.nextDouble() - 0.5) * 14;
-      final bpm = (seriesHr + noise).clamp(50.0, 145.0);
-      final isSpike = bpm > _spikeThreshold;
-      if (isSpike) spikeCount++;
-      return HrChartPoint(
-        index: i,
-        bpm: bpm,
-        isSpike: isSpike,
-        isSeriesBoundary: shotInSeries == shotsPerSeries - 1 &&
-            seriesIdx < seriesList.length - 1,
-      );
-    });
+    final hrPoints = realHr == null
+        ? const <HrChartPoint>[]
+        : List.generate(realHr.points.length, (i) {
+            final point = realHr.points[i];
+            final isSpike = point.heartRate > _spikeThreshold;
+            if (isSpike) spikeCount++;
+            return HrChartPoint(
+              index: i,
+              bpm: point.heartRate.toDouble(),
+              isSpike: isSpike,
+              // No real shot/series-timing correlation exists for HR
+              // samples — never fabricate boundary markers.
+              isSeriesBoundary: false,
+            );
+          });
 
-    final hrMin = hrPoints.map((p) => p.bpm).reduce(min).round();
-    final hrPeak = hrPoints.map((p) => p.bpm).reduce(max).round();
-    final hrAvg = (hrPoints.map((p) => p.bpm).reduce((a, b) => a + b) /
-            hrPoints.length)
-        .round();
-    final avgPreShotHr =
-        (avgHr - 3).clamp(50, 130); // ~3 bpm lower just before shot
+    final hrMin = realHr?.minHr ?? 0;
+    final hrPeak = realHr?.maxHr ?? 0;
+    final hrAvg = realHr?.avgHr ?? 0;
+    // No per-shot timing exists to compute a true pre-shot HR average from
+    // real data — the overall session average is the honest best-effort
+    // substitute rather than a fabricated offset.
+    final avgPreShotHr = hrAvg;
 
     final hrMetrics = HrMetricsEntity(
       avgHr: hrAvg,
@@ -177,6 +177,54 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     );
   }
 
+  // ── Real HR fetch ────────────────────────────────────────────────────────
+
+  /// Fetches real aggregated HR for the current session from the backend
+  /// (`hr_stream`, via the real backend session_id already persisted by the
+  /// existing session flow — never a local bookkeeping id, never a newly
+  /// generated one). Returns `null` on any failure or when no session/athlete
+  /// id is available — callers must treat `null` as "no data", never fall
+  /// back to fabricating values.
+  static Future<_SessionHrData?> _fetchSessionHr() async {
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (sessionId == null || athleteId == null) return null;
+
+    try {
+      final res = await ApiService.instance.getSessionHeartRate(
+        athleteId: athleteId,
+        sessionId: sessionId,
+      );
+      final data = res.data;
+      if (data is! Map<String, dynamic>) return null;
+
+      final sampleCount = (data['sample_count'] as num?)?.toInt() ?? 0;
+      if (sampleCount == 0) return null;
+
+      final avgHr = (data['avg_hr'] as num?)?.round();
+      final minHr = (data['min_hr'] as num?)?.round();
+      final maxHr = (data['max_hr'] as num?)?.round();
+      if (avgHr == null || minHr == null || maxHr == null) return null;
+
+      final rawPoints = (data['points'] as List?) ?? const [];
+      final points = rawPoints
+          .cast<Map<String, dynamic>>()
+          .map((p) => _SessionHrPoint(
+                heartRate: (p['heart_rate'] as num).round(),
+              ))
+          .toList();
+
+      return _SessionHrData(
+        avgHr: avgHr,
+        minHr: minHr,
+        maxHr: maxHr,
+        points: points,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   static double _parseScore(String display) {
@@ -200,8 +248,18 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
 
   static String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
@@ -258,10 +316,8 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     final post = last?['postSession'] as Map<String, dynamic>?;
     final postRating = (post?['overallRating'] as num?)?.toInt() ?? 3;
     final scoreFactor = (avgScore / 10).clamp(0.0, 1.0);
-    final postMoodRaw =
-        (preMoodRaw + (postRating >= 4 ? 0 : -1)).clamp(1, 5);
-    final postFatigue =
-        (10 - (scoreFactor * 4).round()).clamp(3, 9);
+    final postMoodRaw = (preMoodRaw + (postRating >= 4 ? 0 : -1)).clamp(1, 5);
+    final postFatigue = (10 - (scoreFactor * 4).round()).clamp(3, 9);
     final postSelfRating = (postRating * 2).clamp(2, 10);
 
     // Mood label mapping
@@ -273,8 +329,11 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
           _ => '😤 Poor',
         };
 
-    MetricColor moodColor(int raw) =>
-        raw >= 4 ? MetricColor.good : raw == 3 ? MetricColor.warning : MetricColor.bad;
+    MetricColor moodColor(int raw) => raw >= 4
+        ? MetricColor.good
+        : raw == 3
+            ? MetricColor.warning
+            : MetricColor.bad;
 
     return MentalStateComparisonEntity(rows: [
       // Row 1: Mood before vs Mood after
@@ -332,8 +391,7 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
       return InsightEntity(
         headline:
             'Your HR spiked $spikeCount times and score dipped in S${worstSeries.seriesNumber}.',
-        body:
-            'Stress-driven arousal broke your stability mid-session. '
+        body: 'Stress-driven arousal broke your stability mid-session. '
             'When HR exceeds ~${avgPreShotHr + 8} bpm pre-shot, '
             'your grouping tends to open by 15–20%.',
       );
@@ -341,8 +399,7 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     if (variance < 3 && avgScore >= 8) {
       return const InsightEntity(
         headline: 'Exceptional consistency',
-        body:
-            'Your shot variance was minimal this session. You maintained '
+        body: 'Your shot variance was minimal this session. You maintained '
             'tight groupings across all series — a sign of strong mental '
             'control under pressure.',
       );
@@ -350,16 +407,14 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     if (avgScore >= 8) {
       return InsightEntity(
         headline: 'High scoring session',
-        body:
-            'You scored ${avgScore.toStringAsFixed(1)} average per shot. '
+        body: 'You scored ${avgScore.toStringAsFixed(1)} average per shot. '
             "Keep reinforcing this pre-shot routine — it's clearly working. "
             'Watch for slight drops in the final series.',
       );
     }
     return const InsightEntity(
       headline: 'Solid baseline performance',
-      body:
-          'Your scores reflect a consistent baseline. Continue applying '
+      body: 'Your scores reflect a consistent baseline. Continue applying '
           'your pre-shot routine and look to increase shot scores '
           'in the 7–8 range toward 9–10.',
     );
@@ -399,4 +454,25 @@ class _SeriesData {
   final int number;
   final List<double> shots;
   final double total;
+}
+
+/// Real, backend-sourced HR aggregate for one session — never fabricated.
+class _SessionHrData {
+  const _SessionHrData({
+    required this.avgHr,
+    required this.minHr,
+    required this.maxHr,
+    required this.points,
+  });
+
+  final int avgHr;
+  final int minHr;
+  final int maxHr;
+  final List<_SessionHrPoint> points;
+}
+
+class _SessionHrPoint {
+  const _SessionHrPoint({required this.heartRate});
+
+  final int heartRate;
 }

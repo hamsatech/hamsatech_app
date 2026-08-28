@@ -29,8 +29,8 @@ class CoachFeedbackCard extends StatelessWidget {
                   backgroundColor: DSColors.info,
                   child: Text(
                     feedback.avatarInitial,
-                    style: DSTypography.headingMd
-                        .copyWith(color: DSColors.white),
+                    style:
+                        DSTypography.headingMd.copyWith(color: DSColors.white),
                   ),
                 ),
                 const SizedBox(width: DSSpacing.md),

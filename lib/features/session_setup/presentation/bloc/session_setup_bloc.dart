@@ -1,4 +1,10 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_setup_entity.dart';
 import '../../domain/repositories/session_setup_repository.dart';
 import 'session_setup_event.dart';
@@ -90,6 +96,71 @@ class SessionSetupBloc extends Bloc<SessionSetupEvent, SessionSetupState> {
 
     emit(editing.copyWith(isSubmitting: true));
     try {
+      // ── Step 1: create session via mobile backend ──────────────────────────
+      String? sessionId;
+      final athleteId = AuthHelper.getCurrentAthleteId();
+      if (athleteId != null) {
+        try {
+          debugPrint('[SESSION] POST api/mobile/athletes/$athleteId/sessions');
+          final response = await ApiService.instance.createMobileSession(
+            athleteId: athleteId,
+            sessionType: _toApiSessionType(editing.sessionType),
+            rangeType: _toApiRangeType(editing.rangeType),
+            plannedShots: editing.plannedShots,
+            discipline: editing.discipline,
+          );
+          debugPrint('[SESSION CREATED] response=${response.data}');
+          sessionId = _extractSessionId(response.data);
+          SessionMemory.sessionId = sessionId;
+          if (sessionId != null) {
+            await StorageService.saveSessionId(sessionId);
+            debugPrint('[SESSION] session_id persisted: $sessionId');
+          } else {
+            debugPrint(
+                '[SESSION] WARNING: no session_id in response: ${response.data}');
+          }
+        } catch (apiError) {
+          _logApiError('SESSION CREATE', apiError);
+          // API failure does not block the local flow.
+        }
+      } else {
+        debugPrint('[SESSION] skipped — no athlete_id (onboarding incomplete)');
+      }
+
+      // ── Step 2: pre-log (must not block session setup on failure) ──────────
+      if (sessionId != null) {
+        try {
+          final preLogBody = {
+            'session_id': sessionId,
+            'training_plan': _toApiSessionType(editing.sessionType),
+            'equipment_status': 'ready',
+            'energy_level': 5,
+            'readiness_score': 5,
+            'mental_state': 'neutral',
+            'feeling_rating': 'moderate',
+            'mental_tags': <String>[],
+          };
+          debugPrint('[PRE LOG FLOW ENTERED]');
+          debugPrint('[PRE LOG CALL START]');
+          debugPrint('[PRE LOG BODY] $preLogBody');
+
+          final preRes = await ApiService.instance.savePreSessionLog(
+            sessionId: sessionId,
+            energyLevel: 5,
+            readinessScore: 5,
+            mentalState: 'neutral',
+            feelingRating: 'moderate',
+          );
+          debugPrint(
+              '[PRE LOG RESPONSE] status=${preRes.statusCode} data=${preRes.data}');
+        } catch (preLogError) {
+          _logApiError('PRE LOG', preLogError);
+        }
+      } else {
+        debugPrint('[PRE LOG] skipped — sessionId is null');
+      }
+
+      // ── Step 3: save setup locally and navigate ────────────────────────────
       await _repository.saveSetup(SessionSetupEntity(
         rangeType: editing.rangeType,
         sessionType: editing.sessionType,
@@ -99,6 +170,48 @@ class SessionSetupBloc extends Bloc<SessionSetupEvent, SessionSetupState> {
       emit(const SessionSetupSuccess());
     } catch (e) {
       emit(SessionSetupError(e.toString()));
+    }
+  }
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+
+  String _toApiSessionType(SessionType? type) => switch (type) {
+        SessionType.scoring => 'scoring',
+        SessionType.grouping => 'grouping',
+        SessionType.dryFire => 'dry_fire',
+        null => 'training',
+      };
+
+  String _toApiRangeType(RangeType? type) => switch (type) {
+        RangeType.electronic => 'electronic',
+        RangeType.paper => 'paper',
+        null => 'paper',
+      };
+
+  String? _extractSessionId(dynamic data) {
+    if (data is List && data.isNotEmpty) {
+      final row = data.first;
+      if (row is Map) return (row['session_id'] ?? row['id'])?.toString();
+    }
+    if (data is Map) {
+      // Handle wrapped response: { "data": { "session_id": "..." } }
+      if (data['data'] is Map) {
+        final inner = data['data'] as Map;
+        return (inner['session_id'] ?? inner['id'])?.toString();
+      }
+      return (data['session_id'] ?? data['id'])?.toString();
+    }
+    return null;
+  }
+
+  void _logApiError(String tag, Object e) {
+    if (e is DioException) {
+      debugPrint('[$tag ERROR] DioException type=${e.type.name}');
+      debugPrint('[$tag ERROR] status=${e.response?.statusCode}');
+      debugPrint('[$tag ERROR] body=${e.response?.data}');
+      debugPrint('[$tag ERROR] message=${e.message}');
+    } else {
+      debugPrint('[$tag ERROR] $e');
     }
   }
 }

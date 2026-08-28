@@ -1,7 +1,9 @@
 import '../entities/score_entry_config.dart';
-import '../entities/session_series_entity.dart';
 
 abstract class ScoreEntryRepository {
   ScoreEntryConfig getConfig();
-  Future<void> saveScores(List<SessionSeries> series);
+
+  /// Saves one total score per series. Downstream analytics receive synthetic
+  /// per-shot averages so existing report screens remain accurate.
+  Future<void> saveTotals(List<double> totals, int shotsPerSeries);
 }

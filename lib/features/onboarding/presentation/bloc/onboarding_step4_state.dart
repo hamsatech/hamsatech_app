@@ -26,23 +26,23 @@ class OnboardingStep4State extends Equatable {
   final bool submissionSuccess;
 
   const OnboardingStep4State({
-    this.stepTitle = 'STEP 4 OF 4',
-    this.progress = 1.0,
+    this.stepTitle = 'STEP 4 OF 6',
+    this.progress = 4 / 6,
     this.title = 'Set your goals',
     this.subtitle =
-        'Clear goals give your training direction. Be as specific as you can — we\'ll help you work towards them.',
-    this.goal30Label = '30-day goal',
-    this.goal30Hint = 'Write your message here...',
+        'Specific goals give your training direction. We\'ll help you track progress and adjust.',
+    this.goal30Label = '30-Day Goal',
+    this.goal30Hint = 'What do you want to achieve in 30 days?',
     this.goal30Tag = 'Next 30 days',
     this.goal30Value = '',
-    this.goal6MonthLabel = '6-month goal',
-    this.goal6MonthHint = 'Write your message here...',
+    this.goal6MonthLabel = '6-Month Goal',
+    this.goal6MonthHint = 'Where do you see yourself in 6 months?',
     this.goal6MonthTag = '6 months',
     this.goal6MonthValue = '',
     this.tipText =
-        'Tip: The most effective goals are specific and measurable — include a score, event, or date where you can.',
-    this.ctaText = 'Next',
-    this.helperText = 'Fill in at least one goal to continue',
+        '💡 Tip: Best goals are specific and measurable. Examples: "Score 580+ at State Meet" or "Reduce heart rate variance by 15%."',
+    this.ctaText = 'Continue',
+    this.helperText = 'You can update your goals anytime',
     this.isValid = false,
     this.errorMessage,
     this.submissionSuccess = false,

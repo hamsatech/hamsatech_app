@@ -27,29 +27,32 @@ class OnboardingStep3State extends Equatable {
   final bool isValid;
   final String? errorMessage;
   final bool submissionSuccess;
+  final bool isSubmitting;
 
   const OnboardingStep3State({
-    this.stepTitle = 'STEP 3 OF 4',
-    this.progress = 0.6,
-    this.title = 'Where are you now?',
+    this.stepTitle = 'STEP 3 OF 6',
+    this.progress = 3 / 6,
+    this.title = 'Track Your Performance',
     this.subtitle =
-        'Help us understand your current performance and the mental blocks holding you back.',
-    this.avgScoreLabel = 'Average practice score',
-    this.avgScoreHint = 'e.g. 560',
+        'Share your current scores and what\'s getting in the way of your best performance.',
+    this.avgScoreLabel = 'Avg. Practice Score',
+    this.avgScoreHint = 'e.g. 580',
     this.avgScore = '',
-    this.targetScoreLabel = 'Target score',
-    this.targetScoreHint = 'e.g. 560',
+    this.targetScoreLabel = 'Target Score',
+    this.targetScoreHint = 'e.g. 620',
     this.targetScore = '',
-    this.factorTitle = 'Performance factors',
-    this.factorSubtitle =
-        'What affects your performance the most? (Pick up to 3)',
+    this.factorTitle = 'Performance Blockers (Select up to 3)',
+    this.factorSubtitle = '',
     this.factorOptions = const [
-      PerformanceFactorModel(id: 'nervousness', label: 'Nervousness in competition'),
+      PerformanceFactorModel(
+          id: 'nervousness', label: 'Nervousness in competition'),
       PerformanceFactorModel(id: 'overthinking', label: 'Overthinking scores'),
       PerformanceFactorModel(id: 'poor_sleep', label: 'Poor sleep'),
       PerformanceFactorModel(id: 'distractions', label: 'Distractions'),
-      PerformanceFactorModel(id: 'fear_losing', label: 'Fear of losing'),
+      PerformanceFactorModel(id: 'pressure', label: 'Pressure in big moments'),
       PerformanceFactorModel(id: 'lack_focus', label: 'Lack of focus'),
+      PerformanceFactorModel(
+          id: 'inconsistent_routine', label: 'Inconsistent routine'),
     ],
     this.selectedFactors = const [],
     this.maxFactorSelection = 3,
@@ -57,6 +60,7 @@ class OnboardingStep3State extends Equatable {
     this.isValid = false,
     this.errorMessage,
     this.submissionSuccess = false,
+    this.isSubmitting = false,
   });
 
   OnboardingStep3State copyWith({
@@ -79,6 +83,7 @@ class OnboardingStep3State extends Equatable {
     bool? isValid,
     String? errorMessage,
     bool? submissionSuccess,
+    bool? isSubmitting,
   }) {
     return OnboardingStep3State(
       stepTitle: stepTitle ?? this.stepTitle,
@@ -100,6 +105,7 @@ class OnboardingStep3State extends Equatable {
       isValid: isValid ?? this.isValid,
       errorMessage: errorMessage ?? this.errorMessage,
       submissionSuccess: submissionSuccess ?? this.submissionSuccess,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }
 
@@ -124,5 +130,6 @@ class OnboardingStep3State extends Equatable {
         isValid,
         errorMessage,
         submissionSuccess,
+        isSubmitting,
       ];
 }

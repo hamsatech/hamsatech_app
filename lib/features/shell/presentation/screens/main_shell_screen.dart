@@ -9,16 +9,29 @@ class MainShellScreen extends StatelessWidget {
 
   static const _tabs = [
     _TabItem(icon: Icons.home_rounded, label: 'Home', path: '/home'),
-    _TabItem(icon: Icons.gps_fixed_rounded, label: 'Train', path: '/sessions'),
-    _TabItem(icon: Icons.chat_bubble_outline_rounded, label: 'Coach', path: '/journal'),
+    _TabItem(
+        icon: Icons.gps_fixed_rounded, label: 'Sessions', path: '/sessions'),
+    _TabItem(icon: Icons.insights_rounded, label: 'Insight', path: '/insight'),
     _TabItem(icon: Icons.person_rounded, label: 'Profile', path: '/profile'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: shell,
-      bottomNavigationBar: _BottomNav(shell: shell, tabs: _tabs),
+    return PopScope(
+      // Allow the system back gesture/button to bubble up only when already
+      // on the home tab — at that point there is nothing to go back to and
+      // the platform handles it (minimises the app).
+      canPop: shell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          // Back pressed on a non-home tab → return to home tab.
+          shell.goBranch(0);
+        }
+      },
+      child: Scaffold(
+        body: shell,
+        bottomNavigationBar: _BottomNav(shell: shell, tabs: _tabs),
+      ),
     );
   }
 }
@@ -71,9 +84,8 @@ class _BottomNav extends StatelessWidget {
                           child: Icon(
                             tab.icon,
                             size: 22,
-                            color: isActive
-                                ? DSColors.brand
-                                : DSColors.textMuted,
+                            color:
+                                isActive ? DSColors.brand : DSColors.textMuted,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -81,12 +93,10 @@ class _BottomNav extends StatelessWidget {
                           tab.label,
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: isActive
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: isActive
-                                ? DSColors.brand
-                                : DSColors.textMuted,
+                            fontWeight:
+                                isActive ? FontWeight.w600 : FontWeight.w400,
+                            color:
+                                isActive ? DSColors.brand : DSColors.textMuted,
                           ),
                         ),
                       ],

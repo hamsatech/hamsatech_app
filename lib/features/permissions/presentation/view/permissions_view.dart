@@ -3,12 +3,38 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../../core/services/storage_service.dart';
 import '../bloc/permissions_bloc.dart';
 import '../bloc/permissions_event.dart';
 import '../bloc/permissions_state.dart';
 
-class PermissionsView extends StatelessWidget {
+class PermissionsView extends StatefulWidget {
   const PermissionsView({super.key});
+
+  @override
+  State<PermissionsView> createState() => _PermissionsViewState();
+}
+
+class _PermissionsViewState extends State<PermissionsView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (StorageService.wasAssessmentJustSkipped()) {
+        await StorageService.clearAssessmentSkippedFlag();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Assessment progress saved'),
+            backgroundColor: Color(0xFF2F7E8F),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,15 +108,11 @@ class PermissionsView extends StatelessWidget {
                           iconColor: DSColors.info,
                           iconBackgroundColor:
                               DSColors.info.withValues(alpha: 0.10),
-
                           title: 'Bluetooth',
                           subtitle: 'To connect to Polar',
-
                           isGranted: state.bluetoothGranted,
                           isLoading: state.bluetoothLoading,
-
-                          onTap: () =>
-                              bloc.add(const OnBluetoothTapped()),
+                          onTap: () => bloc.add(const OnBluetoothTapped()),
                         ),
 
                         const SizedBox(height: DSSpacing.lg),
@@ -101,15 +123,11 @@ class PermissionsView extends StatelessWidget {
                           iconColor: DSColors.warning,
                           iconBackgroundColor:
                               DSColors.warning.withValues(alpha: 0.10),
-
                           title: 'Notifications',
                           subtitle: 'For session reminders',
-
                           isGranted: state.notificationsGranted,
                           isLoading: state.notificationsLoading,
-
-                          onTap: () =>
-                              bloc.add(const OnNotificationsTapped()),
+                          onTap: () => bloc.add(const OnNotificationsTapped()),
                         ),
 
                         const SizedBox(height: DSSpacing.lg),
@@ -120,26 +138,19 @@ class PermissionsView extends StatelessWidget {
                           iconColor: DSColors.success,
                           iconBackgroundColor:
                               DSColors.success.withValues(alpha: 0.10),
-
                           title: 'Microphone',
                           subtitle: 'For session reminders',
-
                           badgeLabel: 'Optional',
-
                           isGranted: state.microphoneGranted,
                           isLoading: state.microphoneLoading,
-
-                          onTap: () =>
-                              bloc.add(const OnMicrophoneTapped()),
+                          onTap: () => bloc.add(const OnMicrophoneTapped()),
                         ),
                       ],
                     ),
                   ),
                 ),
-
                 _BottomCta(
-                  isLoading:
-                      state.status == PermissionsStatus.loading,
+                  isLoading: state.status == PermissionsStatus.loading,
                 ),
               ],
             ),
@@ -193,14 +204,9 @@ class PermissionItemCard extends StatelessWidget {
             color: isGranted
                 ? DSColors.success.withValues(alpha: 0.05)
                 : DSColors.white,
-
             borderRadius: DSRadius.borderLg,
-
             border: Border.all(
-              color: isGranted
-                  ? DSColors.success
-                  : DSColors.gray200,
-
+              color: isGranted ? DSColors.success : DSColors.gray200,
               width: isGranted ? 1.5 : 1,
             ),
           ),
@@ -219,52 +225,39 @@ class PermissionItemCard extends StatelessWidget {
                   size: DSSpacing.xxl,
                 ),
               ),
-
               const SizedBox(width: DSSpacing.lg),
-
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
-
                   children: [
                     Row(
                       children: [
                         Flexible(
                           child: Text(
                             title,
-                            style: DSTypography.headingLarge
-                                .copyWith(
+                            style: DSTypography.headingLarge.copyWith(
                               color: DSColors.black,
                             ),
                           ),
                         ),
-
                         if (badgeLabel != null) ...[
                           const SizedBox(width: DSSpacing.sm),
-
                           _Badge(label: badgeLabel!),
                         ],
                       ],
                     ),
-
                     const SizedBox(height: DSSpacing.xs),
-
                     Text(
                       subtitle,
-                      style:
-                          DSTypography.bodyLarge.copyWith(
+                      style: DSTypography.bodyLarge.copyWith(
                         color: DSColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(width: DSSpacing.md),
-
               if (isLoading)
                 const SizedBox(
                   width: 22,
@@ -327,20 +320,17 @@ class _DividerLabel extends StatelessWidget {
         const Expanded(
           child: Divider(color: DSColors.gray300),
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: DSSpacing.lg,
           ),
           child: Text(
             'To continue, we need',
-            style:
-                DSTypography.headingMedium.copyWith(
+            style: DSTypography.headingMedium.copyWith(
               color: DSColors.textPrimary,
             ),
           ),
         ),
-
         const Expanded(
           child: Divider(color: DSColors.gray300),
         ),
@@ -391,14 +381,12 @@ class _BottomCta extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-
       padding: const EdgeInsets.fromLTRB(
         DSSpacing.xxl,
         DSSpacing.xxl,
         DSSpacing.xxl,
         DSSpacing.xxl,
       ),
-
       decoration: const BoxDecoration(
         color: DSColors.white,
         border: Border(
@@ -407,7 +395,6 @@ class _BottomCta extends StatelessWidget {
           ),
         ),
       ),
-
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -416,24 +403,18 @@ class _BottomCta extends StatelessWidget {
             isFullWidth: true,
             size: DSButtonSize.lg,
             isLoading: isLoading,
-
             onPressed: () {
-              context
-                  .read<PermissionsBloc>()
-                  .add(const OnContinuePressed());
+              context.read<PermissionsBloc>().add(const OnContinuePressed());
             },
           ),
-
           const SizedBox(height: DSSpacing.lg),
-
           DSButton(
             label: 'I don\'t have a polar yet',
             variant: DSButtonVariant.linkSecondary,
-
-            onPressed: () {
-              context
-                  .read<PermissionsBloc>()
-                  .add(const OnContinuePressed());
+            onPressed: () async {
+              await StorageService.setPolarEnabled(false);
+              await StorageService.setOnboardingComplete(true);
+              if (context.mounted) context.go('/home');
             },
           ),
         ],

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
@@ -22,7 +23,21 @@ class StorageService {
     await _prefs.remove('onboarding_complete');
     await _prefs.remove('onboarding_step');
     await _prefs.remove('questionnaire_progress');
+    await _prefs.remove('last_route');
   }
+
+  // ── Last active route ─────────────────────────────────────────────────────
+
+  // Only persist stable shell-tab destinations — deep/modal routes are
+  // intentionally excluded because they require extra navigation state.
+  static const _restorable = {'/home', '/sessions', '/insight', '/profile'};
+
+  static Future<void> saveLastRoute(String route) {
+    if (!_restorable.contains(route)) return Future.value();
+    return _prefs.setString('last_route', route);
+  }
+
+  static String getLastRoute() => _prefs.getString('last_route') ?? '/home';
 
   // ── User profile ──────────────────────────────────────────────────────────
 
@@ -56,10 +71,28 @@ class StorageService {
   static String getOnboardingStep() =>
       _prefs.getString('onboarding_step') ?? '';
 
+  // ── Polar mode ────────────────────────────────────────────────────────────
+
+  static Future<void> setPolarEnabled(bool value) =>
+      _prefs.setBool('polar_enabled', value);
+
+  // Returns true when the user completed Polar setup, false when explicitly
+  // skipped ("I don't have Polar yet" / "Continue without Polar").
+  static bool isPolarEnabled() => _prefs.getBool('polar_enabled') ?? false;
+
+  // 'connected' = real Polar device; 'demo' = simulated demo device; '' = not set.
+  static Future<void> setPolarConnectionMode(String mode) =>
+      _prefs.setString('polar_connection_mode', mode);
+
+  static String getPolarConnectionMode() =>
+      _prefs.getString('polar_connection_mode') ?? '';
+
   // ── Questionnaire progress ────────────────────────────────────────────────
 
   static Future<void> saveQuestionnaireProgress(
       int questionIndex, Map<int, int> answers) {
+    debugPrint(
+        '[Assessment] SAVE: index=$questionIndex, answered=${answers.length}');
     return _prefs.setString(
       'questionnaire_progress',
       jsonEncode({
@@ -72,6 +105,8 @@ class StorageService {
   // Returns {'index': int, 'answers': Map<int,int>} or null.
   static Map<String, dynamic>? getQuestionnaireProgress() {
     final str = _prefs.getString('questionnaire_progress');
+    debugPrint(
+        '[Assessment] READ: ${str == null ? "null (no progress)" : "found, raw=${str.length}chars"}');
     if (str == null) return null;
     final data = jsonDecode(str) as Map<String, dynamic>;
     final answers = (data['answers'] as Map<String, dynamic>)
@@ -79,8 +114,28 @@ class StorageService {
     return {'index': data['index'] as int, 'answers': answers};
   }
 
-  static Future<void> clearQuestionnaireProgress() =>
-      _prefs.remove('questionnaire_progress');
+  static Future<void> clearQuestionnaireProgress() {
+    debugPrint('[Assessment] CLEAR called\n${StackTrace.current}');
+    return _prefs.remove('questionnaire_progress');
+  }
+
+  static bool hasIncompleteAssessment() => getQuestionnaireProgress() != null;
+
+  static int getAssessmentRemainingCount(int totalQuestions) {
+    final progress = getQuestionnaireProgress();
+    if (progress == null) return 0;
+    final answers = progress['answers'] as Map<int, int>;
+    return totalQuestions - answers.length;
+  }
+
+  static Future<void> saveAssessmentSkippedFlag() =>
+      _prefs.setBool('assessment_skipped_flag', true);
+
+  static bool wasAssessmentJustSkipped() =>
+      _prefs.getBool('assessment_skipped_flag') ?? false;
+
+  static Future<void> clearAssessmentSkippedFlag() =>
+      _prefs.remove('assessment_skipped_flag');
 
   // ── Athlete profile ───────────────────────────────────────────────────────
 
@@ -93,6 +148,16 @@ class StorageService {
     return jsonDecode(str) as Map<String, dynamic>;
   }
 
+  // ── Supabase athlete_id (UUID returned after POST /athletes) ─────────────
+  // This is the single source of truth for the current user's Supabase ID.
+  // Written once after onboarding completes the athletes POST.
+  // All session, log, and chat writes read from here via AuthHelper.
+
+  static Future<void> saveAthleteId(String id) =>
+      _prefs.setString('supabase_athlete_id', id);
+
+  static String? getAthleteId() => _prefs.getString('supabase_athlete_id');
+
   // ── Baseline scores ───────────────────────────────────────────────────────
 
   static Future<void> saveBaselineScores(Map<String, double> scores) =>
@@ -104,6 +169,17 @@ class StorageService {
     final decoded = jsonDecode(str) as Map<String, dynamic>;
     return decoded.map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0.0));
   }
+
+  // ── Active session ID (current Supabase session UUID) ────────────────────
+  // Written after POST /sessions returns a session_id.
+  // Survives app restart so PATCH /sessions can close sessions opened offline.
+
+  static Future<void> saveSessionId(String id) =>
+      _prefs.setString('current_session_id', id);
+
+  static String? getSessionId() => _prefs.getString('current_session_id');
+
+  static Future<void> clearSessionId() => _prefs.remove('current_session_id');
 
   // ── Sessions ──────────────────────────────────────────────────────────────
 
@@ -118,8 +194,7 @@ class StorageService {
 
   // ── Journal entries ───────────────────────────────────────────────────────
 
-  static Future<void> saveJournalEntries(
-      List<Map<String, dynamic>> entries) =>
+  static Future<void> saveJournalEntries(List<Map<String, dynamic>> entries) =>
       _prefs.setString('journal_entries', jsonEncode(entries));
 
   static List<Map<String, dynamic>> getJournalEntries() {
@@ -166,8 +241,7 @@ class StorageService {
 
   // ── Score summary ─────────────────────────────────────────────────────────
 
-  static Future<void> saveScoreSummary(
-          List<Map<String, dynamic>> summary) =>
+  static Future<void> saveScoreSummary(List<Map<String, dynamic>> summary) =>
       _prefs.setString('score_summary', jsonEncode(summary));
 
   static List<Map<String, dynamic>>? getScoreSummary() {
@@ -177,6 +251,39 @@ class StorageService {
   }
 
   static Future<void> clearAll() => _prefs.clear();
+
+  // ── Academic profile (Step 4 — local-only, no backend endpoint yet) ──────
+
+  static Future<void> saveAcademicProfile(Map<String, dynamic> profile) =>
+      _prefs.setString('academic_profile', jsonEncode(profile));
+
+  static Map<String, dynamic>? getAcademicProfile() {
+    final str = _prefs.getString('academic_profile');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
+
+  // ── Lifestyle & wellness (Step 5 — local-only, no backend endpoint yet) ──
+
+  static Future<void> saveLifestyleWellness(Map<String, dynamic> profile) =>
+      _prefs.setString('lifestyle_wellness', jsonEncode(profile));
+
+  static Map<String, dynamic>? getLifestyleWellness() {
+    final str = _prefs.getString('lifestyle_wellness');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
+
+  // ── Mental & social profile (Step 6 — local-only, no backend endpoint yet)
+
+  static Future<void> saveMentalSocialProfile(Map<String, dynamic> profile) =>
+      _prefs.setString('mental_social_profile', jsonEncode(profile));
+
+  static Map<String, dynamic>? getMentalSocialProfile() {
+    final str = _prefs.getString('mental_social_profile');
+    if (str == null) return null;
+    return jsonDecode(str) as Map<String, dynamic>;
+  }
 }
 
 class DateTimeHelper {

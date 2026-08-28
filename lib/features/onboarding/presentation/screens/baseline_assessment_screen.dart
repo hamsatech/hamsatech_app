@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/services/storage_service.dart';
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
@@ -37,12 +38,38 @@ class _AssessmentViewState extends State<_AssessmentView> {
     super.dispose();
   }
 
+  Future<void> _showSkipSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: DSColors.white,
+      builder: (_) => _SkipBottomSheet(
+        onContinueLater: () async {
+          Navigator.of(context).pop();
+          // Any answer already confirmed via "Next"/"Complete" is already
+          // persisted server-side (POST /api/v2/psychology-assessment/answers
+          // upserts per question) — GET /api/v2/psychology-assessment resumes
+          // correctly from the true server frontier next time, so no local
+          // progress needs to be saved here.
+          await StorageService.saveAssessmentSkippedFlag();
+          if (context.mounted) context.go('/permissions');
+        },
+        onKeepAnswering: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state.step == OnboardingStep.complete) {
-          context.go('/permissions');
+          context.go('/assessment-result', extra: {
+            'categoryScores': state.categoryScores,
+            'insights': state.insights,
+          });
         } else if (state.status == OnboardingStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -62,7 +89,7 @@ class _AssessmentViewState extends State<_AssessmentView> {
 
         final question = state.currentQuestion!;
         final selectedIndex = state.answers[question.id];
-        final total = state.questions.length;
+        final total = state.totalQuestions;
         final current = state.currentQuestionIndex + 1;
 
         // Reset explanation field when question changes
@@ -205,65 +232,94 @@ class _AssessmentViewState extends State<_AssessmentView> {
                 // ── Bottom navigation ───────────────────────────────────
                 const Divider(height: 1, color: Color(0xFFCAE8EE)),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          if (state.currentQuestionIndex > 0) {
-                            context
-                                .read<OnboardingBloc>()
-                                .add(const OnboardingPreviousQuestion());
-                          } else {
-                            context.go('/login');
-                          }
-                        },
-                        child: SizedBox(
-                          width: 64,
-                          child: Text(
-                            'Back',
-                            textAlign: TextAlign.center,
-                            style: DSTypography.labelMd.copyWith(
-                              color: DSColors.terracotta,
-                              fontWeight: FontWeight.w600,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              if (state.currentQuestionIndex > 0) {
+                                context
+                                    .read<OnboardingBloc>()
+                                    .add(const OnboardingPreviousQuestion());
+                              } else {
+                                context.go('/login');
+                              }
+                            },
+                            child: SizedBox(
+                              width: 64,
+                              child: Text(
+                                'Back',
+                                textAlign: TextAlign.center,
+                                style: DSTypography.labelMd.copyWith(
+                                  color: DSColors.terracotta,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 200),
+                              opacity: selectedIndex != null ? 1.0 : 0.45,
+                              child: state.isLastQuestion
+                                  ? DSPrimaryButton(
+                                      label: 'Complete',
+                                      color: DSColors.terracotta,
+                                      isLoading: state.status ==
+                                          OnboardingStatus.loading,
+                                      onPressed: selectedIndex != null
+                                          ? () => context
+                                              .read<OnboardingBloc>()
+                                              .add(
+                                                  const OnboardingAssessmentCompleted())
+                                          : () {},
+                                      textStyle: DSTypography.labelMd.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    )
+                                  : DSPrimaryButton(
+                                      label: 'Next',
+                                      color: DSColors.terracotta,
+                                      isLoading:
+                                          state.status == OnboardingStatus.loading,
+                                      onPressed: (selectedIndex != null &&
+                                              state.status !=
+                                                  OnboardingStatus.loading)
+                                          ? () => context
+                                              .read<OnboardingBloc>()
+                                              .add(
+                                                  const OnboardingNextQuestion())
+                                          : () {},
+                                      textStyle: DSTypography.labelMd.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: selectedIndex != null ? 1.0 : 0.45,
-                          child: state.isLastQuestion
-                              ? DSPrimaryButton(
-                                  label: 'Complete',
-                                  color: DSColors.terracotta,
-                                  isLoading:
-                                      state.status == OnboardingStatus.loading,
-                                  onPressed: selectedIndex != null
-                                      ? () => context.read<OnboardingBloc>().add(
-                                          const OnboardingAssessmentCompleted())
-                                      : () {},
-                                  textStyle: DSTypography.labelMd.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                )
-                              : DSPrimaryButton(
-                                  label: 'Next',
-                                  color: DSColors.terracotta,
-                                  onPressed: selectedIndex != null
-                                      ? () => context
-                                          .read<OnboardingBloc>()
-                                          .add(const OnboardingNextQuestion())
-                                      : () {},
-                                  textStyle: DSTypography.labelMd.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                      const SizedBox(height: 4),
+                      TextButton(
+                        onPressed: () => _showSkipSheet(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: DSColors.textSecondary,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          minimumSize: Size.zero,
+                        ),
+                        child: Text(
+                          'Skip for now',
+                          style: DSTypography.labelMd.copyWith(
+                            color: DSColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -274,6 +330,85 @@ class _AssessmentViewState extends State<_AssessmentView> {
           ),
         );
       },
+    );
+  }
+}
+
+// ── Skip confirmation bottom sheet ────────────────────────────────────────────
+
+class _SkipBottomSheet extends StatelessWidget {
+  const _SkipBottomSheet({
+    required this.onContinueLater,
+    required this.onKeepAnswering,
+  });
+
+  final VoidCallback onContinueLater;
+  final VoidCallback onKeepAnswering;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E0E0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Pause Assessment?',
+              style: DSTypography.headingXl.copyWith(
+                color: DSColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your progress is saved. You can continue later from where you stopped.',
+              style: DSTypography.bodyMd.copyWith(
+                color: DSColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 28),
+            DSPrimaryButton(
+              label: 'Continue Later',
+              color: DSColors.terracotta,
+              onPressed: onContinueLater,
+              textStyle: DSTypography.labelMd.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Center(
+              child: TextButton(
+                onPressed: onKeepAnswering,
+                style: TextButton.styleFrom(
+                  foregroundColor: DSColors.terracotta,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                child: Text(
+                  'Keep Answering',
+                  style: DSTypography.labelMd.copyWith(
+                    color: DSColors.terracotta,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

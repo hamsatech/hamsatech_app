@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/dashboard_data_entity.dart';
 import '../../domain/repositories/dashboard_repository.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
@@ -8,10 +10,10 @@ class DashboardRepositoryImpl implements DashboardRepository {
   Future<DashboardDataEntity> getDashboardData() async {
     final profileJson = StorageService.getAthleteProfile();
     final userProfile = StorageService.getUserProfile();
-    final rawName = profileJson?['name'] as String? ??
-        userProfile?['name'] as String? ??
-        '';
-    final athleteName = rawName.trim().isEmpty ? 'Athlete' : rawName.trim();
+    final nameFromProfile = (profileJson?['name'] as String? ?? '').trim();
+    final nameFromUser = (userProfile?['name'] as String? ?? '').trim();
+    final rawName = nameFromProfile.isNotEmpty ? nameFromProfile : nameFromUser;
+    var athleteName = rawName.isEmpty ? 'Athlete' : rawName;
     final baselineScores = StorageService.getBaselineScores() ?? {};
     final checkIn = StorageService.getTodayCheckIn();
     final sessions = StorageService.getSessions();
@@ -22,13 +24,80 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final hrv = _buildHrvData(baselineScores, readiness);
     final lastSession = _buildLastSession(sessions);
     final performanceHistory = _buildPerformanceHistory(sessions);
-    final insights = _generateInsights(readiness, lastSession, performanceHistory);
+    var insights =
+        _generateInsights(readiness, lastSession, performanceHistory);
     final actionPlan = _generateActionPlan(readiness);
-    final weeklyStats = _buildWeeklyStats(sessions);
-    final coachFeedback = _buildCoachFeedback(lastSession);
-    final streakDays = _calculateStreak(sessions);
-    final isPolarConnected = StorageService.isOnboardingComplete();
+    var weeklyStats = _buildWeeklyStats(sessions);
+    var coachFeedback = _buildCoachFeedback(lastSession);
+    var streakDays = _calculateStreak(sessions);
+    final isPolarConnected = StorageService.isPolarEnabled();
     final todayCheckinCompleted = checkIn != null;
+
+    // ── Augment with backend data (non-blocking fallback to local) ──────────
+    final athleteId = AuthHelper.getCurrentAthleteId();
+
+    var assessmentAnsweredCount = 0;
+    var assessmentTotalQuestions = 0;
+    var assessmentIsComplete = true;
+
+    if (athleteId != null) {
+      final assessmentStatus = await _fetchAssessmentStatus();
+      if (assessmentStatus != null) {
+        assessmentAnsweredCount = assessmentStatus.answeredCount;
+        assessmentTotalQuestions = assessmentStatus.totalQuestions;
+        assessmentIsComplete = assessmentStatus.isComplete;
+      }
+      // Mobile backend: primary source for dashboard home data
+      final homeData = await _fetchMobileHomeData(athleteId);
+      if (homeData != null) {
+        final backendName = (homeData['athlete_name'] ?? homeData['name'])?.toString().trim();
+        if (backendName != null && backendName.isNotEmpty) {
+          athleteName = backendName;
+        }
+
+        final backendStreak = homeData['streak_days'] ?? homeData['streak'];
+        if (backendStreak is num) streakDays = backendStreak.toInt();
+
+        final rawInsights = homeData['ai_insights'] ?? homeData['insights'] ?? homeData['recommendations'];
+        if (rawInsights is List && rawInsights.isNotEmpty) {
+          final parsed = rawInsights
+              .map((e) => e?.toString() ?? '')
+              .where((s) => s.isNotEmpty)
+              .take(3)
+              .toList();
+          if (parsed.isNotEmpty) insights = parsed;
+        }
+
+        final backendSessionCount = homeData['sessions_this_week'] ?? homeData['weekly_sessions'];
+        final backendAvgScore = homeData['weekly_avg_score'] ?? homeData['avg_score'];
+        if (backendSessionCount is num || backendAvgScore is num) {
+          weeklyStats = WeeklyStats(
+            sessionCount: backendSessionCount is num
+                ? backendSessionCount.toInt()
+                : weeklyStats.sessionCount,
+            averageScore: backendAvgScore is num
+                ? backendAvgScore.toDouble()
+                : weeklyStats.averageScore,
+          );
+        }
+      }
+
+      // Supabase fallback: AI insights (used only if mobile backend had none)
+      if (homeData == null || (homeData['ai_insights'] == null && homeData['insights'] == null && homeData['recommendations'] == null)) {
+        final apiInsights = await _fetchApiInsights(athleteId);
+        if (apiInsights != null && apiInsights.isNotEmpty) {
+          insights = apiInsights;
+        }
+      }
+
+      final apiCoachFeedback =
+          await _fetchApiCoachFeedback(athleteId, profileJson);
+      if (apiCoachFeedback != null) {
+        coachFeedback = apiCoachFeedback;
+      }
+    } else {
+      debugPrint('[DASHBOARD] skipping API augmentation — no athlete_id');
+    }
 
     return DashboardDataEntity(
       athleteName: athleteName,
@@ -47,7 +116,112 @@ class DashboardRepositoryImpl implements DashboardRepository {
       lastSession: lastSession,
       performanceHistory: performanceHistory,
       actionPlan: actionPlan,
+      assessmentAnsweredCount: assessmentAnsweredCount,
+      assessmentTotalQuestions: assessmentTotalQuestions,
+      assessmentIsComplete: assessmentIsComplete,
     );
+  }
+
+  // ─── API: Psychology Assessment status ─────────────────────────────────────
+
+  Future<
+      ({
+        int answeredCount,
+        int totalQuestions,
+        bool isComplete
+      })?> _fetchAssessmentStatus() async {
+    try {
+      debugPrint('[DASHBOARD] fetching psychology-assessment status');
+      final res = await ApiService.instance.getPsychologyAssessmentStatus();
+      final data = res.data as Map<String, dynamic>;
+      final answeredCount = data['answeredCount'] as int? ?? 0;
+      final totalQuestions = data['totalQuestions'] as int? ?? 0;
+      final isComplete = data['isComplete'] as bool? ?? true;
+      debugPrint(
+          '[DASHBOARD] psychology-assessment status answered=$answeredCount '
+          'total=$totalQuestions isComplete=$isComplete');
+      return (
+        answeredCount: answeredCount,
+        totalQuestions: totalQuestions,
+        isComplete: isComplete,
+      );
+    } catch (e) {
+      debugPrint('[DASHBOARD] psychology-assessment status fetch failed (non-fatal): $e');
+      return null;
+    }
+  }
+
+  // ─── API: AI Insights ──────────────────────────────────────────────────────
+
+  Future<List<String>?> _fetchApiInsights(String athleteId) async {
+    try {
+      debugPrint('[DASHBOARD] fetching ai_insights athleteId=$athleteId');
+      final res = await ApiService.instance.getAiInsights(athleteId);
+      final data = res.data;
+      if (data is! List || data.isEmpty) return null;
+      final texts = data
+          .map((e) => (e as Map?)?['insight_text']?.toString())
+          .whereType<String>()
+          .where((s) => s.isNotEmpty)
+          .take(3)
+          .toList();
+      debugPrint('[DASHBOARD] ai_insights fetched count=${texts.length}');
+      return texts.isEmpty ? null : texts;
+    } catch (e) {
+      debugPrint('[DASHBOARD] ai_insights fetch failed: $e');
+      return null;
+    }
+  }
+
+  // ─── API: Coach Feedback ───────────────────────────────────────────────────
+
+  Future<CoachFeedbackData?> _fetchApiCoachFeedback(
+    String athleteId,
+    Map<String, dynamic>? profileJson,
+  ) async {
+    try {
+      debugPrint('[DASHBOARD] fetching coach_feedback athleteId=$athleteId');
+      final res = await ApiService.instance.getCoachFeedback(athleteId);
+      final data = res.data;
+      if (data is! List || data.isEmpty) return null;
+      final row = data.first as Map<String, dynamic>;
+      final notes = row['coach_notes']?.toString() ?? '';
+      final plan = row['training_plan']?.toString() ?? '';
+      if (notes.isEmpty && plan.isEmpty) return null;
+      final coachName = profileJson?['coachName'] as String? ?? 'Coach';
+      debugPrint('[DASHBOARD] coach_feedback fetched coachName=$coachName');
+      return CoachFeedbackData(
+        coachName: coachName,
+        message: '"$notes"',
+        about: 'Coach feedback',
+        assigned: plan.isNotEmpty ? plan : 'Review plan',
+        timestamp: DateTime.now(),
+        isRead: false,
+      );
+    } catch (e) {
+      debugPrint('[DASHBOARD] coach_feedback fetch failed: $e');
+      return null;
+    }
+  }
+
+  // ─── API: Mobile backend home ─────────────────────────────────────────────
+
+  Future<Map<String, dynamic>?> _fetchMobileHomeData(String athleteId) async {
+    try {
+      debugPrint('[DASHBOARD] GET api/mobile/athletes/$athleteId/home');
+      final res = await ApiService.instance.getDashboardHome(athleteId);
+      final data = res.data;
+      if (data is Map<String, dynamic>) return data;
+      // Handle wrapped response: { "data": { ... } }
+      if (data is Map && data['data'] is Map<String, dynamic>) {
+        return data['data'] as Map<String, dynamic>;
+      }
+      debugPrint('[DASHBOARD] home: unexpected response shape: ${data.runtimeType}');
+      return null;
+    } catch (e) {
+      debugPrint('[DASHBOARD] home fetch failed (non-fatal): $e');
+      return null;
+    }
   }
 
   // ─── Greeting ─────────────────────────────────────────────────────────────
@@ -95,9 +269,11 @@ class DashboardRepositoryImpl implements DashboardRepository {
     }
 
     return ReadinessMetrics(
-      readinessScore:
-          (focus * 0.30 + emotional * 0.25 + decision * 0.25 + motivation * 0.20)
-              .clamp(0, 100),
+      readinessScore: (focus * 0.30 +
+              emotional * 0.25 +
+              decision * 0.25 +
+              motivation * 0.20)
+          .clamp(0, 100),
       focusScore: focus,
       stressLevel: 100 - emotional,
       energyLevel: motivation * 0.8,

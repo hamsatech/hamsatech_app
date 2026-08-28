@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/services/storage_service.dart';
-
+import '../../../dashboard/presentation/bloc/dashboard_bloc.dart';
+import '../../../dashboard/presentation/bloc/dashboard_event.dart';
 import '../../domain/entities/alex_summary_entity.dart';
+import '../../domain/repositories/onboarding_repository.dart';
 import '../bloc/alex_summary_bloc.dart';
 import '../bloc/alex_summary_event.dart';
 import '../bloc/alex_summary_state.dart';
@@ -144,12 +147,6 @@ class _SummaryCard extends StatelessWidget {
           _SummaryRow(label: 'Goal', value: summary.goal),
           const _Divider(),
           _SummaryRow(label: 'Resting HR', value: summary.restingHr),
-          const _Divider(),
-          _SummaryRow(
-            label: 'Coach',
-            value: summary.coachStatus,
-            valueColor: DSColors.error,
-          ),
         ],
       ),
     );
@@ -157,15 +154,10 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-    this.valueColor = DSColors.gray900,
-  });
+  const _SummaryRow({required this.label, required this.value});
 
   final String label;
   final String value;
-  final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +180,7 @@ class _SummaryRow extends StatelessWidget {
           Text(
             value,
             style: DSTypography.headingLg.copyWith(
-              color: valueColor,
+              color: DSColors.gray900,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -248,7 +240,13 @@ class _Footer extends StatelessWidget {
             color: DSColors.terracotta,
             onPressed: () async {
               await StorageService.setOnboardingComplete(true);
-              await StorageService.clearQuestionnaireProgress();
+
+              // If the Supabase athletes POST failed during assessment
+              // completion (network error), retry it here before navigating
+              // so the dashboard gets a real UUID, not the phone fallback.
+              await getIt<OnboardingRepository>().retryAthleteSync();
+
+              getIt<DashboardBloc>().add(const DashboardRefreshRequested());
               if (context.mounted) context.go('/home');
             },
           ),

@@ -41,9 +41,7 @@ class CheckinCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    isCompleted
-                        ? 'Check-in complete'
-                        : 'How are you feeling?',
+                    isCompleted ? 'Check-in complete' : 'How are you feeling?',
                     style: DSTypography.bodySmall.copyWith(
                       color: DSColors.textSecondary,
                     ),
@@ -53,9 +51,7 @@ class CheckinCard extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: isCompleted
-                  ? DSColors.success
-                  : DSColors.textSecondary,
+              color: isCompleted ? DSColors.success : DSColors.textSecondary,
               size: 24,
             ),
           ],

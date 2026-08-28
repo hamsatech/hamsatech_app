@@ -34,7 +34,7 @@ class _DailyCheckinView extends StatelessWidget {
     return BlocConsumer<DailyCheckinBloc, DailyCheckinState>(
       listener: (context, state) {
         if (state is DailyCheckinSuccess) {
-          context.pop();
+          context.pushReplacement('/session/setup');
         } else if (state is DailyCheckinError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

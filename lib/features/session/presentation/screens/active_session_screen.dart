@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:go_router/go_router.dart';
 
-
-
 class ActiveSessionScreen extends StatefulWidget {
   const ActiveSessionScreen({super.key, required this.sessionId});
 
@@ -58,7 +56,10 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     final durationMinutes = _stopwatch.elapsed.inMinutes;
     context.pushReplacement(
       '/session/post',
-      extra: {'sessionId': widget.sessionId, 'durationMinutes': durationMinutes},
+      extra: {
+        'sessionId': widget.sessionId,
+        'durationMinutes': durationMinutes
+      },
     );
   }
 
@@ -72,8 +73,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
         actions: [
           TextButton.icon(
             onPressed: _endSession,
-            icon: const Icon(Icons.stop_circle_outlined,
-                color: DSColors.error),
+            icon: const Icon(Icons.stop_circle_outlined, color: DSColors.error),
             label: const Text('End Session',
                 style: TextStyle(color: DSColors.error)),
           ),
@@ -172,7 +172,8 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Padding(
-                                      padding: EdgeInsets.only(top: 4, right: 8),
+                                      padding:
+                                          EdgeInsets.only(top: 4, right: 8),
                                       child: Icon(
                                         Icons.circle,
                                         size: 6,

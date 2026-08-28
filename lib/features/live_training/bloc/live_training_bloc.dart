@@ -88,14 +88,16 @@ class LiveTrainingBloc extends Bloc<LiveTrainingEvent, LiveTrainingState> {
 
   // ── Series completion ─────────────────────────────────────────────────────
 
-  void _onSeriesCompleted(
+  Future<void> _onSeriesCompleted(
     LiveTrainingSeriesCompleted event,
     Emitter<LiveTrainingState> emit,
-  ) {
+  ) async {
     if (state is! LiveSessionActiveState) return;
     final s = state as LiveSessionActiveState;
     final nextIndex = s.currentSeriesIndex + 1;
     if (nextIndex >= s.totalSeries) {
+      _repository.stopHrTelemetry();
+      await _repository.flushHrTelemetry();
       _cancelTimer();
       emit(ReflectingState(
         sessionId: s.sessionId,
@@ -108,12 +110,14 @@ class LiveTrainingBloc extends Bloc<LiveTrainingEvent, LiveTrainingState> {
 
   // ── End session ───────────────────────────────────────────────────────────
 
-  void _onEndRequested(
+  Future<void> _onEndRequested(
     LiveTrainingEndRequested event,
     Emitter<LiveTrainingState> emit,
-  ) {
+  ) async {
     if (state is! LiveSessionActiveState) return;
     final s = state as LiveSessionActiveState;
+    _repository.stopHrTelemetry();
+    await _repository.flushHrTelemetry();
     _cancelTimer();
     emit(ReflectingState(
       sessionId: s.sessionId,

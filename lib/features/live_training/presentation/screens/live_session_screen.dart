@@ -4,13 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../polar/presentation/bloc/polar_bloc.dart';
+import '../../../polar/presentation/bloc/polar_event.dart';
 import '../../bloc/live_training_bloc.dart';
 import '../../bloc/live_training_event.dart';
 import '../../bloc/live_training_state.dart';
 import '../widgets/hr_analytics_card.dart';
-import '../widgets/instruction_card.dart';
 import '../widgets/live_header.dart';
-import '../widgets/series_progress.dart';
 
 class LiveSessionScreen extends StatelessWidget {
   const LiveSessionScreen({super.key});
@@ -39,10 +38,23 @@ class _LiveSessionViewState extends State<_LiveSessionView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context
-          .read<LiveTrainingBloc>()
-          .add(const LiveTrainingStartRequested());
+      context.read<LiveTrainingBloc>().add(const LiveTrainingStartRequested());
+      _startPolarHrStreamIfConnected();
     });
+  }
+
+  // Live Training assumes a Polar device may already be connected from an
+  // earlier pairing/baseline screen — it doesn't scan or connect itself,
+  // it only (re)starts HR streaming on the existing connection, if any.
+  void _startPolarHrStreamIfConnected() {
+    final polarBloc = context.read<PolarBloc>();
+    final polarState = polarBloc.state;
+    if (polarState.connectedDeviceId != null && polarState.isConnected) {
+      debugPrint('[PolarLiveTraining] Starting HR stream');
+      polarBloc.add(const PolarStartHrStreamRequested());
+    } else {
+      debugPrint('[PolarLiveTraining] No connected Polar device');
+    }
   }
 
   @override
@@ -50,12 +62,11 @@ class _LiveSessionViewState extends State<_LiveSessionView> {
     return BlocConsumer<LiveTrainingBloc, LiveTrainingState>(
       listener: (context, state) {
         if (state is ReflectingState) {
-          context.pushReplacement('/session/reflect');
+          context.pushReplacement('/session/scores');
         }
       },
       builder: (context, state) {
-        final s =
-            state is LiveSessionActiveState ? state : null;
+        final s = state is LiveSessionActiveState ? state : null;
         return Scaffold(
           backgroundColor: const Color(0xFFF5FDFF),
           body: SafeArea(
@@ -76,21 +87,11 @@ class _LiveSessionViewState extends State<_LiveSessionView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const InstructionCard(),
-                        const SizedBox(height: 16),
                         HrAnalyticsCard(
                           baselineHr: s?.baselineHr ?? 65,
                           simulatedHr: s?.simulatedHr,
-                          simulatedHrHistory:
-                              s?.simulatedHrHistory ?? const [],
+                          simulatedHrHistory: s?.simulatedHrHistory ?? const [],
                         ),
-                        const SizedBox(height: 24),
-                        if (s != null)
-                          SeriesProgress(
-                            currentSeriesIndex: s.currentSeriesIndex,
-                            totalSeries: s.totalSeries,
-                            shotsPerSeries: s.shotsPerSeries,
-                          ),
                       ],
                     ),
                   ),
@@ -131,9 +132,7 @@ class _BottomActionBar extends StatelessWidget {
                   .read<LiveTrainingBloc>()
                   .add(const LiveTrainingPauseToggled()),
               icon: Icon(
-                isPaused
-                    ? Icons.play_arrow_rounded
-                    : Icons.pause_rounded,
+                isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                 size: 18,
               ),
               label: Text(isPaused ? 'Resume' : 'Pause'),

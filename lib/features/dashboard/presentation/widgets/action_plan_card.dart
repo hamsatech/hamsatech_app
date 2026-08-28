@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
-
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class ActionPlanCard extends StatelessWidget {
@@ -33,8 +32,7 @@ class ActionPlanCard extends StatelessWidget {
                     color: DSColors.brand, size: 18),
               ),
               const SizedBox(width: 10),
-              Text('Today\'s Action Plan',
-                  style: DSTypography.headingSmall),
+              Text('Today\'s Action Plan', style: DSTypography.headingSmall),
             ],
           ),
           const SizedBox(height: 16),
@@ -73,7 +71,8 @@ class _ActionTileState extends State<_ActionTile> {
               color: DSColors.appBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _done ? DSColors.appBorder : color.withValues(alpha: 0.3),
+                color:
+                    _done ? DSColors.appBorder : color.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -105,9 +104,8 @@ class _ActionTileState extends State<_ActionTile> {
                             child: Text(
                               widget.action.title,
                               style: DSTypography.labelLarge.copyWith(
-                                decoration: _done
-                                    ? TextDecoration.lineThrough
-                                    : null,
+                                decoration:
+                                    _done ? TextDecoration.lineThrough : null,
                               ),
                             ),
                           ),

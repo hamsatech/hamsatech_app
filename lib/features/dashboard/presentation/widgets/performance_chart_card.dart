@@ -2,7 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
-
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class PerformanceChartCard extends StatelessWidget {
@@ -36,8 +35,7 @@ class PerformanceChartCard extends StatelessWidget {
               const SizedBox(width: 10),
               Text('Performance Trend', style: DSTypography.headingSmall),
               const Spacer(),
-              Text('Last 5 sessions',
-                  style: DSTypography.caption),
+              Text('Last 5 sessions', style: DSTypography.caption),
             ],
           ),
           const SizedBox(height: 20),
@@ -73,10 +71,16 @@ class PerformanceChartCard extends StatelessWidget {
   }
 
   LineChartData _buildChartData() {
-    final qualitySpots = history.asMap().entries.map((e) =>
-        FlSpot(e.key.toDouble(), e.value.overallRating)).toList();
-    final focusSpots = history.asMap().entries.map((e) =>
-        FlSpot(e.key.toDouble(), e.value.focusScore)).toList();
+    final qualitySpots = history
+        .asMap()
+        .entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value.overallRating))
+        .toList();
+    final focusSpots = history
+        .asMap()
+        .entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value.focusScore))
+        .toList();
 
     return LineChartData(
       minY: 0,
@@ -112,8 +116,7 @@ class PerformanceChartCard extends StatelessWidget {
             ),
           ),
         ),
-        topTitles:
-            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles:
             const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),

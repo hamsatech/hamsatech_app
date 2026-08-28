@@ -1,5 +1,10 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_summary_entity.dart';
 import '../../domain/repositories/session_summary_repository.dart';
@@ -15,10 +20,8 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
     // ── Parse series ────────────────────────────────────────────────────────
 
     final seriesList = rawSummary.map((s) {
-      final shots = (s['shots'] as List)
-          .cast<String>()
-          .map(_parseScore)
-          .toList();
+      final shots =
+          (s['shots'] as List).cast<String>().map(_parseScore).toList();
       final total = (s['total'] as num).toDouble();
       final number = (s['seriesNumber'] as num).toInt();
       return _SeriesData(number: number, shots: shots, total: total);
@@ -38,33 +41,34 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
     final bestShot = validShots.isEmpty ? 0.0 : validShots.reduce(max);
     final worstShot = validShots.isEmpty ? 0.0 : validShots.reduce(min);
 
-    final bestSeries =
-        seriesList.reduce((a, b) => a.total > b.total ? a : b);
-    final worstSeries =
-        seriesList.reduce((a, b) => a.total < b.total ? a : b);
+    final bestSeries = seriesList.reduce((a, b) => a.total > b.total ? a : b);
+    final worstSeries = seriesList.reduce((a, b) => a.total < b.total ? a : b);
 
     final avgSeriesTotal = grandTotal / seriesList.length;
     final shotsPerSeries = seriesList.first.shots.length;
     final maxSeriesTotal = shotsPerSeries * 10.0;
 
-    final breakdown = seriesList.map((s) => SeriesBreakdownEntity(
-          seriesNumber: s.number,
-          total: s.total,
-          maxTotal: maxSeriesTotal,
-          isBest: s.number == bestSeries.number,
-        )).toList();
+    final breakdown = seriesList
+        .map((s) => SeriesBreakdownEntity(
+              seriesNumber: s.number,
+              total: s.total,
+              maxTotal: maxSeriesTotal,
+              isBest: s.number == bestSeries.number,
+            ))
+        .toList();
 
-    final scorePoints = seriesList.map((s) => ScorePointEntity(
-          index: s.number - 1,
-          value: s.total,
-          isSpike: s.total > avgSeriesTotal * 1.12,
-        )).toList();
+    final scorePoints = seriesList
+        .map((s) => ScorePointEntity(
+              index: s.number - 1,
+              value: s.total,
+              isSpike: s.total > avgSeriesTotal * 1.12,
+            ))
+        .toList();
 
     // ── Session metadata ─────────────────────────────────────────────────────
 
     final setup = StorageService.getSessionSetup();
-    final sessionTitle =
-        setup != null ? _buildTitle(setup) : 'Session';
+    final sessionTitle = setup != null ? _buildTitle(setup) : 'Session';
 
     final sessions = StorageService.getSessions();
     final completed =
@@ -84,14 +88,53 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
       }
     }
 
+    // ── Augment with mobile backend summary (non-blocking) ───────────────────
+    var finalTotal = grandTotal;
+    var finalDurationMins = durationMins;
+    var finalTitle = sessionTitle;
+
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (sessionId != null && athleteId != null) {
+      try {
+        final res = await ApiService.instance.getSessionSummary(
+          athleteId: athleteId,
+          sessionId: sessionId,
+        );
+        final data = res.data is Map<String, dynamic>
+            ? res.data as Map<String, dynamic>
+            : (res.data is Map && res.data['data'] is Map<String, dynamic>
+                ? res.data['data'] as Map<String, dynamic>
+                : null);
+        if (data != null) {
+          final apiTotal = data['total_score'] ?? data['total'];
+          if (apiTotal is num) finalTotal = apiTotal.toDouble();
+
+          final apiDur = data['duration_minutes'] ?? data['duration'];
+          if (apiDur is num) finalDurationMins = apiDur.toInt();
+
+          final apiTitle = data['session_title'] ?? data['title'];
+          if (apiTitle is String && apiTitle.isNotEmpty) finalTitle = apiTitle;
+
+          debugPrint('[SESSION SUMMARY] augmented from API sessionId=$sessionId');
+        }
+      } catch (e) {
+        debugPrint('[SESSION SUMMARY] API fetch failed (non-fatal): $e');
+      }
+    }
+
+    final finalMaxPossible = maxPossible > 0 ? maxPossible : finalTotal;
+    final finalEfficiency =
+        finalMaxPossible > 0 ? (finalTotal / finalMaxPossible) * 100 : efficiency;
+
     return SessionSummaryEntity(
-      sessionTitle: sessionTitle,
+      sessionTitle: finalTitle,
       totalShots: totalShots,
-      duration: _formatDuration(durationMins),
-      total: grandTotal,
-      maxPossible: maxPossible,
-      averagePerShot: avg,
-      efficiency: efficiency,
+      duration: _formatDuration(finalDurationMins),
+      total: finalTotal,
+      maxPossible: finalMaxPossible,
+      averagePerShot: totalShots > 0 ? finalTotal / totalShots : avg,
+      efficiency: finalEfficiency,
       bestShot: bestShot,
       worstShot: worstShot,
       bestSeriesLabel: 'S${bestSeries.number}: ${_fmt(bestSeries.total)}',

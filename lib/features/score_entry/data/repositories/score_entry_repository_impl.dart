@@ -1,6 +1,5 @@
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/score_entry_config.dart';
-import '../../domain/entities/session_series_entity.dart';
 import '../../domain/repositories/score_entry_repository.dart';
 
 class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
@@ -14,8 +13,7 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
 
     if (setup != null) {
       final rangeTypeStr = setup['rangeType'] as String? ?? 'paper';
-      final rangeLabel =
-          rangeTypeStr == 'electronic' ? 'Electronic' : 'Paper';
+      final rangeLabel = rangeTypeStr == 'electronic' ? 'Electronic' : 'Paper';
       final sessionTypeStr = setup['sessionType'] as String?;
       final typeLabel = switch (sessionTypeStr) {
         'scoring' => ' Scoring',
@@ -25,8 +23,7 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
       };
       title = '$rangeLabel$typeLabel Session';
 
-      final plannedShots =
-          (setup['plannedShots'] as num?)?.toInt() ?? 60;
+      final plannedShots = (setup['plannedShots'] as num?)?.toInt() ?? 60;
       totalSeries = (plannedShots / _defaultShotsPerSeries).ceil();
     }
 
@@ -38,14 +35,39 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
   }
 
   @override
-  Future<void> saveScores(List<SessionSeries> series) async {
-    final data = series
-        .map((s) => {
-              'seriesNumber': s.seriesNumber,
-              'shots': s.shots.map((v) => v.display).toList(),
-              'total': s.total,
-            })
-        .toList();
+  Future<void> saveTotals(List<double> totals, int shotsPerSeries) async {
+    // Represent each series as synthetic per-shot averages so downstream
+    // analytics (variance, avg-per-shot, HR charts) remain meaningful.
+    final data = totals.asMap().entries.map((e) {
+      final avgShot = shotsPerSeries > 0 ? e.value / shotsPerSeries : 0.0;
+      final avgStr = avgShot.toStringAsFixed(2);
+      return {
+        'seriesNumber': e.key + 1,
+        'shots': List<String>.filled(shotsPerSeries, avgStr),
+        'total': e.value,
+      };
+    }).toList();
+
     await StorageService.saveScoreSummary(data);
+
+    // TODO(backend): Sync score totals to shooting_session_log in Supabase.
+    // shooting_session_log has: avg_score, best_series_score, consistency_index,
+    // total_shots, session_duration_min, technical_rating, focus_rating, etc.
+    // This is NOT session_post_log (which records session reflection/mood data).
+    // Wire this after the session_id from SessionMemory is confirmed reliable:
+    //
+    // void _syncScoresToApi(List<double> totals, int shotsPerSeries) {
+    //   final sessionId = SessionMemory.sessionId;
+    //   if (sessionId == null || totals.isEmpty) return;
+    //   Future(() async {
+    //     try {
+    //       final total = totals.fold(0.0, (sum, t) => sum + t);
+    //       final avgScore = total / totals.length;
+    //       final bestSeries = totals.reduce((a, b) => a > b ? a : b);
+    //       final athleteId = SessionBloc._resolveAthleteId(); // expose as static helper
+    //       await ApiService.instance... // POST to shooting_session_log
+    //     } catch (_) {}
+    //   });
+    // }
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:intl/intl.dart';
 
-
 import '../../domain/entities/dashboard_data_entity.dart';
 
 class SessionSummaryCard extends StatelessWidget {
@@ -64,7 +63,8 @@ class SessionSummaryCard extends StatelessWidget {
                 ),
                 _SummaryItem(
                   label: 'Rating',
-                  value: '${'★' * session!.postSessionRating}${'☆' * (5 - session!.postSessionRating)}',
+                  value:
+                      '${'★' * session!.postSessionRating}${'☆' * (5 - session!.postSessionRating)}',
                   icon: Icons.star_border_rounded,
                   valueColor: DSColors.warning,
                 ),
@@ -73,16 +73,13 @@ class SessionSummaryCard extends StatelessWidget {
             const SizedBox(height: 14),
             const Divider(color: DSColors.appDivider),
             const SizedBox(height: 12),
-            Text('Pre-session state',
-                style: DSTypography.labelMedium),
+            Text('Pre-session state', style: DSTypography.labelMedium),
             const SizedBox(height: 8),
+            _PreSessionBar(label: 'Energy', value: session!.preSessionEnergy),
+            _PreSessionBar(label: 'Focus', value: session!.preSessionFocus),
             _PreSessionBar(
-                label: 'Energy',
-                value: session!.preSessionEnergy),
-            _PreSessionBar(
-                label: 'Focus', value: session!.preSessionFocus),
-            _PreSessionBar(
-                label: 'Stress', value: session!.preSessionStress,
+                label: 'Stress',
+                value: session!.preSessionStress,
                 isInverse: true),
           ],
         ],

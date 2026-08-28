@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 import 'onboarding_step4_event.dart';
 import 'onboarding_step4_state.dart';
@@ -45,11 +48,30 @@ class OnboardingStep4Bloc
     await StorageService.setProfileSetupComplete(true);
     emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
     emit(validated.copyWith(submissionSuccess: true));
+
+    // Fire-and-forget: sync goals to mobile backend (also triggers onboarding_complete).
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId != null) {
+      Future(() async {
+        try {
+          await ApiService.instance.saveOnboardingGoals(
+            athleteId: athleteId,
+            goal30d: state.goal30Value,
+            goal6m: state.goal6MonthValue,
+          );
+          debugPrint(
+              '[ONBOARDING] goals synced — backend will set onboarding_complete=true');
+        } catch (e) {
+          debugPrint('[ONBOARDING] goals sync failed (non-fatal): $e');
+        }
+      });
+    } else {
+      debugPrint('[ONBOARDING] goals skipped — no athlete_id yet');
+    }
   }
 
   OnboardingStep4State _validate(OnboardingStep4State s) {
-    final hasAnyGoal =
-        s.goal30Value.isNotEmpty || s.goal6MonthValue.isNotEmpty;
+    final hasAnyGoal = s.goal30Value.isNotEmpty || s.goal6MonthValue.isNotEmpty;
     if (!hasAnyGoal) {
       return s.copyWith(
         isValid: false,

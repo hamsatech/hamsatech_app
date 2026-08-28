@@ -42,3 +42,19 @@ class OnCityChanged extends OnboardingStep1Event {
 class OnSubmit extends OnboardingStep1Event {
   const OnSubmit();
 }
+
+/// Fetches the athlete's saved onboarding progress so Step 1 fields can be
+/// prefilled (GET /api/v2/onboarding). Dispatched once when the screen opens.
+class OnLoadOnboarding extends OnboardingStep1Event {
+  const OnLoadOnboarding();
+}
+
+/// Fired when the user picks a date in the DOB field, alongside the existing
+/// [OnAgeChanged] — carries the raw date needed for the step-1 API payload.
+class OnDobSelected extends OnboardingStep1Event {
+  final DateTime dob;
+  const OnDobSelected(this.dob);
+
+  @override
+  List<Object?> get props => [dob];
+}

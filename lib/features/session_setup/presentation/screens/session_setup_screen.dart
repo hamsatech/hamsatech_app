@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/services/storage_service.dart';
 import '../bloc/session_setup_bloc.dart';
 import '../bloc/session_setup_event.dart';
 import '../bloc/session_setup_state.dart';
@@ -34,7 +35,11 @@ class _SessionSetupView extends StatelessWidget {
     return BlocConsumer<SessionSetupBloc, SessionSetupState>(
       listener: (context, state) {
         if (state is SessionSetupSuccess) {
-          context.push('/ritual/breathing');
+          if (StorageService.isPolarEnabled()) {
+            context.push('/session/live');
+          } else {
+            context.push('/session/scores');
+          }
         } else if (state is SessionSetupError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -45,9 +50,8 @@ class _SessionSetupView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        final editing = state is SessionSetupEditing
-            ? state
-            : const SessionSetupEditing();
+        final editing =
+            state is SessionSetupEditing ? state : const SessionSetupEditing();
 
         return Scaffold(
           backgroundColor: DSColors.appBackground,
@@ -126,7 +130,8 @@ class _SessionSetupView extends StatelessWidget {
                       const SizedBox(height: 10),
                       PlannedShotsSelector(
                         value: editing.plannedShots,
-                        quickSelectValues: SessionSetupEditing.quickSelectValues,
+                        quickSelectValues:
+                            SessionSetupEditing.quickSelectValues,
                         min: SessionSetupEditing.minShots,
                         max: SessionSetupEditing.maxShots,
                         onChanged: (v) => context

@@ -39,14 +39,14 @@ class InsightCard extends StatelessWidget {
               children: [
                 Text(
                   insight.headline,
-                  style: DSTypography.headingSmall
-                      .copyWith(color: DSColors.black),
+                  style:
+                      DSTypography.headingSmall.copyWith(color: DSColors.black),
                 ),
                 const SizedBox(height: DSSpacing.xs),
                 Text(
                   insight.body,
-                  style:
-                      DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
+                  style: DSTypography.bodySm
+                      .copyWith(color: DSColors.textSecondary),
                 ),
               ],
             ),

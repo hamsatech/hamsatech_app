@@ -20,6 +20,9 @@ class DashboardDataEntity extends Equatable {
     this.lastSession,
     required this.performanceHistory,
     required this.actionPlan,
+    this.assessmentAnsweredCount = 0,
+    this.assessmentTotalQuestions = 0,
+    this.assessmentIsComplete = true,
   });
 
   final String athleteName;
@@ -39,6 +42,12 @@ class DashboardDataEntity extends Equatable {
   final List<PerformanceDataPoint> performanceHistory;
   final List<ActionItem> actionPlan;
 
+  // Populated from GET /api/v2/psychology-assessment (non-fatal on failure —
+  // defaults leave the Assessment Reminder card hidden).
+  final int assessmentAnsweredCount;
+  final int assessmentTotalQuestions;
+  final bool assessmentIsComplete;
+
   DashboardDataEntity copyWith({
     bool? isPolarConnected,
     CoachFeedbackData? coachFeedback,
@@ -56,11 +65,15 @@ class DashboardDataEntity extends Equatable {
       streakDays: streakDays,
       coachFeedback: coachFeedback ?? this.coachFeedback,
       weeklyStats: weeklyStats,
-      todayCheckinCompleted: todayCheckinCompleted ?? this.todayCheckinCompleted,
+      todayCheckinCompleted:
+          todayCheckinCompleted ?? this.todayCheckinCompleted,
       aiInsights: aiInsights,
       lastSession: lastSession,
       performanceHistory: performanceHistory,
       actionPlan: actionPlan,
+      assessmentAnsweredCount: assessmentAnsweredCount,
+      assessmentTotalQuestions: assessmentTotalQuestions,
+      assessmentIsComplete: assessmentIsComplete,
     );
   }
 
@@ -82,6 +95,9 @@ class DashboardDataEntity extends Equatable {
         lastSession,
         performanceHistory,
         actionPlan,
+        assessmentAnsweredCount,
+        assessmentTotalQuestions,
+        assessmentIsComplete,
       ];
 }
 

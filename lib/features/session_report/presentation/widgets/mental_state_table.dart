@@ -33,8 +33,7 @@ class MentalStateTable extends StatelessWidget {
           // ── Data rows ──────────────────────────────────────────────────────
           for (int i = 0; i < comparison.rows.length; i++) ...[
             if (i > 0)
-              const Divider(
-                  height: 1, thickness: 1, color: DSColors.gray200),
+              const Divider(height: 1, thickness: 1, color: DSColors.gray200),
             _DataRow(row: comparison.rows[i]),
           ],
         ],
