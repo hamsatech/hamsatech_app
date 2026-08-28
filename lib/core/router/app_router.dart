@@ -18,9 +18,6 @@ import '../../features/onboarding/presentation/screens/baseline_assessment_scree
 import '../../features/onboarding/presentation/screens/baseline_result_screen.dart';
 import '../../features/onboarding/presentation/screens/baseline_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
-import '../../features/session/presentation/screens/pre_session_screen.dart';
-import '../../features/session/presentation/screens/active_session_screen.dart';
-import '../../features/session/presentation/screens/post_session_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/permissions/presentation/view/permissions_screen.dart';
 import '../../features/shell/presentation/screens/main_shell_screen.dart';
@@ -284,29 +281,6 @@ class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const SaarthiChatScreen(),
       ),
-      GoRoute(
-        path: '/session/pre',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const PreSessionScreen(),
-      ),
-      GoRoute(
-        path: '/session/active',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, state) =>
-            ActiveSessionScreen(sessionId: state.extra as String),
-      ),
-      GoRoute(
-        path: '/session/post',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, state) {
-          final extra = state.extra as Map;
-          return PostSessionScreen(
-            sessionId: extra['sessionId'] as String,
-            durationMinutes: (extra['durationMinutes'] as num?)?.toInt() ?? 0,
-          );
-        },
-      ),
-
       // ── SHELL (bottom nav) ────────────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         parentNavigatorKey: _rootNavigatorKey,
