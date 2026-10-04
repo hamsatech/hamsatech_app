@@ -4,16 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../../../core/di/injection.dart';
-import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/astra_logo.dart';
 import '../../../../core/widgets/saarthi_avatar.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../polar/presentation/bloc/polar_bloc.dart';
 import '../../../polar/presentation/bloc/polar_state.dart';
 import '../../domain/entities/dashboard_data_entity.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
 import '../bloc/dashboard_state.dart';
+import '../widgets/ai_insights_card.dart';
+import '../widgets/coach_feedback_card.dart';
 import '../widgets/metric_card.dart';
+import '../widgets/performance_chart_card.dart';
+import '../widgets/weekly_stats_card.dart';
 
 // "Connected" must reflect only the actual current PolarBloc BLE state —
 // the persisted "has ever paired" flag (`data.isPolarConnected`) previously
@@ -153,11 +157,32 @@ class _DashboardContent extends StatelessWidget {
           totalQuestions: data.assessmentTotalQuestions,
           isComplete: data.assessmentIsComplete,
         ),
-        _MetricsGrid(data: data),
+        const _WellnessUnavailableCard(),
+        const SizedBox(height: 16),
+        WeeklyStatsCard(
+          sessionCount: data.sessionsThisWeek,
+          averageScore: data.weeklyAvgScore,
+        ),
         const SizedBox(height: 16),
         _SessionActionCard(onTap: () => context.push('/checkin')),
         const SizedBox(height: 16),
-        const _CoachSummaryCard(),
+        PerformanceChartCard(history: data.performanceHistory),
+        const SizedBox(height: 16),
+        if (data.coachFeedback != null) ...[
+          CoachFeedbackCard(
+            feedback: data.coachFeedback!,
+            onViewFull: () {},
+            onMarkRead: () => context
+                .read<DashboardBloc>()
+                .add(const DashboardCoachFeedbackMarkRead()),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (data.aiInsights.isNotEmpty) ...[
+          AiInsightsCard(insights: data.aiInsights),
+          const SizedBox(height: 16),
+        ] else
+          const _InsightsUnavailableCard(),
         const SizedBox(height: DSSpacing.xxl),
       ],
     );
@@ -253,8 +278,8 @@ class _HomeHeader extends StatelessWidget {
               children: [
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: DSColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -555,10 +580,14 @@ void _showLogoutDialog(BuildContext context) {
           ),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
             Navigator.pop(dialogCtx);
-            StorageService.clearAuth();
-            context.go('/welcome');
+            // Route through the same AuthRepository.logout() the Profile
+            // screen's Sign Out uses, so every logout path clears the JWT,
+            // secure storage, and all cached athlete-specific local state —
+            // not just the auth token.
+            await getIt<AuthRepository>().logout();
+            if (context.mounted) context.go('/welcome');
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: DSColors.error,
@@ -671,193 +700,61 @@ class _PolarConnectCard extends StatelessWidget {
   }
 }
 
-// ─── Metrics grid ─────────────────────────────────────────────────────────────
+// ─── Wellness metrics — honest "not available" state ────────────────────────
+//
+// Readiness/Recovery/Stress/Mental-State used to be shown here as numbers —
+// including a hardcoded 60 for any athlete with no cached baseline, which
+// was effectively every athlete, since nothing ever populated that cache.
+// No backend endpoint or sensor provides these today (confirmed against
+// current source: DashboardHomeResponse only returns sessions_this_week /
+// weekly_avg_score), so rather than invent a formula, this is now an
+// explicit unavailable state.
 
-class _MetricsGrid extends StatelessWidget {
-  const _MetricsGrid({required this.data});
-
-  final DashboardDataEntity data;
-
-  @override
-  Widget build(BuildContext context) {
-    final r = data.readiness;
-
-    final readinessScore = r.readinessScore.round().clamp(0, 100);
-    final readinessStatus = switch (r.readinessLevel) {
-      ReadinessLevel.ready => 'ready',
-      ReadinessLevel.moderate => 'moderate',
-      ReadinessLevel.needsRecovery => 'needs recovery',
-    };
-    final readinessColor = switch (r.readinessLevel) {
-      ReadinessLevel.ready => DSColors.success,
-      ReadinessLevel.moderate => DSColors.brand,
-      ReadinessLevel.needsRecovery => DSColors.error,
-    };
-
-    final recoveryScore = r.energyLevel.round().clamp(0, 100);
-    final recoveryStatus = recoveryScore > 66
-        ? 'good'
-        : recoveryScore > 33
-            ? 'acceptable'
-            : 'low';
-    final recoveryColor = recoveryScore > 66
-        ? DSColors.success
-        : recoveryScore > 33
-            ? DSColors.brand
-            : DSColors.error;
-
-    final stressScore = r.stressLevel.round().clamp(0, 100);
-    final stressStatus = stressScore < 33
-        ? 'low'
-        : stressScore < 66
-            ? 'moderate'
-            : 'elevated';
-    final stressColor = stressScore < 33
-        ? DSColors.success
-        : stressScore < 66
-            ? DSColors.brand
-            : DSColors.error;
-
-    final mentalValue = switch (r.focusLevel) {
-      FocusLevel.high => 'Calm',
-      FocusLevel.medium => 'Steady',
-      FocusLevel.low => 'Foggy',
-    };
-    final mentalStatus = switch (r.focusLevel) {
-      FocusLevel.high => 'stable',
-      FocusLevel.medium => 'steady',
-      FocusLevel.low => 'distracted',
-    };
-    final mentalColor = switch (r.focusLevel) {
-      FocusLevel.high => DSColors.success,
-      FocusLevel.medium => DSColors.brand,
-      FocusLevel.low => DSColors.error,
-    };
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _MetricCard(
-                label: 'READINESS',
-                valueText: '$readinessScore',
-                statusLabel: readinessStatus,
-                statusColor: readinessColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _MetricCard(
-                label: 'RECOVERY',
-                valueText: '$recoveryScore',
-                statusLabel: recoveryStatus,
-                statusColor: recoveryColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _MetricCard(
-                label: 'STRESS',
-                valueText: '$stressScore',
-                statusLabel: stressStatus,
-                statusColor: stressColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _MetricCard(
-                label: 'MENTAL STATE',
-                valueText: mentalValue,
-                statusLabel: mentalStatus,
-                statusColor: mentalColor,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Metric card ──────────────────────────────────────────────────────────────
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.valueText,
-    required this.statusLabel,
-    required this.statusColor,
-  });
-
-  final String label;
-  final String valueText;
-  final String statusLabel;
-  final Color statusColor;
+class _WellnessUnavailableCard extends StatelessWidget {
+  const _WellnessUnavailableCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: DSColors.gray200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            label,
-            style: DSTypography.labelXs.copyWith(
-              color: DSColors.textSecondary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: DSColors.gray100,
+              shape: BoxShape.circle,
             ),
+            child: Icon(Icons.insights_outlined,
+                color: DSColors.textSecondary, size: 18),
           ),
-          const SizedBox(height: 10),
-          Text(
-            valueText,
-            style: DSTypography.headingXl.copyWith(
-              color: DSColors.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontSize: 30,
-              height: 1.0,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  shape: BoxShape.circle,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Wellness metrics not available yet',
+                  style: DSTypography.labelMd.copyWith(
+                    color: DSColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  statusLabel,
-                  style: DSTypography.caption.copyWith(
+                const SizedBox(height: 2),
+                Text(
+                  'Readiness, recovery, and stress scores are coming soon.',
+                  style: DSTypography.bodySm.copyWith(
                     color: DSColors.textSecondary,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -949,16 +846,14 @@ class _SessionActionCard extends StatelessWidget {
   }
 }
 
-// ─── Coach quick summary card ─────────────────────────────────────────────────
+// ─── AI insights — honest "not available yet" state ──────────────────────────
+//
+// Shown only when hamsatech.ai_insights genuinely has no rows for this
+// athlete yet (e.g. psychology assessment not completed/scored) — never
+// replaced with canned/static copy pretending to be a real insight.
 
-class _CoachSummaryCard extends StatelessWidget {
-  const _CoachSummaryCard();
-
-  static const _tips = [
-    'Start with breathing and sight alignment.',
-    'Keep first block short; watch fatigue drift.',
-    'Review focus trend after training.',
-  ];
+class _InsightsUnavailableCard extends StatelessWidget {
+  const _InsightsUnavailableCard();
 
   @override
   Widget build(BuildContext context) {
@@ -967,55 +862,33 @@ class _CoachSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: DSColors.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DSColors.gray200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: DSColors.appBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Coach Quick Summary',
-            style: DSTypography.headingMd.copyWith(
-              color: DSColors.textPrimary,
-              fontWeight: FontWeight.w700,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: DSColors.info.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
             ),
+            child: const Icon(Icons.auto_awesome_rounded,
+                color: DSColors.info, size: 18),
           ),
-          const SizedBox(height: 14),
-          for (int i = 0; i < _tips.length; i++) ...[
-            Row(
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('AI Insights', style: DSTypography.headingSmall),
+                const SizedBox(height: 2),
                 Text(
-                  '${i + 1}.',
-                  style: DSTypography.bodySm.copyWith(
-                    color: DSColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _tips[i],
-                    style: DSTypography.bodySm.copyWith(
-                      color: DSColors.textPrimary,
-                    ),
+                  'Complete your psychology assessment to unlock personalized insights.',
+                  style: DSTypography.bodySmall.copyWith(
+                    color: DSColors.textSecondary,
                   ),
                 ),
               ],
-            ),
-            if (i < _tips.length - 1) const SizedBox(height: 10),
-          ],
-          const SizedBox(height: 14),
-          Text(
-            'Performance is live. Wellness and Decisions coming soon.',
-            style: DSTypography.caption.copyWith(
-              color: DSColors.textSecondary,
             ),
           ),
         ],

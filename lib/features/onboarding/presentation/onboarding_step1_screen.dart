@@ -248,8 +248,6 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
         return 'male';
       case OnboardingGender.female:
         return 'female';
-      case OnboardingGender.other:
-        return 'other';
       case OnboardingGender.unknown:
         return '';
     }

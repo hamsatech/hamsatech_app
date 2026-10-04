@@ -250,6 +250,19 @@ class StorageService {
     return (jsonDecode(str) as List).cast<Map<String, dynamic>>();
   }
 
+  // ── Score summary's owning session ID ─────────────────────────────────────
+  // `score_summary` above has no session key of its own — it's just "the
+  // last score summary saved." Tagged alongside it (by
+  // `ScoreEntryRepositoryImpl.saveTotals`) so a reader can verify the cache
+  // actually belongs to the session it's about to be shown for, instead of
+  // assuming it does (see `SessionReportRepositoryImpl.getReport`).
+
+  static Future<void> saveScoreSummarySessionId(String id) =>
+      _prefs.setString('score_summary_session_id', id);
+
+  static String? getScoreSummarySessionId() =>
+      _prefs.getString('score_summary_session_id');
+
   static Future<void> clearAll() => _prefs.clear();
 
   // ── Academic profile (Step 4 — local-only, no backend endpoint yet) ──────

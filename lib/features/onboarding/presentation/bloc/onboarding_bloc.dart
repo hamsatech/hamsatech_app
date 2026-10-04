@@ -126,6 +126,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     OnboardingNextQuestion event,
     Emitter<OnboardingState> emit,
   ) async {
+    if (state.status == OnboardingStatus.loading) return;
     if (state.isLastQuestion) return;
     final question = state.currentQuestion;
     final selectedIndex = question != null ? state.answers[question.id] : null;
@@ -138,6 +139,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       final res = await ApiService.instance.saveAssessmentAnswer(
         questionNumber: question.id,
         optionCode: optionCode,
+        answerText: event.answerText,
       );
       final progress = res.data as Map<String, dynamic>;
       final answered = progress['answeredCount'] as int;
@@ -201,6 +203,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     OnboardingAssessmentCompleted event,
     Emitter<OnboardingState> emit,
   ) async {
+    if (state.status == OnboardingStatus.loading) return;
     final question = state.currentQuestion;
     final selectedIndex = question != null ? state.answers[question.id] : null;
     if (question == null || selectedIndex == null) return;
@@ -214,6 +217,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       final res = await ApiService.instance.saveAssessmentAnswer(
         questionNumber: question.id,
         optionCode: optionCode,
+        answerText: event.answerText,
       );
       final progress = res.data as Map<String, dynamic>;
       final answered = progress['answeredCount'] as int;

@@ -4,15 +4,30 @@ import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_report_entity.dart';
 import '../../domain/repositories/session_report_repository.dart';
+import '../models/session_report_model.dart';
 
 class SessionReportRepositoryImpl implements SessionReportRepository {
   static const _spikeThreshold = 84;
 
   @override
   Future<SessionReportEntity> getReport() async {
-    final rawSummary = StorageService.getScoreSummary();
+    final selectedSessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final rawSummary = _localScoreSummaryFor(selectedSessionId);
     if (rawSummary == null || rawSummary.isEmpty) {
-      return SessionReportEntity.empty;
+      // No per-shot data on this device for the current session (cleared
+      // storage, a different device, or a session created through a flow
+      // that never wrote to local storage). Before giving up, check
+      // whether the backend has real, persisted score/series data for
+      // this exact session — if so, render a report from that instead of
+      // an empty screen. Never fabricates a value it doesn't have: fields
+      // with no per-shot equivalent get the same safe defaults
+      // `SessionReportEntity.empty` already uses.
+      final backendReport = await _fetchSessionReport();
+      final backendScores = backendReport?.scores;
+      if (backendScores == null) {
+        return SessionReportEntity.empty;
+      }
+      return _buildFromBackendOnly(backendScores);
     }
 
     // ── Parse series ────────────────────────────────────────────────────────
@@ -177,6 +192,36 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     );
   }
 
+  // ── Local score-summary ownership check ─────────────────────────────────
+
+  /// Returns the locally-cached score summary only if it can be proven to
+  /// belong to `selectedSessionId` — `StorageService.getScoreSummary()` has
+  /// no session key of its own, it's just "the last score summary saved on
+  /// this device," so trusting it unconditionally would show a different
+  /// session's data whenever a *different* session is explicitly selected
+  /// (e.g. tapping an older entry in Session History, which sets
+  /// `SessionMemory.sessionId`/`StorageService.saveSessionId` to that
+  /// session before navigating here).
+  ///
+  /// - No selected session at all (`selectedSessionId == null`): no specific
+  ///   session to conflict with, so the cache is returned as-is — same
+  ///   best-effort behavior this repository already had, unchanged.
+  /// - A selected session exists: the cache is only trusted if it was
+  ///   tagged (by `ScoreEntryRepositoryImpl.saveTotals`) with that exact
+  ///   session ID. An untagged cache (written before this check existed, or
+  ///   by another path) or one tagged for a different session is never
+  ///   guessed to match — callers fall through to the existing
+  ///   backend-report fetch instead.
+  List<Map<String, dynamic>>? _localScoreSummaryFor(String? selectedSessionId) {
+    final rawSummary = StorageService.getScoreSummary();
+    if (rawSummary == null || rawSummary.isEmpty) return null;
+    if (selectedSessionId == null) return rawSummary;
+
+    final cachedSessionId = StorageService.getScoreSummarySessionId();
+    if (cachedSessionId != selectedSessionId) return null;
+    return rawSummary;
+  }
+
   // ── Real HR fetch ────────────────────────────────────────────────────────
 
   /// Fetches real aggregated HR for the current session from the backend
@@ -223,6 +268,102 @@ class SessionReportRepositoryImpl implements SessionReportRepository {
     } catch (e) {
       return null;
     }
+  }
+
+  // ── Real session report fetch (backend-only fallback) ──────────────────────
+
+  /// Fetches the real, persisted session report from the backend
+  /// (`GET .../sessions/{sessionId}/report`) — score summary, series, and
+  /// reflection, all cross-device and durable, unlike `StorageService`.
+  /// Returns `null` on any failure or when no session/athlete id is
+  /// available; callers must treat `null` as "no data available."
+  static Future<SessionReportModel?> _fetchSessionReport() async {
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (sessionId == null || athleteId == null) return null;
+
+    try {
+      final res = await ApiService.instance.getSessionReport(
+        athleteId: athleteId,
+        sessionId: sessionId,
+      );
+      final data = res.data;
+      if (data is! Map<String, dynamic>) return null;
+      return SessionReportModel.fromJson(data);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Builds a report entity purely from the backend's saved score summary,
+  /// for when this device has no local per-shot data for the session (a
+  /// different device, cleared storage, or a session created outside the
+  /// local-storage flow). There is no per-shot data to derive variance,
+  /// mental-state comparison, or a session title from, so those fields use
+  /// the same safe, neutral defaults `SessionReportEntity.empty` already
+  /// defines — never a fabricated value.
+  Future<SessionReportEntity> _buildFromBackendOnly(
+    SessionReportScores backendScores,
+  ) async {
+    final realHr = await _fetchSessionHr();
+    final avgHr = realHr?.avgHr ?? 0;
+    final avgScore =
+        backendScores.averageScore ?? backendScores.avgScore ?? 0.0;
+
+    int spikeCount = 0;
+    final hrPoints = realHr == null
+        ? const <HrChartPoint>[]
+        : List.generate(realHr.points.length, (i) {
+            final point = realHr.points[i];
+            final isSpike = point.heartRate > _spikeThreshold;
+            if (isSpike) spikeCount++;
+            return HrChartPoint(
+              index: i,
+              bpm: point.heartRate.toDouble(),
+              isSpike: isSpike,
+              isSeriesBoundary: false,
+            );
+          });
+
+    final empty = SessionReportEntity.empty;
+    return SessionReportEntity(
+      sessionTitle: empty.sessionTitle,
+      dateLabel: _formatDate(DateTime.now()),
+      timeLabel: _formatTime(DateTime.now()),
+      physiology: PhysiologyMetricsEntity(
+        avgHr: avgHr,
+        peakHr: realHr?.maxHr ?? 0,
+        fatigueLabel: empty.physiology.fatigueLabel,
+        fatigueColor: empty.physiology.fatigueColor,
+        recoveryLabel: empty.physiology.recoveryLabel,
+        recoveryColor: empty.physiology.recoveryColor,
+      ),
+      seriesRows: empty.seriesRows,
+      hrMetrics: HrMetricsEntity(
+        avgHr: avgHr,
+        peakHr: realHr?.maxHr ?? 0,
+        minHr: realHr?.minHr ?? 0,
+        hrZoneLabel: _hrZoneLabel(avgHr),
+        hrZoneColor: _hrZoneColor(avgHr),
+        avgPreShotHr: avgHr,
+        spikeCount: spikeCount,
+        spikeThreshold: _spikeThreshold,
+      ),
+      hrPoints: hrPoints,
+      mentalState: empty.mentalState,
+      // variance: 0.0 — no per-shot data exists to compute a real one from;
+      // `_buildInsight` reads this as "no fatigue-driving variance", not a
+      // fabricated "perfectly consistent" claim.
+      insight: _buildInsight(
+        avgScore: avgScore,
+        variance: 0.0,
+        spikeCount: spikeCount,
+        avgPreShotHr: avgHr,
+        seriesRows: const [],
+      ),
+      recommendations: _buildRecommendations(MetricColor.neutral, avgScore),
+      coachFeedback: empty.coachFeedback,
+    );
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

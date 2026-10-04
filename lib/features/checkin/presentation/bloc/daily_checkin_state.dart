@@ -20,6 +20,7 @@ class DailyCheckinEditing extends DailyCheckinState {
     this.emotions = const [],
     this.polarSleepEstimate,
     this.isSubmitting = false,
+    this.errorMessage,
   });
 
   final MoodOption? mood;
@@ -28,6 +29,10 @@ class DailyCheckinEditing extends DailyCheckinState {
   final List<EmotionTag> emotions;
   final String? polarSleepEstimate;
   final bool isSubmitting;
+  // Set only on a failed submit attempt; every other field is left exactly
+  // as the athlete entered it, so a failure never loses their selections.
+  // Cleared on the next field edit or submit attempt.
+  final String? errorMessage;
 
   bool get canSubmit => mood != null && sleep != null && !isSubmitting;
 
@@ -38,6 +43,11 @@ class DailyCheckinEditing extends DailyCheckinState {
     List<EmotionTag>? emotions,
     String? polarSleepEstimate,
     bool? isSubmitting,
+    // Deliberately no `?? this.errorMessage` fallback: every call site is
+    // either a field edit or a fresh submit attempt, both of which must
+    // clear a prior error, or the failed-submit handler itself setting a
+    // new one — so "omitted" and "clear it" are the same thing here.
+    String? errorMessage,
   }) =>
       DailyCheckinEditing(
         mood: mood ?? this.mood,
@@ -46,22 +56,21 @@ class DailyCheckinEditing extends DailyCheckinState {
         emotions: emotions ?? this.emotions,
         polarSleepEstimate: polarSleepEstimate ?? this.polarSleepEstimate,
         isSubmitting: isSubmitting ?? this.isSubmitting,
+        errorMessage: errorMessage,
       );
 
   @override
-  List<Object?> get props =>
-      [mood, energy, sleep, emotions, polarSleepEstimate, isSubmitting];
+  List<Object?> get props => [
+        mood,
+        energy,
+        sleep,
+        emotions,
+        polarSleepEstimate,
+        isSubmitting,
+        errorMessage,
+      ];
 }
 
 class DailyCheckinSuccess extends DailyCheckinState {
   const DailyCheckinSuccess();
-}
-
-class DailyCheckinError extends DailyCheckinState {
-  const DailyCheckinError(this.message);
-
-  final String message;
-
-  @override
-  List<Object?> get props => [message];
 }

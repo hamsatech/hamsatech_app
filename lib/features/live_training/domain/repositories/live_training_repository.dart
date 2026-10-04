@@ -6,6 +6,17 @@ abstract class LiveTrainingRepository {
 
   Future<String> startSession(String title);
 
+  /// Persists mood/whatWorked/whatDidnt to the backend
+  /// (hamsatech.session_post_log). Must throw on failure — callers must
+  /// not treat this as best-effort the way [completeSession]'s own
+  /// backend call is.
+  Future<void> saveReflection({
+    required String sessionId,
+    required SessionMood? mood,
+    required String whatWorked,
+    required String whatDidnt,
+  });
+
   Future<void> completeSession({
     required String sessionId,
     required int durationMinutes,

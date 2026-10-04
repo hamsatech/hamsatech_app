@@ -14,7 +14,6 @@ import '../../domain/entities/session_report_entity.dart';
 
 const _kTeal = Color(0xFF2F7E8F);
 const _kAmber = Color(0xFFF59E0B);
-const _kGreen = Color(0xFF22C55E);
 const _kIndigo = Color(0xFF6366F1);
 const _kRed = Color(0xFFEF4444);
 
@@ -102,8 +101,6 @@ class _InsightsDashboard extends StatelessWidget {
               children: [
                 _PageHeader(data: data),
                 const SizedBox(height: DSSpacing.xxl),
-                const _PsychologyGrid(),
-                const SizedBox(height: DSSpacing.lg),
                 if (isPolarConnected)
                   _PhysiologyCard(data: data)
                 else
@@ -168,7 +165,7 @@ class _PageHeader extends StatelessWidget {
         ),
         const SizedBox(height: DSSpacing.xxs),
         Text(
-          'Psychology, physiology and score-vs-HR trust',
+          'Physiology and score-vs-HR trust',
           style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
         ),
       ],
@@ -261,112 +258,6 @@ class _PolarInsightsEmptyState extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Psychology 2 × 2 metric grid
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _PsychCardData {
-  const _PsychCardData(this.label, this.value, this.status, this.dotColor);
-
-  final String label;
-  final int value;
-  final String status;
-  final Color dotColor;
-}
-
-class _PsychologyGrid extends StatelessWidget {
-  const _PsychologyGrid();
-
-  static const _cards = [
-    _PsychCardData('SOCIAL', 60, 'functional', _kGreen),
-    _PsychCardData('AROUSAL', 50, 'conditioning', _kAmber),
-    _PsychCardData('DECISION', 90, 'elite', _kTeal),
-    _PsychCardData('FOCUS', 80, 'elite', _kIndigo),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: DSSpacing.md,
-      mainAxisSpacing: DSSpacing.md,
-      childAspectRatio: 1.55,
-      children: _cards.map((c) => _PsychMetricCard(card: c)).toList(),
-    );
-  }
-}
-
-class _PsychMetricCard extends StatelessWidget {
-  const _PsychMetricCard({required this.card});
-
-  final _PsychCardData card;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: DSColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DSColors.gray200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(DSSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Text(
-            card.label,
-            style: DSTypography.labelXs.copyWith(
-              color: DSColors.textSecondary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: DSSpacing.sm),
-          Text(
-            '${card.value}',
-            style: DSTypography.headingXl.copyWith(
-              color: DSColors.textPrimary,
-              fontWeight: FontWeight.w700,
-              height: 1.0,
-            ),
-          ),
-          const SizedBox(height: DSSpacing.sm),
-          Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: card.dotColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                card.status,
-                style: DSTypography.labelXs.copyWith(
-                  color: card.dotColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Physiology Explained card
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -391,12 +282,10 @@ class _PhysiologyCard extends StatelessWidget {
             badgeColor: _kTeal,
             text: _hrText(avgHr),
           ),
-          const SizedBox(height: DSSpacing.md),
-          _PhysRow(
-            badge: 'HRV 19 ms',
-            badgeColor: _kAmber,
-            text: 'Recovery signal is low; warm up patiently.',
-          ),
+          // HRV row intentionally removed: no HRV field exists anywhere in
+          // the HR pipeline (SessionHrResponse has none), so the "HRV 19
+          // ms" badge and its "recovery signal" caption previously shown
+          // here were a fixed, made-up value presented as a real reading.
           const SizedBox(height: DSSpacing.md),
           _PhysRow(
             badge: 'ACC ${spikeCount > 0 ? spikeCount * 25 : 100}',
@@ -574,14 +463,14 @@ class _ScoreHrTrustCard extends StatelessWidget {
 
   Widget _buildChart() {
     final pts = data.hrPoints;
-    if (pts.isEmpty) return _staticChart();
+    if (pts.isEmpty) return _emptyChartState();
 
     final maxB = pts.map((p) => p.bpm).reduce(max);
     final minB = pts.map((p) => p.bpm).reduce(min);
     final chartMax = (maxB + 10).ceilToDouble();
     final chartMin = (minB - 5).floorToDouble().clamp(0.0, double.infinity);
     final range = chartMax - chartMin;
-    if (range == 0) return _staticChart();
+    if (range == 0) return _emptyChartState();
 
     final threshold = chartMin + range * 0.6;
     final trustSpots = <FlSpot>[];
@@ -603,37 +492,20 @@ class _ScoreHrTrustCard extends StatelessWidget {
     );
   }
 
-  Widget _staticChart() {
-    const hrRaw = [72.0, 75.0, 78.0, 83.0, 86.0, 84.0, 80.0, 77.0, 74.0, 72.0];
-    const trustRaw = [
-      86.0,
-      84.0,
-      82.0,
-      78.0,
-      74.0,
-      76.0,
-      80.0,
-      83.0,
-      85.0,
-      86.0
-    ];
+  // Replaces a previous fully-fabricated fallback chart (fixed HR/trust
+  // arrays drawn whenever real HR data was missing, with nothing on
+  // screen distinguishing it from an actual reading). Showing a chart
+  // shape here would misrepresent a session that has no such data.
+  Widget _emptyChartState() {
     return SizedBox(
       height: 130,
-      child: LineChart(_chartData(
-        hrSpots: hrRaw
-            .asMap()
-            .entries
-            .map((e) => FlSpot(e.key.toDouble(), e.value))
-            .toList(),
-        trustSpots: trustRaw
-            .asMap()
-            .entries
-            .map((e) => FlSpot(e.key.toDouble(), e.value))
-            .toList(),
-        minY: 60,
-        maxY: 96,
-        threshold: 80,
-      )),
+      child: Center(
+        child: Text(
+          'Not enough heart-rate data to show this chart yet.',
+          textAlign: TextAlign.center,
+          style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
+        ),
+      ),
     );
   }
 

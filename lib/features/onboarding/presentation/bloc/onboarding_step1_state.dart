@@ -1,6 +1,11 @@
 import 'package:equatable/equatable.dart';
 
-enum OnboardingGender { male, female, other, unknown }
+// The backend's Gender enum only ever accepts "Male"/"Female" — it's kept
+// to exactly what the real hamsatech.athletes.gender column data uses (see
+// app/modules/onboarding/constants/__init__.py). There is deliberately no
+// `other` value here: offering an option the backend cannot accept would
+// let an athlete pick a choice that 422s on submit.
+enum OnboardingGender { male, female, unknown }
 
 class OnboardingStep1State extends Equatable {
   final String name;
@@ -50,7 +55,7 @@ class OnboardingStep1State extends Equatable {
     this.ageLabel = 'DOB',
     this.ageHint = 'DD / MM / YYYY',
     this.genderLabel = 'Gender',
-    this.genderOptions = const ['male', 'female', 'other'],
+    this.genderOptions = const ['male', 'female'],
     this.cityLabel = 'City',
     this.cityHint = 'Where do you live?',
     this.ctaLabel = 'Continue to Step 2',

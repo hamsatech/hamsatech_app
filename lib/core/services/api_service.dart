@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../constants/api_constants.dart';
+import 'secure_storage_service.dart';
+import 'storage_service.dart';
 
 // PATH RULE: never start a path with '/'. baseUrl already ends with '/'.
 //   'sessions'  → 'https://.../rest/v1/sessions'  ✓
@@ -51,6 +53,13 @@ class ApiService {
   static void setMobileAuthToken(String? token) =>
       _MobileAuthInterceptor.setToken(token);
 
+  /// Invoked exactly once when a session can no longer be recovered (no
+  /// refresh token available, or the refresh call itself failed) — after
+  /// local auth state has already been cleared. Kept as a plain callback,
+  /// not a direct import of the router, so this core service never depends
+  /// on `core/router`; wired in `main.dart` to navigate to `/login`.
+  static void Function()? onSessionExpired;
+
   static Dio _buildMobileDio() {
     debugPrint(
         '[API BASE URL] mobile backend: ${ApiConstants.mobileApiBaseUrl}');
@@ -68,7 +77,7 @@ class ApiService {
     );
     // Auth interceptor must run before the logger so logged requests already
     // carry the Authorization header.
-    dio.interceptors.add(_MobileAuthInterceptor());
+    dio.interceptors.add(_MobileAuthInterceptor(dio));
     dio.interceptors.add(_ApiLogger());
     return dio;
   }
@@ -130,25 +139,6 @@ class ApiService {
         },
       );
 
-  /// POST /api/v1/onboarding/goals — backend also sets onboarding_complete = true.
-  Future<Response<dynamic>> saveOnboardingGoals({
-    required String athleteId,
-    required String goal30d,
-    required String goal6m,
-  }) =>
-      _mobileDio.post(
-        'api/v1/onboarding/goals',
-        data: {
-          'athlete_id': athleteId,
-          'goal_30d': goal30d,
-          'goal_6m': goal6m,
-        },
-      );
-
-  /// GET /api/v1/onboarding/summary/{athlete_id}
-  Future<Response<dynamic>> getOnboardingSummary(String athleteId) =>
-      _mobileDio.get('api/v1/onboarding/summary/$athleteId');
-
   // ── Mobile backend — Daily check-in ──────────────────────────────────────
 
   /// POST /api/v1/checkin/daily
@@ -190,7 +180,8 @@ class ApiService {
     String? sport,
     String? focusArea,
   }) {
-    debugPrint('[ATHLETE REGISTER] POST api/mobile/athletes/register athleteId=$athleteId');
+    debugPrint(
+        '[ATHLETE REGISTER] POST api/mobile/athletes/register athleteId=$athleteId');
     return _mobileDio.post(
       'api/mobile/athletes/register',
       data: {
@@ -210,73 +201,24 @@ class ApiService {
 
   /// POST https://hamsatech-api.onrender.com/api/v2/auth/phone/send-otp
   /// Triggers Twilio Verify OTP to the given phone number.
-  Future<Response<dynamic>> sendOtpToBackend(String phone) async {
-    const endpoint = 'api/v2/auth/phone/send-otp';
-    final base = _mobileDio.options.baseUrl;
-    final fullUrl = '$base$endpoint';
-    final body = {'phone': phone};
-
-    debugPrint('──────────────────────────────────────────────');
-    debugPrint('[OTP REQUEST]');
-    debugPrint('POST $fullUrl');
-    debugPrint('BODY: $body');
-    debugPrint('──────────────────────────────────────────────');
-
-    final res = await _mobileDio.post(endpoint, data: body);
-
-    debugPrint('──────────────────────────────────────────────');
-    debugPrint('[OTP RESPONSE]');
-    debugPrint('STATUS: ${res.statusCode}');
-    debugPrint('BODY: ${res.data}');
-    debugPrint('──────────────────────────────────────────────');
-
-    return res;
-  }
+  /// Never logs the phone number or the raw response — both are sensitive.
+  Future<Response<dynamic>> sendOtpToBackend(String phone) =>
+      _mobileDio.post('api/v2/auth/phone/send-otp', data: {'phone': phone});
 
   /// POST https://hamsatech-api.onrender.com/api/v2/auth/phone/verify-otp
   /// Matches VerifyOTPRequest exactly: { phone_number, otp_code }.
   /// Returns AuthResponse: { access_token, refresh_token, token_type,
   /// expires_in, user_id, is_new_user, next_step }.
+  /// Never logs the phone number, OTP code, or the raw response — the
+  /// response carries live access/refresh tokens.
   Future<Response<dynamic>> verifyOtpAndRegister({
     required String phone,
     required String otp,
-  }) async {
-    const endpoint = 'api/v2/auth/phone/verify-otp';
-    final base = _mobileDio.options.baseUrl;
-    final fullUrl = '$base$endpoint';
-    final body = <String, dynamic>{
-      'phone_number': phone,
-      'otp_code': otp,
-    };
-
-    debugPrint('══════════════════════════════════════════════');
-    debugPrint('[OTP VERIFY — REQUEST]');
-    debugPrint('POST $fullUrl');
-    debugPrint('BODY (raw)  : $body');
-    debugPrint('phone value : "$phone"');
-    debugPrint(
-        'otp value   : "$otp"  (length=${otp.length}, codeUnits=${otp.codeUnits})');
-    debugPrint('══════════════════════════════════════════════');
-
-    // try/catch here is instrumentation only — the exception is rethrown
-    // unchanged so calling code sees identical behavior to before.
-    try {
-      final res = await _mobileDio.post(endpoint, data: body);
-      debugPrint('══════════════════════════════════════════════');
-      debugPrint('[OTP VERIFY — RESPONSE] SUCCESS');
-      debugPrint('STATUS: ${res.statusCode}');
-      debugPrint('BODY  : ${res.data}');
-      debugPrint('══════════════════════════════════════════════');
-      return res;
-    } on DioException catch (e) {
-      debugPrint('══════════════════════════════════════════════');
-      debugPrint('[OTP VERIFY — RESPONSE] ERROR');
-      debugPrint('STATUS: ${e.response?.statusCode}');
-      debugPrint('BODY  : ${e.response?.data}');
-      debugPrint('══════════════════════════════════════════════');
-      rethrow;
-    }
-  }
+  }) =>
+      _mobileDio.post(
+        'api/v2/auth/phone/verify-otp',
+        data: {'phone_number': phone, 'otp_code': otp},
+      );
 
   // ── Mobile backend — Onboarding (V2) ───────────────────────────────────────
 
@@ -583,18 +525,53 @@ class ApiService {
     );
   }
 
+  /// POST /api/mobile/athletes/{athleteId}/sessions/{sessionId}/reflection
+  /// Persists the post-session reflection (hamsatech.session_post_log:
+  /// mood, what_worked, what_didnt) through the authenticated backend —
+  /// upsert, safe to retry.
+  Future<Response<dynamic>> saveReflection({
+    required String athleteId,
+    required String sessionId,
+    int? mood,
+    String? whatWorked,
+    String? whatDidnt,
+  }) {
+    debugPrint(
+        '[REFLECTION SAVE] POST api/mobile/athletes/$athleteId/sessions/$sessionId/reflection');
+    return _mobileDio.post(
+      'api/mobile/athletes/$athleteId/sessions/$sessionId/reflection',
+      data: {
+        'mood': mood,
+        'what_worked': whatWorked,
+        'what_didnt': whatDidnt,
+      },
+    );
+  }
+
   /// POST /api/mobile/athletes/{athleteId}/sessions/{sessionId}/complete
   /// Signals session completion to the mobile backend with optional score summary.
   /// All fields except athleteId and sessionId are optional — pass what's available.
+  ///
+  /// Does NOT accept totalScore or performanceRating (SESSION-2, verified
+  /// against the current backend source): neither has a column anywhere —
+  /// `total_score` has no destination on hamsatech.sessions or
+  /// shooting_session_log (see CompleteSessionRequest's docstring), and the
+  /// real hamsatech.session_post_log.performance_rating column carries a
+  /// different, already-in-use meaning (see SessionPostLog's docstring), so
+  /// writing a client-computed rating into it would silently corrupt
+  /// unrelated data rather than just being ignored. Both were previously
+  /// sent and always silently dropped server-side — removed rather than
+  /// given real columns, since the underlying values are either already
+  /// persisted elsewhere (totalShots/avgScore/bestSeriesScore via
+  /// saveScore(), individual series via saveSeries()) or, for the mood-based
+  /// performanceRating, via saveReflection()'s own `mood` field.
   Future<Response<dynamic>> completeMobileSession({
     required String athleteId,
     required String sessionId,
     int? durationMinutes,
     int? totalShots,
-    double? totalScore,
     double? avgScore,
     double? bestSeriesScore,
-    int? performanceRating,
     String? notes,
   }) {
     debugPrint(
@@ -604,10 +581,8 @@ class ApiService {
       data: {
         if (durationMinutes != null) 'duration_minutes': durationMinutes,
         if (totalShots != null) 'total_shots': totalShots,
-        if (totalScore != null) 'total_score': totalScore,
         if (avgScore != null) 'avg_score': avgScore,
         if (bestSeriesScore != null) 'best_series_score': bestSeriesScore,
-        if (performanceRating != null) 'performance_rating': performanceRating,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
       },
     );
@@ -1015,11 +990,19 @@ class ApiService {
     required String athleteId,
     required int restingHr,
   }) {
-    debugPrint('[BASELINE] POST api/mobile/athletes/$athleteId/baseline resting_hr=$restingHr');
+    debugPrint(
+        '[BASELINE] POST api/mobile/athletes/$athleteId/baseline resting_hr=$restingHr');
     return _mobileDio.post(
       'api/mobile/athletes/$athleteId/baseline',
       data: {'resting_hr': restingHr},
     );
+  }
+
+  /// GET /api/mobile/athletes/{athleteId}/baseline
+  /// Reads back the athlete's most recently captured physiological baseline.
+  Future<Response<dynamic>> getBaselineHR(String athleteId) {
+    debugPrint('[BASELINE] GET api/mobile/athletes/$athleteId/baseline');
+    return _mobileDio.get('api/mobile/athletes/$athleteId/baseline');
   }
 
   // ── Mobile backend — Intake questions ────────────────────────────────────
@@ -1049,16 +1032,43 @@ class ApiService {
     );
   }
 
-  // ── Mobile backend — Session Summary ─────────────────────────────────────
+  // ── Mobile backend — Session Report ──────────────────────────────────────
 
-  /// GET /api/mobile/athletes/{athleteId}/sessions/{sessionId}/summary
-  Future<Response<dynamic>> getSessionSummary({
+  /// GET /api/mobile/athletes/{athleteId}/sessions/{sessionId}/report
+  /// Returns the full aggregated report for one session: session metadata
+  /// (type/started_at/completed_at/duration_seconds), a heart-rate summary,
+  /// a score summary, the saved series list, and the reflection — each
+  /// category null/empty when nothing was saved for it. Replaces the old
+  /// `/summary` path, which never existed server-side.
+  Future<Response<dynamic>> getSessionReport({
     required String athleteId,
     required String sessionId,
   }) {
-    debugPrint('[SESSION SUMMARY] GET api/mobile/athletes/$athleteId/sessions/$sessionId/summary');
+    debugPrint(
+        '[SESSION REPORT] GET api/mobile/athletes/$athleteId/sessions/$sessionId/report');
+    return _mobileDio
+        .get('api/mobile/athletes/$athleteId/sessions/$sessionId/report');
+  }
+
+  // ── Mobile backend — Session History ─────────────────────────────────────
+
+  /// GET /api/mobile/athletes/{athleteId}/sessions
+  /// Returns one page of the athlete's completed sessions, newest first, as
+  /// the project's standard `PaginatedResponse` envelope:
+  /// `{ success, data: [ {session_id, session_type, start_time, end_time,
+  /// duration_seconds, avg_score, best_series_score, total_shots,
+  /// series_count} ], meta: {total, page, page_size, total_pages} }`.
+  Future<Response<dynamic>> getSessionHistory({
+    required String athleteId,
+    int page = 1,
+    int pageSize = 20,
+  }) {
+    debugPrint(
+        '[SESSION HISTORY] GET api/mobile/athletes/$athleteId/sessions page=$page pageSize=$pageSize');
     return _mobileDio.get(
-        'api/mobile/athletes/$athleteId/sessions/$sessionId/summary');
+      'api/mobile/athletes/$athleteId/sessions',
+      queryParameters: {'page': page, 'page_size': pageSize},
+    );
   }
 
   // ── Mobile backend — Session Heart Rate ──────────────────────────────────
@@ -1070,9 +1080,10 @@ class ApiService {
     required String athleteId,
     required String sessionId,
   }) {
-    debugPrint('[SESSION HR] GET api/mobile/athletes/$athleteId/sessions/$sessionId/heart-rate');
-    return _mobileDio.get(
-        'api/mobile/athletes/$athleteId/sessions/$sessionId/heart-rate');
+    debugPrint(
+        '[SESSION HR] GET api/mobile/athletes/$athleteId/sessions/$sessionId/heart-rate');
+    return _mobileDio
+        .get('api/mobile/athletes/$athleteId/sessions/$sessionId/heart-rate');
   }
 
   // ── Mobile backend — Dashboard Home ─────────────────────────────────────
@@ -1082,6 +1093,18 @@ class ApiService {
   Future<Response<dynamic>> getDashboardHome(String athleteId) {
     debugPrint('[DASHBOARD] GET api/mobile/athletes/$athleteId/home');
     return _mobileDio.get('api/mobile/athletes/$athleteId/home');
+  }
+
+  // ── Mobile backend — Streak ──────────────────────────────────────────────
+
+  /// GET /api/mobile/athletes/{athleteId}/streak
+  /// Returns `{athlete_id, current_streak, longest_streak, last_active_date}`
+  /// — real, derived from persisted completed sessions, never a local
+  /// calculation. Replaces the two independent local streak calculations
+  /// previously in DashboardRepositoryImpl and ProfileScreen.
+  Future<Response<dynamic>> getStreak(String athleteId) {
+    debugPrint('[STREAK] GET api/mobile/athletes/$athleteId/streak');
+    return _mobileDio.get('api/mobile/athletes/$athleteId/streak');
   }
 
   // ── RPC ───────────────────────────────────────────────────────────────────
@@ -1095,16 +1118,37 @@ class ApiService {
       );
 }
 
-// ── Mobile backend auth token injector ───────────────────────────────────────
-
+// ── Mobile backend auth token injector + 401 refresh-and-retry ──────────────
+//
+// On a 401 from any mobile-backend request (except the auth endpoints
+// themselves, which must never trigger this): attempt exactly one token
+// refresh, retry the original request exactly once with the new token, and
+// if either the refresh or the retry fails, clear local auth state and hand
+// off to [ApiService.onSessionExpired] so the app can route to login.
+// Concurrent 401s share one in-flight refresh instead of each firing their
+// own. Never logs token contents, request bodies, or raw auth responses.
 class _MobileAuthInterceptor extends Interceptor {
+  _MobileAuthInterceptor(this._dio);
+
+  final Dio _dio;
+
   static String? _token;
 
+  // Requests to these paths must never trigger a refresh attempt: the OTP
+  // endpoints run before any session exists, and excluding the refresh
+  // endpoint itself is defense-in-depth against recursion (the refresh call
+  // is also issued on a bare, interceptor-free Dio — see [_refresh]).
+  static const _authPaths = [
+    'api/v2/auth/refresh',
+    'api/v2/auth/phone/send-otp',
+    'api/v2/auth/phone/verify-otp',
+  ];
+
+  // Shared by every concurrent 401 so only one refresh call is ever
+  // in flight at a time; cleared once that call resolves.
+  static Future<String?>? _refreshInFlight;
+
   static void setToken(String? token) {
-    // TEMPORARY DEBUG (auth trace) — remove after diagnosis.
-    debugPrint('[AuthDebug] setToken called — '
-        'was: ${_preview(_token)} | now: ${_preview(token)} | '
-        'changed: ${_token != token}');
     _token = token;
   }
 
@@ -1113,22 +1157,88 @@ class _MobileAuthInterceptor extends Interceptor {
     if (_token != null && _token!.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $_token';
     }
-    // TEMPORARY DEBUG (auth trace) — remove after diagnosis.
-    debugPrint('[AuthDebug] ${options.method} ${options.path} — '
-        'token isNull: ${_token == null} | length: ${_token?.length ?? 0} | '
-        'first20: ${_preview(_token)} | '
-        'Authorization header present: '
-        '${options.headers.containsKey('Authorization')}');
     handler.next(options);
   }
 
-  // TEMPORARY DEBUG (auth trace) — remove after diagnosis.
-  // Never prints the full token — null-safe first-20-chars preview only.
-  static String _preview(String? token) {
-    if (token == null) return 'null';
-    if (token.isEmpty) return '(empty)';
-    final cut = token.length < 20 ? token.length : 20;
-    return '${token.substring(0, cut)}… (len=${token.length})';
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    final options = err.requestOptions;
+    final isAuthPath = _authPaths.any((path) => options.path.contains(path));
+    final alreadyRetried = options.extra['retriedAfter401'] == true;
+
+    if (err.response?.statusCode != 401 || isAuthPath || alreadyRetried) {
+      handler.next(err);
+      return;
+    }
+
+    final newToken = await (_refreshInFlight ??= _refresh());
+    _refreshInFlight = null;
+
+    if (newToken == null) {
+      await _forceLogout();
+      handler.next(err);
+      return;
+    }
+
+    try {
+      options.extra['retriedAfter401'] = true;
+      options.headers['Authorization'] = 'Bearer $newToken';
+      final retried = await _dio.fetch<dynamic>(options);
+      handler.resolve(retried);
+    } on DioException catch (retryError) {
+      handler.next(retryError);
+    }
+  }
+
+  /// Exchanges the stored refresh token for a new access/refresh pair and
+  /// persists both. Returns null — never throws — if there is no refresh
+  /// token to use, or the exchange itself fails for any reason; either way
+  /// the caller must treat the session as unrecoverable without a fresh
+  /// login. Uses a bare Dio (no interceptors) so a failing refresh call can
+  /// never re-enter this interceptor's own `onError`.
+  static Future<String?> _refresh() async {
+    try {
+      final refreshToken = await SecureStorageService.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) return null;
+
+      final refreshDio = Dio(
+        BaseOptions(
+          baseUrl: ApiConstants.mobileApiBaseUrl,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      final response = await refreshDio.post<Map<String, dynamic>>(
+        'api/v2/auth/refresh',
+        data: {'refresh_token': refreshToken},
+      );
+      final body = response.data;
+      final newAccessToken = body?['access_token'] as String?;
+      final newRefreshToken = body?['refresh_token'] as String?;
+      if (newAccessToken == null ||
+          newAccessToken.isEmpty ||
+          newRefreshToken == null ||
+          newRefreshToken.isEmpty) {
+        return null;
+      }
+
+      await SecureStorageService.saveAuthToken(newAccessToken);
+      await SecureStorageService.saveRefreshToken(newRefreshToken);
+      await StorageService.saveAuthToken(newAccessToken);
+      _token = newAccessToken;
+      return newAccessToken;
+    } on DioException {
+      return null;
+    }
+  }
+
+  static Future<void> _forceLogout() async {
+    await StorageService.clearAll();
+    await SecureStorageService.clearAll();
+    _token = null;
+    ApiService.onSessionExpired?.call();
   }
 }
 

@@ -50,10 +50,38 @@ class _ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<_ProfileView> {
+  // Real streak, from GET /api/mobile/athletes/{id}/streak — see
+  // `_fetchStreak` below. Null until loaded; `build()` treats null the
+  // same as "no streak yet" (0), the same neutral value the old local
+  // calculation returned for an athlete with no sessions. Replaces the
+  // local `_computeStreak` calculation, which disagreed with the
+  // Dashboard's own separate local calculation.
+  int? _streak;
+
   @override
   void initState() {
     super.initState();
     _syncProfileFromApi();
+    _fetchStreak();
+  }
+
+  void _fetchStreak() {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) return;
+
+    Future(() async {
+      try {
+        final res = await ApiService.instance.getStreak(athleteId);
+        final data = res.data;
+        if (data is! Map<String, dynamic>) return;
+        final current = data['current_streak'];
+        if (current is num && mounted) {
+          setState(() => _streak = current.toInt());
+        }
+      } catch (e) {
+        debugPrint('[PROFILE] streak fetch failed (non-fatal): $e');
+      }
+    });
   }
 
   void _syncProfileFromApi() {
@@ -62,7 +90,8 @@ class _ProfileViewState extends State<_ProfileView> {
 
     Future(() async {
       try {
-        final res = await ApiService.instance.getMobileAthleteProfile(athleteId);
+        final res =
+            await ApiService.instance.getMobileAthleteProfile(athleteId);
         final raw = res.data;
         Map<String, dynamic>? apiData;
         if (raw is Map<String, dynamic>) {
@@ -78,7 +107,8 @@ class _ProfileViewState extends State<_ProfileView> {
         String? pick(List<String> keys) {
           for (final k in keys) {
             final v = apiData![k];
-            if (v != null && v.toString().trim().isNotEmpty) return v.toString().trim();
+            if (v != null && v.toString().trim().isNotEmpty)
+              return v.toString().trim();
           }
           return null;
         }
@@ -152,7 +182,7 @@ class _ProfileViewState extends State<_ProfileView> {
     final experienceLevel = profile?['experienceLevel'] as String? ?? '';
 
     final sessionCount = sessions.length;
-    final streak = _computeStreak(sessions);
+    final streak = _streak ?? 0;
     final level = (sessionCount ~/ 5) + 1;
     final avgScore = _computeAvgScore(sessions);
     final personalBest = _computePersonalBest(sessions);
@@ -164,7 +194,8 @@ class _ProfileViewState extends State<_ProfileView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthUnauthenticated) {
-          StorageService.clearAll();
+          // AuthRepositoryImpl.logout() already performs the full clear —
+          // this listener only needs to navigate once it's done.
           context.go('/login');
         }
       },
@@ -245,34 +276,6 @@ class _ProfileViewState extends State<_ProfileView> {
   }
 
   // ── Data computation (unchanged) ─────────────────────────────────────────
-
-  int _computeStreak(List<Map<String, dynamic>> sessions) {
-    if (sessions.isEmpty) return 0;
-    final dates = <DateTime>{};
-    for (final s in sessions) {
-      final raw = s['date'] as String?;
-      if (raw != null) {
-        try {
-          final d = DateTime.parse(raw);
-          dates.add(DateTime(d.year, d.month, d.day));
-        } catch (_) {}
-      }
-    }
-    if (dates.isEmpty) return 0;
-    final sorted = dates.toList()..sort((a, b) => b.compareTo(a));
-    var streak = 0;
-    var current = DateTime.now();
-    current = DateTime(current.year, current.month, current.day);
-    for (final d in sorted) {
-      if (d == current || d == current.subtract(const Duration(days: 1))) {
-        streak++;
-        current = d.subtract(const Duration(days: 1));
-      } else {
-        break;
-      }
-    }
-    return streak;
-  }
 
   String _computeAvgScore(List<Map<String, dynamic>> sessions) {
     if (sessions.isEmpty) return '—';

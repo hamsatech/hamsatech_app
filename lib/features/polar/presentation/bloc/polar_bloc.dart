@@ -24,6 +24,7 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     on<PolarBluetoothOffEvent>(_onBluetoothOff);
     on<PolarConnectTimedOutEvent>(_onConnectTimedOut);
     on<PolarDisconnectTimedOutEvent>(_onDisconnectTimedOut);
+    on<PolarScanErrorEvent>(_onScanError);
 
     _deviceSubscription = _service.deviceEvents.listen((event) {
       switch (event.status) {
@@ -58,6 +59,8 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
           // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
           debugPrint('[PolarDebug] PolarBloc: bluetoothOff case reached, dispatching PolarBluetoothOffEvent');
           add(const PolarBluetoothOffEvent());
+        case PolarDeviceStatus.scanError:
+          add(PolarScanErrorEvent(event.message ?? 'Unknown Bluetooth scan error'));
       }
     });
   }
@@ -83,6 +86,7 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     Emitter<PolarState> emit,
   ) async {
     if (state.isScanning) return;
+    debugPrint('[PolarScan] scan starting');
     emit(state.copyWith(
       connectionStatus: PolarConnectionStatus.scanning,
       discoveredDevices: [],
@@ -91,11 +95,26 @@ class PolarBloc extends Bloc<PolarEvent, PolarState> {
     try {
       await _service.scanForDevices();
     } catch (e) {
+      debugPrint('[PolarScan] scanForDevices() threw synchronously: $e');
       emit(state.copyWith(
         connectionStatus: PolarConnectionStatus.error,
         errorMessage: e.toString(),
       ));
     }
+  }
+
+  Future<void> _onScanError(
+    PolarScanErrorEvent event,
+    Emitter<PolarState> emit,
+  ) async {
+    debugPrint('[PolarScan] scan failed: ${event.message}');
+    try {
+      await _service.stopScan();
+    } catch (_) {}
+    emit(state.copyWith(
+      connectionStatus: PolarConnectionStatus.error,
+      errorMessage: 'Bluetooth scan failed: ${event.message}',
+    ));
   }
 
   Future<void> _onScanStopped(

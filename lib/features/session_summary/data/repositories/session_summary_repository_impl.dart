@@ -6,6 +6,7 @@ import '../../../../core/services/api_service.dart';
 import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../session_report/data/models/session_report_model.dart';
 import '../../domain/entities/session_summary_entity.dart';
 import '../../domain/repositories/session_summary_repository.dart';
 
@@ -88,61 +89,135 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
       }
     }
 
-    // ── Augment with mobile backend summary (non-blocking) ───────────────────
+    // ── Augment with real, persisted backend data (non-blocking) ─────────────
+    // `bestShot`/`worstShot` are deliberately never touched here — the
+    // backend only ever stores per-series totals, never individual shot
+    // values, so there is no real data to replace them with.
     var finalTotal = grandTotal;
     var finalDurationMins = durationMins;
     var finalTitle = sessionTitle;
+    var finalTotalShots = totalShots;
+    var finalBestSeriesLabel =
+        'S${bestSeries.number}: ${_fmt(bestSeries.total)}';
+    var finalWorstSeriesLabel =
+        'S${worstSeries.number}: ${_fmt(worstSeries.total)}';
+    var finalBreakdown = breakdown;
+    var finalScorePoints = scorePoints;
+    var finalMood = mood;
+    double? backendAvgScore;
 
-    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
-    final athleteId = AuthHelper.getCurrentAthleteId();
-    if (sessionId != null && athleteId != null) {
-      try {
-        final res = await ApiService.instance.getSessionSummary(
-          athleteId: athleteId,
-          sessionId: sessionId,
-        );
-        final data = res.data is Map<String, dynamic>
-            ? res.data as Map<String, dynamic>
-            : (res.data is Map && res.data['data'] is Map<String, dynamic>
-                ? res.data['data'] as Map<String, dynamic>
-                : null);
-        if (data != null) {
-          final apiTotal = data['total_score'] ?? data['total'];
-          if (apiTotal is num) finalTotal = apiTotal.toDouble();
-
-          final apiDur = data['duration_minutes'] ?? data['duration'];
-          if (apiDur is num) finalDurationMins = apiDur.toInt();
-
-          final apiTitle = data['session_title'] ?? data['title'];
-          if (apiTitle is String && apiTitle.isNotEmpty) finalTitle = apiTitle;
-
-          debugPrint('[SESSION SUMMARY] augmented from API sessionId=$sessionId');
-        }
-      } catch (e) {
-        debugPrint('[SESSION SUMMARY] API fetch failed (non-fatal): $e');
+    final report = await _fetchSessionReport();
+    if (report != null) {
+      final scores = report.scores;
+      if (scores != null) {
+        if (scores.totalScore != null) finalTotal = scores.totalScore!;
+        if (scores.totalShots != null) finalTotalShots = scores.totalShots!;
+        backendAvgScore = scores.averageScore ?? scores.avgScore;
       }
+
+      final durationSeconds = report.summary.durationSeconds;
+      if (durationSeconds != null) {
+        finalDurationMins = (durationSeconds / 60).round();
+      }
+
+      // Only backend `session_type` is real here — `rangeType` (Electronic
+      // vs Paper) is a local-only setup choice never sent to the backend,
+      // so the locally-built title is kept whenever local setup exists.
+      if (setup == null && report.summary.sessionType != null) {
+        finalTitle = _buildTitle({'sessionType': report.summary.sessionType});
+      }
+
+      if (report.series.isNotEmpty) {
+        final backendSeries = [...report.series]
+          ..sort((a, b) => a.seriesNumber.compareTo(b.seriesNumber));
+        final bestBackend = backendSeries.reduce(
+            (a, b) => (a.totalScore ?? 0) > (b.totalScore ?? 0) ? a : b);
+        final worstBackend = backendSeries.reduce(
+            (a, b) => (a.totalScore ?? 0) < (b.totalScore ?? 0) ? a : b);
+        finalBestSeriesLabel =
+            'S${bestBackend.seriesNumber}: ${_fmt(bestBackend.totalScore ?? 0)}';
+        finalWorstSeriesLabel =
+            'S${worstBackend.seriesNumber}: ${_fmt(worstBackend.totalScore ?? 0)}';
+
+        final avgBackendSeriesTotal =
+            backendSeries.fold(0.0, (sum, s) => sum + (s.totalScore ?? 0)) /
+                backendSeries.length;
+        finalBreakdown = backendSeries
+            .map((s) => SeriesBreakdownEntity(
+                  seriesNumber: s.seriesNumber,
+                  total: s.totalScore ?? 0,
+                  maxTotal: (s.shotsFired ?? shotsPerSeries) * 10.0,
+                  isBest: s.seriesNumber == bestBackend.seriesNumber,
+                ))
+            .toList();
+        finalScorePoints = backendSeries
+            .map((s) => ScorePointEntity(
+                  index: s.seriesNumber - 1,
+                  value: s.totalScore ?? 0,
+                  isSpike: (s.totalScore ?? 0) > avgBackendSeriesTotal * 1.12,
+                ))
+            .toList();
+      }
+
+      final reflectionMood = report.reflection?.mood;
+      if (reflectionMood != null) {
+        finalMood = _buildMood(reflectionMood, backendAvgScore ?? avg);
+      }
+
+      debugPrint('[SESSION SUMMARY] augmented from /report');
     }
 
-    final finalMaxPossible = maxPossible > 0 ? maxPossible : finalTotal;
-    final finalEfficiency =
-        finalMaxPossible > 0 ? (finalTotal / finalMaxPossible) * 100 : efficiency;
+    final finalAveragePerShot = backendAvgScore ??
+        (finalTotalShots > 0 ? finalTotal / finalTotalShots : avg);
+    final finalMaxPossible = finalTotalShots > 0
+        ? finalTotalShots * 10.0
+        : (maxPossible > 0 ? maxPossible : finalTotal);
+    final finalEfficiency = finalMaxPossible > 0
+        ? (finalTotal / finalMaxPossible) * 100
+        : efficiency;
 
     return SessionSummaryEntity(
       sessionTitle: finalTitle,
-      totalShots: totalShots,
+      totalShots: finalTotalShots,
       duration: _formatDuration(finalDurationMins),
       total: finalTotal,
       maxPossible: finalMaxPossible,
-      averagePerShot: totalShots > 0 ? finalTotal / totalShots : avg,
+      averagePerShot: finalAveragePerShot,
       efficiency: finalEfficiency,
       bestShot: bestShot,
       worstShot: worstShot,
-      bestSeriesLabel: 'S${bestSeries.number}: ${_fmt(bestSeries.total)}',
-      worstSeriesLabel: 'S${worstSeries.number}: ${_fmt(worstSeries.total)}',
-      seriesBreakdown: breakdown,
-      scorePoints: scorePoints,
-      moodCorrelation: mood,
+      bestSeriesLabel: finalBestSeriesLabel,
+      worstSeriesLabel: finalWorstSeriesLabel,
+      seriesBreakdown: finalBreakdown,
+      scorePoints: finalScorePoints,
+      moodCorrelation: finalMood,
     );
+  }
+
+  // ── Real session report fetch ───────────────────────────────────────────
+
+  /// Fetches the real, persisted session report from the backend
+  /// (`GET .../sessions/{sessionId}/report`). Returns `null` on any
+  /// failure or when no session/athlete id is available — callers must
+  /// treat `null` as "no backend data available" and keep their
+  /// locally-computed values.
+  static Future<SessionReportModel?> _fetchSessionReport() async {
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (sessionId == null || athleteId == null) return null;
+
+    try {
+      final res = await ApiService.instance.getSessionReport(
+        athleteId: athleteId,
+        sessionId: sessionId,
+      );
+      final data = res.data;
+      if (data is! Map<String, dynamic>) return null;
+      return SessionReportModel.fromJson(data);
+    } catch (e) {
+      debugPrint('[SESSION SUMMARY] /report fetch failed (non-fatal): $e');
+      return null;
+    }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

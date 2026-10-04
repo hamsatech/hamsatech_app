@@ -444,29 +444,9 @@ class _ScorePatternCard extends StatelessWidget {
 
   final SessionSummaryEntity data;
 
-  static const _demo = [
-    10.2,
-    9.8,
-    9.1,
-    10.4,
-    9.9,
-    8.7,
-    10.1,
-    9.2,
-    9.7,
-    10.5,
-    10.0,
-    9.3,
-    9.8,
-    10.3,
-    10.1,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final scores = data.scorePoints.isNotEmpty
-        ? data.scorePoints.map((p) => p.value).toList()
-        : _demo;
+    final hasScores = data.scorePoints.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -493,11 +473,44 @@ class _ScorePatternCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _ScoreGrid(scores: scores),
-          const SizedBox(height: 12),
-          Text(
-            'Session score, focus and comparison',
-            style: DSTypography.caption.copyWith(color: DSColors.textSecondary),
+          if (hasScores) ...[
+            _ScoreGrid(
+              scores: data.scorePoints.map((p) => p.value).toList(),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Session score, focus and comparison',
+              style:
+                  DSTypography.caption.copyWith(color: DSColors.textSecondary),
+            ),
+          ] else
+            const _EmptyScorePattern(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown instead of the score grid when [SessionSummaryEntity.scorePoints]
+/// is empty — a real athlete with no scored sessions yet must never see a
+/// fabricated-looking score pattern presented as their own history.
+class _EmptyScorePattern extends StatelessWidget {
+  const _EmptyScorePattern();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Icon(Icons.timeline_outlined, color: DSColors.textSecondary, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'No scored sessions yet. Your score pattern will appear here after your first session.',
+              style:
+                  DSTypography.caption.copyWith(color: DSColors.textSecondary),
+            ),
           ),
         ],
       ),

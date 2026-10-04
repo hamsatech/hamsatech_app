@@ -21,12 +21,21 @@ class ScoreEntryActiveState extends ScoreEntryState {
     required this.totalSeries,
     required this.shotsPerSeries,
     required this.enteredTotals,
+    this.isSubmitting = false,
+    this.submitError,
   });
 
   final String sessionTitle;
   final int totalSeries;
   final int shotsPerSeries;
   final List<double> enteredTotals;
+
+  // Set while the final series/score/completion API calls are in flight,
+  // and on failure — see ScoreEntryBloc._onFinalConfirmed. Lets the UI
+  // disable the Continue button and show an error instead of silently
+  // reporting success before those calls actually resolve.
+  final bool isSubmitting;
+  final String? submitError;
 
   int get currentSeriesNumber => enteredTotals.length + 1;
   bool get isComplete => enteredTotals.length >= totalSeries;
@@ -43,12 +52,20 @@ class ScoreEntryActiveState extends ScoreEntryState {
   String get formattedMaxSeriesScore => _fmt(maxSeriesScore);
   String formattedEnteredTotal(int index) => _fmt(enteredTotals[index]);
 
-  ScoreEntryActiveState copyWith({List<double>? enteredTotals}) =>
+  ScoreEntryActiveState copyWith({
+    List<double>? enteredTotals,
+    bool? isSubmitting,
+    String? submitError,
+    bool clearSubmitError = false,
+  }) =>
       ScoreEntryActiveState(
         sessionTitle: sessionTitle,
         totalSeries: totalSeries,
         shotsPerSeries: shotsPerSeries,
         enteredTotals: enteredTotals ?? this.enteredTotals,
+        isSubmitting: isSubmitting ?? this.isSubmitting,
+        submitError:
+            clearSubmitError ? null : (submitError ?? this.submitError),
       );
 
   @override
@@ -57,6 +74,8 @@ class ScoreEntryActiveState extends ScoreEntryState {
         totalSeries,
         shotsPerSeries,
         enteredTotals,
+        isSubmitting,
+        submitError,
       ];
 }
 

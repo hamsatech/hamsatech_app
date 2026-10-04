@@ -35,10 +35,10 @@ class _DailyCheckinView extends StatelessWidget {
       listener: (context, state) {
         if (state is DailyCheckinSuccess) {
           context.pushReplacement('/session/setup');
-        } else if (state is DailyCheckinError) {
+        } else if (state is DailyCheckinEditing && state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(state.errorMessage!),
               backgroundColor: DSColors.error,
             ),
           );

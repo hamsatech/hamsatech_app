@@ -51,10 +51,15 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
   bool _permissionChecked = false;
   bool _scanTimedOut = false;
   Timer? _scanTimeoutTimer;
+  // Captured once, not re-read via context.read in dispose(): by the time
+  // dispose() runs the element may already be unmounted, so provider
+  // lookups there aren't reliable.
+  late final PolarBloc _polarBloc;
 
   @override
   void initState() {
     super.initState();
+    _polarBloc = context.read<PolarBloc>();
     WidgetsBinding.instance.addObserver(this);
     _checkPermission();
   }
@@ -68,9 +73,12 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
       final scan = await Permission.bluetoothScan.status;
       final connect = await Permission.bluetoothConnect.status;
       granted = scan.isGranted && connect.isGranted;
+      debugPrint(
+          '[PolarScan] permission check: bluetoothScan=$scan bluetoothConnect=$connect granted=$granted');
     } else {
       final status = await Permission.bluetooth.status;
       granted = status.isGranted || status.isLimited;
+      debugPrint('[PolarScan] permission check (iOS): bluetooth=$status granted=$granted');
     }
     if (!mounted) return;
     setState(() {
@@ -125,6 +133,11 @@ class _PolarDeviceViewState extends State<_PolarDeviceView>
   void dispose() {
     _scanTimeoutTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    // Leaving this screen (back navigation, forward navigation, or any
+    // other disposal) must not leave the native scan running — it has no
+    // internal timeout of its own. Safe to call unconditionally: stopping
+    // an already-stopped scan is a no-op both in the bloc and natively.
+    _polarBloc.add(const PolarScanStopped());
     super.dispose();
   }
 
@@ -634,7 +647,10 @@ class _TroubleshootCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Can’t find your device? Make sure your Polar is awake and close by, or continue without it for now.',
+            'Can’t find your device? Make sure your Polar is awake and close by. '
+            'A Polar sensor already connected in Polar Flow or another app won’t '
+            'be discoverable here — close or disconnect it there first, or '
+            'continue without it for now.',
             style: TextStyle(
               fontSize: 13,
               color: _kTextSecondary,
@@ -1012,6 +1028,9 @@ class _ContinueWithoutDeviceButton extends StatelessWidget {
         height: 52,
         child: ElevatedButton(
           onPressed: () async {
+            // Continuing without a device must not leave the scan running
+            // in the background — there's no other screen left to stop it.
+            context.read<PolarBloc>().add(const PolarScanStopped());
             await StorageService.setPolarEnabled(false);
             await StorageService.setOnboardingComplete(true);
             if (context.mounted) context.go('/home');

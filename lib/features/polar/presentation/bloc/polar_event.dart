@@ -67,6 +67,16 @@ class PolarBluetoothOffEvent extends PolarEvent {
   const PolarBluetoothOffEvent();
 }
 
+// Native-side scan failure (permission denied, adapter error, SDK
+// exception) — previously swallowed silently, now surfaced so the UI can
+// show the real reason instead of just timing out with zero devices.
+class PolarScanErrorEvent extends PolarEvent {
+  const PolarScanErrorEvent(this.message);
+  final String message;
+  @override
+  List<Object?> get props => [message];
+}
+
 class PolarConnectTimedOutEvent extends PolarEvent {
   const PolarConnectTimedOutEvent();
 }

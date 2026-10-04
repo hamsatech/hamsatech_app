@@ -43,3 +43,19 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets and local environment config — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.p8
+*.key
+*.jks
+*.keystore
+key.properties
+**/local.properties
+
+# Local IDE workspace files
+*.code-workspace

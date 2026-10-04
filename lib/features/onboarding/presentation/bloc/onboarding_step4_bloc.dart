@@ -1,7 +1,4 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/services/api_service.dart';
-import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 import 'onboarding_step4_event.dart';
 import 'onboarding_step4_state.dart';
@@ -45,29 +42,17 @@ class OnboardingStep4Bloc
       emit(validated.copyWith(errorMessage: validated.errorMessage));
       return;
     }
+    // Goal data itself is persisted by the sibling OnboardingStep3Bloc's
+    // submit (PUT /api/v2/onboarding/step-3, which already includes
+    // goal30Day/goal6Month — see onboarding_step3_screen.dart, which fires
+    // both blocs' submits together). This bloc only owns the local
+    // "profile setup" completion flag; it used to also call the backend
+    // itself (POST /api/v1/onboarding/goals), but that route was never
+    // mounted server-side (always 404'd) and was redundant with Step 3's
+    // save regardless — removed rather than implemented.
     await StorageService.setProfileSetupComplete(true);
     emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
     emit(validated.copyWith(submissionSuccess: true));
-
-    // Fire-and-forget: sync goals to mobile backend (also triggers onboarding_complete).
-    final athleteId = AuthHelper.getCurrentAthleteId();
-    if (athleteId != null) {
-      Future(() async {
-        try {
-          await ApiService.instance.saveOnboardingGoals(
-            athleteId: athleteId,
-            goal30d: state.goal30Value,
-            goal6m: state.goal6MonthValue,
-          );
-          debugPrint(
-              '[ONBOARDING] goals synced — backend will set onboarding_complete=true');
-        } catch (e) {
-          debugPrint('[ONBOARDING] goals sync failed (non-fatal): $e');
-        }
-      });
-    } else {
-      debugPrint('[ONBOARDING] goals skipped — no athlete_id yet');
-    }
   }
 
   OnboardingStep4State _validate(OnboardingStep4State s) {

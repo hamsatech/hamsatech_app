@@ -191,7 +191,6 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
             athleteId: athleteId,
             sessionId: supabaseSessionId,
             durationMinutes: durationMinutes,
-            performanceRating: performanceRating,
             notes: post.mentalNotes,
           );
           debugPrint(

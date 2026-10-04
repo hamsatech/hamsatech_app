@@ -12,7 +12,6 @@ import '../../../../core/services/storage_service.dart';
 class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> sendOtp(String phoneOrEmail) async {
-    debugPrint('[OTP SEND] initiating OTP for phone=$phoneOrEmail');
     try {
       await ApiService.instance.sendOtpToBackend(phoneOrEmail);
     } on DioException catch (e) {
@@ -22,13 +21,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> verifyOtp(String phoneOrEmail, String otp) async {
-    debugPrint('[OTP VERIFY] phone=$phoneOrEmail');
     try {
       final res = await ApiService.instance.verifyOtpAndRegister(
         phone: phoneOrEmail,
         otp: otp,
       );
-      debugPrint('[OTP VERIFY] raw response: ${res.data}');
 
       if (res.data is! Map<String, dynamic>) {
         throw Exception('Unexpected response from server.');
@@ -88,14 +85,20 @@ class AuthRepositoryImpl implements AuthRepository {
       await StorageService.saveUserProfile(user.toJson());
       return user;
     } on DioException catch (e) {
-      debugPrint('[OTP VERIFY] DioException: $e');
+      // Never log `e` directly here — DioException.toString() includes the
+      // request (phone/OTP) and response (access/refresh tokens) verbatim.
       throw Exception(_extractErrorMessage(e));
     }
   }
 
   @override
   Future<void> logout() async {
-    await StorageService.clearAuth();
+    // Full clear, not just the auth-related keys: every logout path in the
+    // app must funnel through this method so cached athlete identity
+    // (athlete_id, athlete_profile) and all other athlete-specific local
+    // state can never survive into a different athlete's session on the
+    // same device.
+    await StorageService.clearAll();
     await SecureStorageService.clearAll();
     ApiService.setMobileAuthToken(null);
   }

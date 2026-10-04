@@ -12,6 +12,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   await StorageService.init();
+  // A session that can't be recovered (401 with no usable refresh token, or
+  // the refresh call itself failing) is signaled here rather than the auth
+  // interceptor importing the router directly — see ApiService.onSessionExpired.
+  ApiService.onSessionExpired = () => AppRouter.router.go('/login');
   await _restoreSecureSession();
   setupDI();
   SystemChrome.setPreferredOrientations([
@@ -26,27 +30,67 @@ void main() async {
 /// (e.g. after an app reinstall that cleared SharedPreferences but kept
 /// the Keychain entry intact).
 Future<void> _restoreSecureSession() async {
-  final athleteId = await SecureStorageService.getAthleteId();
-  if (athleteId == null || athleteId.isEmpty) return;
-
-  // Back-fill SharedPreferences if it was wiped.
-  if (StorageService.getAthleteId() == null) {
-    await StorageService.saveAthleteId(athleteId);
-  }
-
-  // Prime the in-memory token so the first mobile backend request after
-  // a cold start already carries the Authorization header.
   final token = await SecureStorageService.getAuthToken();
-  if (token != null && token.isNotEmpty) {
-    ApiService.setMobileAuthToken(token);
+  final secureAthleteId = await SecureStorageService.getAthleteId();
+  final cachedAthleteId = StorageService.getAthleteId();
 
-    // Self-healing, non-blocking: an already-authenticated session may
-    // have an athlete_id persisted before the auth flow correctly
-    // resolved it (see AuthRepositoryImpl._syncAthleteId). Refresh it from
-    // the existing JWT-authenticated onboarding-status endpoint in the
-    // background — intentionally not awaited, so it never delays startup.
-    _syncStoredAthleteId();
+  final plan = planSecureSessionRestore(
+    secureToken: token,
+    secureAthleteId: secureAthleteId,
+    cachedAthleteId: cachedAthleteId,
+  );
+
+  // The JWT is saved to secure storage unconditionally on login
+  // (AuthRepositoryImpl.verifyOtp), independent of whether the best-effort
+  // athlete_id sync that follows it succeeds. Restoring the token into the
+  // mobile-auth interceptor must never be gated on athlete_id being
+  // present — otherwise a single failed sync leaves every subsequent
+  // mobile-backend request silently unauthenticated after a cold start.
+  if (!plan.shouldSetToken) return;
+  ApiService.setMobileAuthToken(token);
+
+  // Back-fill SharedPreferences if it was wiped, when we already know the
+  // athlete_id.
+  if (plan.shouldBackfillAthleteId) {
+    await StorageService.saveAthleteId(secureAthleteId!);
   }
+
+  // Self-healing, non-blocking: an already-authenticated session may have
+  // no athlete_id persisted yet (a prior sync failed) or a stale one.
+  // Re-resolve it from the existing JWT-authenticated onboarding-status
+  // endpoint in the background — intentionally not awaited, so it never
+  // delays startup.
+  _syncStoredAthleteId();
+}
+
+/// Pure decision logic behind [_restoreSecureSession], extracted so the
+/// restore behavior can be unit-tested without touching the
+/// Keychain/Keystore or SharedPreferences.
+@visibleForTesting
+class SecureSessionRestorePlan {
+  final bool shouldSetToken;
+  final bool shouldBackfillAthleteId;
+
+  const SecureSessionRestorePlan({
+    required this.shouldSetToken,
+    required this.shouldBackfillAthleteId,
+  });
+}
+
+@visibleForTesting
+SecureSessionRestorePlan planSecureSessionRestore({
+  required String? secureToken,
+  required String? secureAthleteId,
+  required String? cachedAthleteId,
+}) {
+  final hasToken = secureToken != null && secureToken.isNotEmpty;
+  final hasSecureAthleteId =
+      secureAthleteId != null && secureAthleteId.isNotEmpty;
+  return SecureSessionRestorePlan(
+    shouldSetToken: hasToken,
+    shouldBackfillAthleteId:
+        hasToken && hasSecureAthleteId && cachedAthleteId == null,
+  );
 }
 
 /// Refreshes the persisted athlete_id from the existing onboarding-status

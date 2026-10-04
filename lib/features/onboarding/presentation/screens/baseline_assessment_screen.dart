@@ -9,6 +9,14 @@ import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart';
 
+/// Trims the "Explain your answer" field and maps blank input to `null`, so
+/// an athlete who typed nothing never sends an empty-string explanation.
+@visibleForTesting
+String? explanationTextOrNull(String rawText) {
+  final trimmed = rawText.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
 class BaselineAssessmentScreen extends StatelessWidget {
   const BaselineAssessmentScreen({super.key});
 
@@ -31,6 +39,8 @@ class _AssessmentView extends StatefulWidget {
 class _AssessmentViewState extends State<_AssessmentView> {
   final _explainController = TextEditingController();
   int? _lastQuestionId;
+
+  String? get _explanationText => explanationTextOrNull(_explainController.text);
 
   @override
   void dispose() {
@@ -272,11 +282,16 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                       color: DSColors.terracotta,
                                       isLoading: state.status ==
                                           OnboardingStatus.loading,
-                                      onPressed: selectedIndex != null
+                                      onPressed: (selectedIndex != null &&
+                                              state.status !=
+                                                  OnboardingStatus.loading)
                                           ? () => context
                                               .read<OnboardingBloc>()
                                               .add(
-                                                  const OnboardingAssessmentCompleted())
+                                                  OnboardingAssessmentCompleted(
+                                                      answerText:
+                                                          _explanationText),
+                                                )
                                           : () {},
                                       textStyle: DSTypography.labelMd.copyWith(
                                         color: Colors.white,
@@ -293,8 +308,9 @@ class _AssessmentViewState extends State<_AssessmentView> {
                                                   OnboardingStatus.loading)
                                           ? () => context
                                               .read<OnboardingBloc>()
-                                              .add(
-                                                  const OnboardingNextQuestion())
+                                              .add(OnboardingNextQuestion(
+                                                  answerText:
+                                                      _explanationText))
                                           : () {},
                                       textStyle: DSTypography.labelMd.copyWith(
                                         color: Colors.white,

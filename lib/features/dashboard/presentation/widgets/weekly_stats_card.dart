@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
-import '../../domain/entities/dashboard_data_entity.dart';
 
+/// Both values come directly from `DashboardHomeResponse`
+/// (`sessions_this_week`, `weekly_avg_score`) — real, server-computed, never
+/// a local estimate. [averageScore] is null (renders "—") whenever none of
+/// this week's completed sessions has a saved score yet.
 class WeeklyStatsCard extends StatelessWidget {
-  const WeeklyStatsCard({required this.stats, super.key});
+  const WeeklyStatsCard({
+    required this.sessionCount,
+    required this.averageScore,
+    super.key,
+  });
 
-  final WeeklyStats stats;
+  final int sessionCount;
+  final double? averageScore;
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +28,8 @@ class WeeklyStatsCard extends StatelessWidget {
           children: [
             Expanded(
               child: _StatCell(
-                value: stats.averageScore > 0
-                    ? stats.averageScore.round().toString()
+                value: averageScore != null
+                    ? averageScore!.round().toString()
                     : '—',
                 label: 'Average score',
               ),
@@ -33,8 +41,8 @@ class WeeklyStatsCard extends StatelessWidget {
             ),
             Expanded(
               child: _StatCell(
-                value: stats.sessionCount.toString(),
-                label: 'Sessions',
+                value: sessionCount.toString(),
+                label: 'Sessions this week',
               ),
             ),
           ],

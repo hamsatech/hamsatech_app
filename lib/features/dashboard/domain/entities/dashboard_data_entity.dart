@@ -1,25 +1,21 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
-import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+/// Everything on this entity is either a real backend value, a value
+/// genuinely derived from real backend/athlete data, or an honest "not
+/// available" signal (null / empty list) — never a fabricated fallback.
+/// See DashboardRepositoryImpl for the exact source of each field.
 class DashboardDataEntity extends Equatable {
   const DashboardDataEntity({
     required this.athleteName,
     required this.greeting,
-    required this.readiness,
-    required this.sleep,
-    required this.restingHR,
-    required this.hrStatus,
-    required this.hrv,
     required this.isPolarConnected,
     this.streakDays,
-    this.coachFeedback,
-    required this.weeklyStats,
+    required this.sessionsThisWeek,
+    this.weeklyAvgScore,
     required this.todayCheckinCompleted,
+    this.coachFeedback,
     required this.aiInsights,
-    this.lastSession,
     required this.performanceHistory,
-    required this.actionPlan,
     this.assessmentAnsweredCount = 0,
     this.assessmentTotalQuestions = 0,
     this.assessmentIsComplete = true,
@@ -27,20 +23,34 @@ class DashboardDataEntity extends Equatable {
 
   final String athleteName;
   final String greeting;
-  final ReadinessMetrics readiness;
-  final SleepData sleep;
-  final int restingHR;
-  final String hrStatus;
-  final HrvData hrv;
   final bool isPolarConnected;
+
+  // Real, from GET /api/mobile/athletes/{id}/streak. Null means "not
+  // available yet" (fetch failed, or genuinely zero — the UI already hides
+  // the streak badge for both), never a fabricated/estimated value.
   final int? streakDays;
-  final CoachFeedbackData? coachFeedback;
-  final WeeklyStats weeklyStats;
+
+  // Real, from GET /api/mobile/athletes/{id}/home (DashboardHomeResponse).
+  final int sessionsThisWeek;
+  final double? weeklyAvgScore; // null = no scored sessions yet this week
+
   final bool todayCheckinCompleted;
+
+  // Real human coach feedback, from GET /rest/v1/coach_feedback — null when
+  // no coach has left feedback yet. Never a locally-fabricated message.
+  final CoachFeedbackData? coachFeedback;
+
+  // Real, deterministically-generated insight text from
+  // GET /rest/v1/ai_insights (hamsatech.ai_insights, populated server-side
+  // by hamsatech.generate_deterministic_insights once the athlete's
+  // psychology assessment is scored). Empty list — never canned copy —
+  // when none exist yet.
   final List<String> aiInsights;
-  final SessionSummaryData? lastSession;
+
+  // Real per-session score history, from
+  // GET /api/mobile/athletes/{id}/sessions. Empty when the athlete has no
+  // completed sessions yet.
   final List<PerformanceDataPoint> performanceHistory;
-  final List<ActionItem> actionPlan;
 
   // Populated from GET /api/v2/psychology-assessment (non-fatal on failure —
   // defaults leave the Assessment Reminder card hidden).
@@ -56,21 +66,15 @@ class DashboardDataEntity extends Equatable {
     return DashboardDataEntity(
       athleteName: athleteName,
       greeting: greeting,
-      readiness: readiness,
-      sleep: sleep,
-      restingHR: restingHR,
-      hrStatus: hrStatus,
-      hrv: hrv,
       isPolarConnected: isPolarConnected ?? this.isPolarConnected,
       streakDays: streakDays,
-      coachFeedback: coachFeedback ?? this.coachFeedback,
-      weeklyStats: weeklyStats,
+      sessionsThisWeek: sessionsThisWeek,
+      weeklyAvgScore: weeklyAvgScore,
       todayCheckinCompleted:
           todayCheckinCompleted ?? this.todayCheckinCompleted,
+      coachFeedback: coachFeedback ?? this.coachFeedback,
       aiInsights: aiInsights,
-      lastSession: lastSession,
       performanceHistory: performanceHistory,
-      actionPlan: actionPlan,
       assessmentAnsweredCount: assessmentAnsweredCount,
       assessmentTotalQuestions: assessmentTotalQuestions,
       assessmentIsComplete: assessmentIsComplete,
@@ -81,56 +85,18 @@ class DashboardDataEntity extends Equatable {
   List<Object?> get props => [
         athleteName,
         greeting,
-        readiness,
-        sleep,
-        restingHR,
-        hrStatus,
-        hrv,
         isPolarConnected,
         streakDays,
-        coachFeedback,
-        weeklyStats,
+        sessionsThisWeek,
+        weeklyAvgScore,
         todayCheckinCompleted,
+        coachFeedback,
         aiInsights,
-        lastSession,
         performanceHistory,
-        actionPlan,
         assessmentAnsweredCount,
         assessmentTotalQuestions,
         assessmentIsComplete,
       ];
-}
-
-// ─── New entities for Figma design ──────────────────────────────────────────
-
-class SleepData extends Equatable {
-  const SleepData({
-    required this.duration,
-    required this.quality,
-    required this.score,
-  });
-
-  final String duration; // e.g. "7h 20m"
-  final String quality; // e.g. "Good"
-  final double score; // 0.0–1.0 for progress indicator
-
-  @override
-  List<Object?> get props => [duration, quality, score];
-}
-
-class HrvData extends Equatable {
-  const HrvData({
-    required this.value,
-    required this.status,
-    required this.normalizedScore,
-  });
-
-  final int value; // ms
-  final String status; // "Typical", "Above typical", "Below typical"
-  final double normalizedScore; // 0.0–1.0 for progress indicator
-
-  @override
-  List<Object?> get props => [value, status, normalizedScore];
 }
 
 class CoachFeedbackData extends Equatable {
@@ -172,149 +138,20 @@ class CoachFeedbackData extends Equatable {
       ];
 }
 
-class WeeklyStats extends Equatable {
-  const WeeklyStats({
-    required this.averageScore,
-    required this.sessionCount,
-  });
-
-  final double averageScore;
-  final int sessionCount;
-
-  @override
-  List<Object?> get props => [averageScore, sessionCount];
-}
-
-// ─── Existing metrics/entities (kept for full compatibility) ─────────────────
-
-class ReadinessMetrics extends Equatable {
-  const ReadinessMetrics({
-    required this.readinessScore,
-    required this.focusScore,
-    required this.stressLevel,
-    required this.energyLevel,
-    required this.emotionalControl,
-  });
-
-  final double readinessScore;
-  final double focusScore;
-  final double stressLevel;
-  final double energyLevel;
-  final double emotionalControl;
-
-  ReadinessLevel get readinessLevel {
-    if (readinessScore >= 70) return ReadinessLevel.ready;
-    if (readinessScore >= 40) return ReadinessLevel.moderate;
-    return ReadinessLevel.needsRecovery;
-  }
-
-  FocusLevel get focusLevel {
-    if (focusScore >= 70) return FocusLevel.high;
-    if (focusScore >= 40) return FocusLevel.medium;
-    return FocusLevel.low;
-  }
-
-  @override
-  List<Object?> get props => [
-        readinessScore,
-        focusScore,
-        stressLevel,
-        energyLevel,
-        emotionalControl,
-      ];
-}
-
-enum ReadinessLevel {
-  ready('Well recovered', DSColors.success),
-  moderate('Moderate', DSColors.warning),
-  needsRecovery('Needs recovery', DSColors.error);
-
-  const ReadinessLevel(this.label, this.color);
-  final String label;
-  final Color color;
-}
-
-enum FocusLevel {
-  high('High', DSColors.info),
-  medium('Medium', DSColors.warning),
-  low('Low', DSColors.error);
-
-  const FocusLevel(this.label, this.color);
-  final String label;
-  final Color color;
-}
-
-class SessionSummaryData extends Equatable {
-  const SessionSummaryData({
-    required this.date,
-    required this.durationMinutes,
-    required this.preSessionEnergy,
-    required this.preSessionFocus,
-    required this.preSessionStress,
-    required this.postSessionRating,
-  });
-
-  final DateTime date;
-  final int durationMinutes;
-  final int preSessionEnergy;
-  final int preSessionFocus;
-  final int preSessionStress;
-  final int postSessionRating; // 1–5
-
-  @override
-  List<Object?> get props => [
-        date,
-        durationMinutes,
-        preSessionEnergy,
-        preSessionFocus,
-        preSessionStress,
-        postSessionRating,
-      ];
-}
-
+/// One completed session's real score, for the performance-history chart.
+/// [avgScore] is null when the session was completed but no score summary
+/// was ever saved for it — plotted as a gap, never a fabricated value.
 class PerformanceDataPoint extends Equatable {
   const PerformanceDataPoint({
     required this.date,
     required this.sessionNumber,
-    required this.overallRating,
-    required this.focusScore,
-    required this.stressScore,
+    required this.avgScore,
   });
 
   final DateTime date;
   final int sessionNumber;
-  final double overallRating; // 0–100
-  final double focusScore;
-  final double stressScore;
+  final double? avgScore;
 
   @override
-  List<Object?> get props =>
-      [date, sessionNumber, overallRating, focusScore, stressScore];
-}
-
-class ActionItem extends Equatable {
-  const ActionItem({
-    required this.title,
-    required this.description,
-    required this.priority,
-    required this.icon,
-  });
-
-  final String title;
-  final String description;
-  final ActionPriority priority;
-  final IconData icon;
-
-  @override
-  List<Object?> get props => [title, description, priority];
-}
-
-enum ActionPriority {
-  high('High Priority', DSColors.error),
-  medium('Recommended', DSColors.warning),
-  low('Optional', DSColors.textSecondary);
-
-  const ActionPriority(this.label, this.color);
-  final String label;
-  final Color color;
+  List<Object?> get props => [date, sessionNumber, avgScore];
 }

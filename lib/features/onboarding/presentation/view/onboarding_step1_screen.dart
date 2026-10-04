@@ -408,7 +408,8 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
         final now = DateTime.now();
         final picked = await showDatePicker(
           context: context,
-          initialDate: _selectedDob ?? DateTime(now.year - 18, now.month, now.day),
+          initialDate:
+              _selectedDob ?? DateTime(now.year - 18, now.month, now.day),
           firstDate: DateTime(now.year - 120),
           lastDate: now,
         );
@@ -526,8 +527,6 @@ class _OnboardingStep1ViewState extends State<_OnboardingStep1View> {
         return 'male';
       case OnboardingGender.female:
         return 'female';
-      case OnboardingGender.other:
-        return 'other';
       default:
         return '';
     }

@@ -1,170 +1,239 @@
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/di/injection.dart';
-import '../../domain/entities/session_entity.dart';
-import '../bloc/session_bloc.dart';
-import '../bloc/session_event.dart';
-import '../bloc/session_state.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../data/models/session_history_item_model.dart';
 
-class SessionsListScreen extends StatelessWidget {
+/// Real session history, backed by
+/// `GET /api/mobile/athletes/{athleteId}/sessions` — replaces the previous
+/// local-only (`StorageService.getSessions()`) source. Only fields the
+/// backend actually returns are shown; see `SessionHistoryItemModel`'s
+/// doc comment for what was intentionally left out and why.
+class SessionsListScreen extends StatefulWidget {
   const SessionsListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<SessionBloc>()..add(const SessionsLoadRequested()),
-      child: const _SessionsListView(),
-    );
-  }
+  State<SessionsListScreen> createState() => _SessionsListScreenState();
 }
 
-class _SessionsListView extends StatelessWidget {
-  const _SessionsListView();
+enum _LoadState { loading, loaded, error }
+
+class _SessionsListScreenState extends State<SessionsListScreen> {
+  _LoadState _state = _LoadState.loading;
+  List<SessionHistoryItemModel> _sessions = const [];
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) {
+      setState(() {
+        _state = _LoadState.error;
+        _errorMessage = 'Unable to load sessions — please sign in again.';
+      });
+      return;
+    }
+
+    setState(() => _state = _LoadState.loading);
+    try {
+      final res = await ApiService.instance.getSessionHistory(athleteId: athleteId);
+      final body = res.data;
+      final rawItems = body is Map<String, dynamic> ? body['data'] : null;
+      final items = rawItems is List
+          ? rawItems
+              .map((e) => SessionHistoryItemModel.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : <SessionHistoryItemModel>[];
+
+      setState(() {
+        _sessions = items;
+        _state = _LoadState.loaded;
+      });
+    } catch (_) {
+      setState(() {
+        _state = _LoadState.error;
+        _errorMessage = 'Could not load your session history. Pull down to try again.';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Sessions')),
-      body: BlocBuilder<SessionBloc, SessionState>(
-        builder: (context, state) {
-          if (state is SessionLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: DSColors.brand));
-          }
-          if (state is SessionError) {
-            return Center(child: Text(state.message));
-          }
-          if (state is! SessionsListLoaded) {
-            return const SizedBox.shrink();
-          }
-
-          final sessions = state.sessions
-              .where((s) => s.status == SessionStatus.completed)
-              .toList()
-            ..sort((a, b) => b.date.compareTo(a.date));
-
-          if (sessions.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.fitness_center_rounded,
-                      size: 64, color: DSColors.textMuted),
-                  const SizedBox(height: 16),
-                  Text('No sessions yet', style: DSTypography.headingMedium),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Start a session from the dashboard to\nbuild your training history.',
-                    style: DSTypography.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    onPressed: () => context.go('/home'),
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Go to Dashboard'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: sessions.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) => _SessionCard(session: sessions[i]),
-          );
-        },
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: _buildBody(),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_sessions',
-        onPressed: () => context.push('/session/pre'),
+        onPressed: () => context.push('/session/setup'),
         backgroundColor: DSColors.brand,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text('New Session', style: TextStyle(color: Colors.white)),
       ),
     );
   }
+
+  Widget _buildBody() {
+    switch (_state) {
+      case _LoadState.loading:
+        return const Center(child: CircularProgressIndicator(color: DSColors.brand));
+      case _LoadState.error:
+        return LayoutBuilder(
+          builder: (_, constraints) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(child: Text(_errorMessage ?? 'Something went wrong.')),
+            ),
+          ),
+        );
+      case _LoadState.loaded:
+        if (_sessions.isEmpty) {
+          return LayoutBuilder(
+            builder: (_, constraints) => SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.fitness_center_rounded,
+                          size: 64, color: DSColors.textMuted),
+                      const SizedBox(height: 16),
+                      Text('No sessions yet', style: DSTypography.headingMedium),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Start a session from the dashboard to\nbuild your training history.',
+                        style: DSTypography.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      OutlinedButton.icon(
+                        onPressed: () => context.go('/home'),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Go to Dashboard'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: _sessions.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, i) => _SessionCard(
+            item: _sessions[i],
+            onTap: () => _openSessionReport(context, _sessions[i]),
+          ),
+        );
+    }
+  }
+
+  /// Navigates to the existing session report screen for exactly the
+  /// tapped session — never a fabricated/cached one. The report screen
+  /// (`SessionReportScreen`/`SessionReportBloc`) takes no route parameter;
+  /// it resolves which session to show via `SessionMemory.sessionId ??
+  /// StorageService.getSessionId()` (see
+  /// `SessionReportRepositoryImpl._fetchSessionReport`), so this sets both
+  /// of those existing slots to the real, backend-returned `session_id`
+  /// before navigating — the same convention already used elsewhere in the
+  /// app to tell that screen which session to load, not a new mechanism.
+  void _openSessionReport(BuildContext context, SessionHistoryItemModel item) {
+    final sessionId = item.sessionId;
+    if (sessionId.isEmpty) {
+      // Defensive only: the backend always returns a real session_id for
+      // every history item. Never navigate with a fabricated ID.
+      return;
+    }
+    SessionMemory.sessionId = sessionId;
+    StorageService.saveSessionId(sessionId);
+    context.go('/session/report');
+  }
 }
 
 class _SessionCard extends StatelessWidget {
-  const _SessionCard({required this.session});
+  const _SessionCard({required this.item, required this.onTap});
 
-  final SessionEntity session;
+  final SessionHistoryItemModel item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final post = session.postSession;
-    final rating = post?.overallRating ?? 0;
+    final durationMinutes = item.durationSeconds ~/ 60;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: DSColors.appCard,
+    return Material(
+      color: DSColors.appCard,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DSColors.appBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: DSColors.appBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  DateFormat('EEE, d MMM yyyy').format(session.date),
-                  style: DSTypography.headingSmall,
-                ),
-              ),
               Row(
-                children: List.generate(5, (i) {
-                  return Icon(
-                    i < rating ? Icons.star_rounded : Icons.star_border_rounded,
-                    color: DSColors.warning,
-                    size: 16,
-                  );
-                }),
+                children: [
+                  Expanded(
+                    child: Text(
+                      DateFormat('EEE, d MMM yyyy').format(item.startTime.toLocal()),
+                      style: DSTypography.headingSmall,
+                    ),
+                  ),
+                  if (item.sessionType != null)
+                    Text(item.sessionType!, style: DSTypography.caption),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _Chip(icon: Icons.timer_outlined, label: '${durationMinutes}m'),
+                  if (item.avgScore != null)
+                    _Chip(
+                      icon: Icons.military_tech_outlined,
+                      label: 'Avg ${item.avgScore!.toStringAsFixed(1)}',
+                      color: DSColors.success,
+                    )
+                  else
+                    const _Chip(icon: Icons.military_tech_outlined, label: 'No score yet'),
+                  if (item.seriesCount > 0)
+                    _Chip(
+                      icon: Icons.format_list_numbered_rounded,
+                      label: '${item.seriesCount} series',
+                      color: DSColors.info,
+                    ),
+                  if (item.totalShots != null)
+                    _Chip(
+                      icon: Icons.gps_fixed_rounded,
+                      label: '${item.totalShots} shots',
+                    ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _Chip(
-                icon: Icons.timer_outlined,
-                label: '${session.durationMinutes ?? 0}m',
-              ),
-              const SizedBox(width: 8),
-              _Chip(
-                icon: Icons.bolt_rounded,
-                label: 'Energy ${session.preSession.energy}/10',
-                color: DSColors.success,
-              ),
-              const SizedBox(width: 8),
-              _Chip(
-                icon: Icons.center_focus_strong_rounded,
-                label: 'Focus ${session.preSession.focus}/10',
-                color: DSColors.info,
-              ),
-            ],
-          ),
-          if (post?.wentWell.isNotEmpty ?? false) ...[
-            const SizedBox(height: 10),
-            const Divider(color: DSColors.appDivider),
-            const SizedBox(height: 8),
-            Text(
-              post!.wentWell,
-              style: DSTypography.bodySmall
-                  .copyWith(color: DSColors.textSecondary),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

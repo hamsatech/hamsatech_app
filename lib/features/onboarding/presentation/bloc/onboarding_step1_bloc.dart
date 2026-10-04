@@ -107,7 +107,9 @@ class OnboardingStep1Bloc
       final genderRaw = data['gender'] as String?;
       final city = data['city'] as String?;
 
-      if (fullName == null && dobRaw == null && genderRaw == null &&
+      if (fullName == null &&
+          dobRaw == null &&
+          genderRaw == null &&
           city == null) {
         return;
       }
@@ -172,37 +174,36 @@ class OnboardingStep1Bloc
     final v = value.toLowerCase();
     if (v == 'male') return OnboardingGender.male;
     if (v == 'female') return OnboardingGender.female;
-    if (v == 'other') return OnboardingGender.other;
+    // Any other/unrecognized value (including a legacy "other" from a
+    // cached pre-fix state) is treated as unselected, so _validate forces
+    // the athlete to pick one of the two the backend can actually accept.
     return OnboardingGender.unknown;
   }
 
-  // NOTE: the OpenAPI `Gender` enum only accepts "Male"/"Female" — the UI's
-  // third "Other" option has no backend equivalent yet, so submitting it
-  // will 422. See task report for details; not resolved here per
-  // "do not modify UI" constraint.
+  // Resolved: the UI only ever offers/produces Male or Female (see
+  // OnboardingGender and genderOptions in onboarding_step1_state.dart),
+  // matching the backend's Gender enum exactly — there is no third value
+  // this can submit.
   String _genderApiValue(OnboardingGender gender) {
     switch (gender) {
       case OnboardingGender.male:
         return 'Male';
       case OnboardingGender.female:
         return 'Female';
-      case OnboardingGender.other:
-        return 'Other';
       case OnboardingGender.unknown:
         return '';
     }
   }
 
-  String _formatDate(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-'
+  String _formatDate(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
       '${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
   int _calculateAge(DateTime dob) {
     final now = DateTime.now();
     var age = now.year - dob.year;
-    final beforeBirthday = now.month < dob.month ||
-        (now.month == dob.month && now.day < dob.day);
+    final beforeBirthday =
+        now.month < dob.month || (now.month == dob.month && now.day < dob.day);
     if (beforeBirthday) age -= 1;
     return age;
   }

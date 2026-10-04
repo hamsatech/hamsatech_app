@@ -10,6 +10,33 @@ import '../../../../core/services/storage_service.dart';
 import '../../../polar/presentation/bloc/polar_bloc.dart';
 import '../../../polar/presentation/bloc/polar_state.dart';
 
+/// Centralizes the copy shown once baseline capture ends, so "saved"
+/// language can never appear when nothing was actually persisted — this
+/// used to always say "Baseline saved" even when the bpm shown was a
+/// hardcoded fallback. Extracted as a top-level function so the exact
+/// wording is unit-testable without pumping a widget tree (this repo's
+/// existing tests are all bloc/unit-level, not widget-level).
+@visibleForTesting
+({String heading, String cardTitle, String cardBody}) resolveBaselineResultCopy(
+  bool hasReading,
+) {
+  if (hasReading) {
+    return (
+      heading: 'Your resting heart rate is',
+      cardTitle: 'Baseline saved',
+      cardBody: 'This is your personal baseline. We\'ll use it to\n'
+          'detect when stress affects your performance\n'
+          'during competition and training.',
+    );
+  }
+  return (
+    heading: "We couldn't get a reading",
+    cardTitle: 'No baseline captured',
+    cardBody: 'We didn\'t get a heart rate reading from your Polar '
+        'device in time, so no baseline was saved.',
+  );
+}
+
 class BaselineResultScreen extends StatelessWidget {
   const BaselineResultScreen({super.key});
 
@@ -29,7 +56,13 @@ class _BaselineResultView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<PolarBloc, PolarState>(
       builder: (context, state) {
-        final bpm = state.latestReading?.bpm ?? 76;
+        // No fallback value: this used to default to a hardcoded 76 and
+        // both display it and POST it to the backend as if it were a real
+        // measurement whenever Polar hadn't produced a reading yet. A
+        // missing reading is now shown and handled honestly instead.
+        final bpm = state.latestReading?.bpm;
+        final hasReading = bpm != null;
+        final copy = resolveBaselineResultCopy(hasReading);
 
         return Scaffold(
           backgroundColor: DSColors.white,
@@ -41,10 +74,10 @@ class _BaselineResultView extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(24, 196, 24, 24),
                     child: Column(
                       children: [
-                        const _SuccessMark(),
+                        _SuccessMark(hasReading: hasReading),
                         const SizedBox(height: 46),
                         Text(
-                          'Your resting heart rate is',
+                          copy.heading,
                           textAlign: TextAlign.center,
                           style: DSTypography.headingLg.copyWith(
                             color: const Color(0xFF000F12),
@@ -55,10 +88,12 @@ class _BaselineResultView extends StatelessWidget {
                         ),
                         const SizedBox(height: 36),
                         Text(
-                          '$bpm',
+                          bpm?.toString() ?? '—',
                           textAlign: TextAlign.center,
                           style: DSTypography.scoreDisplay.copyWith(
-                            color: const Color(0xFF15803D),
+                            color: hasReading
+                                ? const Color(0xFF15803D)
+                                : DSColors.textSecondary,
                             fontSize: 54,
                             fontWeight: FontWeight.w800,
                             height: 1,
@@ -75,16 +110,19 @@ class _BaselineResultView extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 46),
-                        const _SavedCard(),
+                        _SavedCard(hasReading: hasReading, copy: copy),
                       ],
                     ),
                   ),
                 ),
                 _ResultFooter(
                   onPressed: () async {
-                    final athleteId = AuthHelper.getCurrentAthleteId();
-                    if (athleteId != null) {
-                      Future(() async {
+                    // Only persist a real reading — never the athlete's
+                    // absence of one — so hamsatech.athlete_physiology
+                    // never receives a fabricated resting_hr value.
+                    if (hasReading) {
+                      final athleteId = AuthHelper.getCurrentAthleteId();
+                      if (athleteId != null) {
                         try {
                           await ApiService.instance.saveBaselineHR(
                             athleteId: athleteId,
@@ -94,7 +132,7 @@ class _BaselineResultView extends StatelessWidget {
                         } catch (e) {
                           debugPrint('[BASELINE] save failed (non-fatal): $e');
                         }
-                      });
+                      }
                     }
                     await StorageService.setOnboardingComplete(true);
                     if (context.mounted) context.go('/alex-summary');
@@ -110,17 +148,20 @@ class _BaselineResultView extends StatelessWidget {
 }
 
 class _SuccessMark extends StatelessWidget {
-  const _SuccessMark();
+  const _SuccessMark({required this.hasReading});
+
+  final bool hasReading;
 
   @override
   Widget build(BuildContext context) {
+    final color = hasReading ? const Color(0xFF15803D) : DSColors.textSecondary;
     return Container(
       width: 62,
       height: 62,
       decoration: BoxDecoration(
-        color: const Color(0xFFECFDF5),
+        color: hasReading ? const Color(0xFFECFDF5) : DSColors.gray100,
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFF15803D)),
+        border: Border.all(color: color),
       ),
       child: Center(
         child: Container(
@@ -128,14 +169,11 @@ class _SuccessMark extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF15803D),
-              width: 2,
-            ),
+            border: Border.all(color: color, width: 2),
           ),
-          child: const Icon(
-            Icons.check_rounded,
-            color: Color(0xFF15803D),
+          child: Icon(
+            hasReading ? Icons.check_rounded : Icons.priority_high_rounded,
+            color: color,
             size: 26,
           ),
         ),
@@ -145,25 +183,30 @@ class _SuccessMark extends StatelessWidget {
 }
 
 class _SavedCard extends StatelessWidget {
-  const _SavedCard();
+  const _SavedCard({required this.hasReading, required this.copy});
+
+  final bool hasReading;
+  final ({String heading, String cardTitle, String cardBody}) copy;
 
   @override
   Widget build(BuildContext context) {
+    final accent =
+        hasReading ? const Color(0xFF15803D) : DSColors.textSecondary;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: hasReading ? const Color(0xFFF0FDF4) : DSColors.gray100,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFF15803D)),
+        border: Border.all(color: accent),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Baseline saved',
+            copy.cardTitle,
             style: DSTypography.headingMd.copyWith(
-              color: const Color(0xFF15803D),
+              color: accent,
               fontSize: 14,
               fontWeight: FontWeight.w700,
               letterSpacing: 0,
@@ -171,11 +214,9 @@ class _SavedCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'This is your personal baseline. We\'ll use it to\n'
-            'detect when stress affects your performance\n'
-            'during competition and training.',
+            copy.cardBody,
             style: DSTypography.bodyMedium.copyWith(
-              color: const Color(0xFF166534),
+              color: hasReading ? const Color(0xFF166534) : accent,
               fontSize: 14,
               height: 1.35,
               letterSpacing: 0,

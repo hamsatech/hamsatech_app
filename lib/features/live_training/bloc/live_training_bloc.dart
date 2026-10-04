@@ -169,6 +169,15 @@ class LiveTrainingBloc extends Bloc<LiveTrainingEvent, LiveTrainingState> {
     final s = state as ReflectingState;
     emit(s.copyWith(isSubmitting: true));
     try {
+      // Must succeed before proceeding — unlike completeSession's own
+      // backend call, this one is not best-effort, so a failure here
+      // must not be silently treated as a successful save.
+      await _repository.saveReflection(
+        sessionId: s.sessionId,
+        mood: s.mood,
+        whatWorked: s.whatWorked,
+        whatDidnt: s.whatDidnt,
+      );
       await _repository.completeSession(
         sessionId: s.sessionId,
         durationMinutes: (s.elapsedSeconds / 60).ceil(),

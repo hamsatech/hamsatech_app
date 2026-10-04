@@ -9,20 +9,26 @@ enum PolarDeviceStatus {
   connected,
   disconnected,
   bluetoothOff,
+  scanError,
 }
 
 class PolarDeviceEvent {
   final PolarDeviceStatus status;
-  // Null for events not tied to a specific device (e.g. bluetoothOff).
+  // Null for events not tied to a specific device (e.g. bluetoothOff, scanError).
   final String? deviceId;
   final String? name;
   final String? deviceType;
+  // Only set for scanError — the native-side exception message, e.g. a
+  // missing-permission or Bluetooth-adapter failure surfaced by
+  // PolarPlugin.kt instead of being silently swallowed.
+  final String? message;
 
   const PolarDeviceEvent(
     this.status,
     this.deviceId, {
     this.name,
     this.deviceType,
+    this.message,
   });
 }
 
@@ -43,12 +49,20 @@ class PolarBleService {
       switch (call.method) {
         case 'deviceFound':
           final args = call.arguments as Map<dynamic, dynamic>;
+          debugPrint(
+              '[PolarScan] real device discovered: deviceId=${args['deviceId']} name=${args['name']} type=${args['type']}');
           _deviceEventController.add(PolarDeviceEvent(
             PolarDeviceStatus.found,
             args['deviceId'] as String,
             name: args['name'] as String?,
             deviceType: args['type'] as String?,
           ));
+        case 'scanError':
+          final message = call.arguments as String?;
+          debugPrint('[PolarScan] scan error from native side: $message');
+          _deviceEventController.add(
+            PolarDeviceEvent(PolarDeviceStatus.scanError, null, message: message),
+          );
         case 'deviceConnected':
           _deviceEventController.add(
             PolarDeviceEvent(
@@ -96,9 +110,15 @@ class PolarBleService {
 
   Stream<HrReading> get hrStream => _hrStream;
 
-  Future<void> scanForDevices() => _methodChannel.invokeMethod('scan');
+  Future<void> scanForDevices() {
+    debugPrint('[PolarScan] scanForDevices() invoked at ${DateTime.now()}');
+    return _methodChannel.invokeMethod('scan');
+  }
 
-  Future<void> stopScan() => _methodChannel.invokeMethod('stopScan');
+  Future<void> stopScan() {
+    debugPrint('[PolarScan] stopScan() invoked at ${DateTime.now()}');
+    return _methodChannel.invokeMethod('stopScan');
+  }
 
   Future<void> connectToDevice(String deviceId) =>
       _methodChannel.invokeMethod('connect', {'deviceId': deviceId});

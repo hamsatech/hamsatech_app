@@ -1,3 +1,4 @@
+import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/score_entry_config.dart';
 import '../../domain/repositories/score_entry_repository.dart';
@@ -49,6 +50,14 @@ class ScoreEntryRepositoryImpl implements ScoreEntryRepository {
     }).toList();
 
     await StorageService.saveScoreSummary(data);
+    // Tag the summary with the session it belongs to, so a reader (the
+    // session report) can verify — never assume — that this cache is for
+    // the session it's about to display. `score_summary` itself has no
+    // session key of its own.
+    final owningSessionId = SessionMemory.sessionId;
+    if (owningSessionId != null) {
+      await StorageService.saveScoreSummarySessionId(owningSessionId);
+    }
 
     // TODO(backend): Sync score totals to shooting_session_log in Supabase.
     // shooting_session_log has: avg_score, best_series_score, consistency_index,

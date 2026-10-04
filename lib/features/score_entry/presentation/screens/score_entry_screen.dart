@@ -120,7 +120,7 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
               if (!state.isComplete)
                 _buildInputCard(ctx, state)
               else
-                _buildContinueButton(ctx),
+                _buildContinueButton(ctx, state),
               const SizedBox(height: DSSpacing.xl),
               Text(
                 'So far in session',
@@ -388,12 +388,25 @@ class _ScoreEntryScreenState extends State<ScoreEntryScreen> {
 
   // ── Continue button (shown when all series are done) ─────────────────────────
 
-  Widget _buildContinueButton(BuildContext ctx) {
-    return DSPrimaryButton(
-      label: 'Continue to Summary  ✓',
-      color: DSColors.brand,
-      onPressed: () =>
-          ctx.read<ScoreEntryBloc>().add(const ScoreEntryFinalConfirmed()),
+  Widget _buildContinueButton(BuildContext ctx, ScoreEntryActiveState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (state.submitError != null) ...[
+          Text(
+            state.submitError!,
+            style: DSTypography.bodySm.copyWith(color: DSColors.error),
+          ),
+          const SizedBox(height: DSSpacing.sm),
+        ],
+        DSPrimaryButton(
+          label: 'Continue to Summary  ✓',
+          color: DSColors.brand,
+          isLoading: state.isSubmitting,
+          onPressed: () =>
+              ctx.read<ScoreEntryBloc>().add(const ScoreEntryFinalConfirmed()),
+        ),
+      ],
     );
   }
 

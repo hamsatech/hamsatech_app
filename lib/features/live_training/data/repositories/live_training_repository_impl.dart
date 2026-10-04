@@ -96,6 +96,28 @@ class LiveTrainingRepositoryImpl implements LiveTrainingRepository {
   }
 
   @override
+  Future<void> saveReflection({
+    required String sessionId,
+    required SessionMood? mood,
+    required String whatWorked,
+    required String whatDidnt,
+  }) async {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) {
+      throw StateError('Cannot save reflection: no athlete_id available.');
+    }
+    // Intentionally not caught here — the bloc must see failures so it can
+    // avoid pretending the reflection was saved when it wasn't.
+    await ApiService.instance.saveReflection(
+      athleteId: athleteId,
+      sessionId: sessionId,
+      mood: mood?.rating,
+      whatWorked: whatWorked,
+      whatDidnt: whatDidnt,
+    );
+  }
+
+  @override
   Future<void> completeSession({
     required String sessionId,
     required int durationMinutes,
@@ -133,7 +155,6 @@ class LiveTrainingRepositoryImpl implements LiveTrainingRepository {
           athleteId: athleteId,
           sessionId: sessionId,
           durationMinutes: durationMinutes,
-          performanceRating: mood?.rating,
         );
       } catch (e) {
         debugPrint('[SESSION COMPLETE] backend call failed: $e');

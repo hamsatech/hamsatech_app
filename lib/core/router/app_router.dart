@@ -30,6 +30,7 @@ import '../../features/live_training/presentation/screens/reflect_screen.dart';
 import '../../features/score_entry/presentation/screens/score_entry_screen.dart';
 import '../../features/score_entry/presentation/screens/series_complete_screen.dart';
 import '../../features/score_entry/presentation/screens/final_scores_summary_screen.dart';
+import '../../features/session/presentation/screens/sessions_list_screen.dart';
 import '../../features/session_summary/presentation/screens/session_summary_screen.dart';
 import '../../features/session_summary/presentation/screens/shooting_analytics_screen.dart';
 import '../../features/session_summary/bloc/session_summary_bloc.dart';
@@ -50,7 +51,9 @@ import '../../features/saarthi/presentation/screens/saarthi_chat_screen.dart';
 //
 // ONBOARDING (after OTP success)
 //   /onboarding/step1 → /onboarding/step2 → /onboarding/step3 (scores,
-//   blockers, and Goals — Goals UI reuses OnboardingStep4Bloc/API unchanged)
+//   blockers, and Goals — Goals UI reuses OnboardingStep4Bloc for local
+//   state only; goal data itself is submitted as part of Step 3's own
+//   PUT /api/v2/onboarding/step-3 call, not a separate backend call)
 //   → /onboarding/step4 (Academic Profile) → /onboarding/step5 (Lifestyle &
 //   Wellness) → /onboarding/step6 (Mental & Social Profile) → /questions
 //   → /assessment-result (Psychology Assessment category scores/insights)
@@ -311,10 +314,7 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/sessions',
-                builder: (_, __) => BlocProvider(
-                  create: (_) => getIt<SessionSummaryBloc>(),
-                  child: const SessionSummaryScreen(),
-                ),
+                builder: (_, __) => const SessionsListScreen(),
               ),
             ],
           ),
