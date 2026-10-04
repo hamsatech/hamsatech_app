@@ -3,9 +3,7 @@ import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-
 import '../../../../core/di/injection.dart';
-
 
 import '../../domain/entities/session_entity.dart';
 import '../bloc/session_bloc.dart';
@@ -96,8 +94,7 @@ class _PostSessionViewState extends State<_PostSessionView> {
         } else if (state is SessionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(state.message),
-                backgroundColor: DSColors.error),
+                content: Text(state.message), backgroundColor: DSColors.error),
           );
         }
       },
@@ -132,7 +129,9 @@ class _PostSessionViewState extends State<_PostSessionView> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Icon(
-                          star <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
+                          star <= _rating
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
                           color: DSColors.warning,
                           size: 40,
                         ),
@@ -144,42 +143,39 @@ class _PostSessionViewState extends State<_PostSessionView> {
                 DSTextInput(
                   controller: _wentWellController,
                   label: 'What went well?',
-                  placeholder: 'e.g. My hold was steady, breathing was controlled...',
+                  placeholder:
+                      'e.g. My hold was steady, breathing was controlled...',
                   maxLines: 3,
                   prefixIcon: Padding(
-
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-
-                    child: Icon(Icons.thumb_up_outlined, size: 20, color: DSColors.textMuted),
-
+                    child: Icon(Icons.thumb_up_outlined,
+                        size: 20, color: DSColors.textMuted),
                   ),
                 ),
                 const SizedBox(height: 16),
                 DSTextInput(
                   controller: _wentWrongController,
                   label: 'What needs improvement?',
-                  placeholder: 'e.g. I lost focus after shot 8, trigger pull was inconsistent...',
+                  placeholder:
+                      'e.g. I lost focus after shot 8, trigger pull was inconsistent...',
                   maxLines: 3,
                   prefixIcon: Padding(
-
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-
-                    child: Icon(Icons.thumb_down_outlined, size: 20, color: DSColors.textMuted),
-
+                    child: Icon(Icons.thumb_down_outlined,
+                        size: 20, color: DSColors.textMuted),
                   ),
                 ),
                 const SizedBox(height: 16),
                 DSTextInput(
                   controller: _mentalNotesController,
                   label: 'Mental state notes',
-                  placeholder: 'e.g. Felt anxious about selection, distracted by external noise...',
+                  placeholder:
+                      'e.g. Felt anxious about selection, distracted by external noise...',
                   maxLines: 3,
                   prefixIcon: Padding(
-
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-
-                    child: Icon(Icons.psychology_outlined, size: 20, color: DSColors.textMuted),
-
+                    child: Icon(Icons.psychology_outlined,
+                        size: 20, color: DSColors.textMuted),
                   ),
                 ),
                 const SizedBox(height: 36),

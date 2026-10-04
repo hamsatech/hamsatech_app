@@ -3,7 +3,6 @@ import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-
 import '../../../../core/di/injection.dart';
 
 import '../../domain/entities/session_entity.dart';
@@ -56,8 +55,7 @@ class _PreSessionViewState extends State<_PreSessionView> {
         } else if (state is SessionError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(state.message),
-                backgroundColor: DSColors.error),
+                content: Text(state.message), backgroundColor: DSColors.error),
           );
         }
       },

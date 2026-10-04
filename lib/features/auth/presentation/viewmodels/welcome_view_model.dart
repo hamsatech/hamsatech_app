@@ -11,13 +11,13 @@ class WelcomeViewModel {
 
   // ── Static copy ───────────────────────────────────────────────────────────
   static const String headerSubtitle = 'Mental Performance AI';
-  static const String headerTitle    = 'ASTRA';
-  static const String signUpLabel    = 'Sign Up Now';
-  static const String loginLabel     = 'Log In Here';
+  static const String headerTitle = 'ASTRA';
+  static const String signUpLabel = 'Sign Up Now';
+  static const String loginLabel = 'Log In Here';
 
   // ── Data ──────────────────────────────────────────────────────────────────
   List<OnboardingSlideEntity> get slides => _repository.getSlides();
 
-  Future<void> initiateSignUp()  => _repository.initiateSignUp();
-  Future<void> initiateLogin()   => _repository.initiateLogin();
+  Future<void> initiateSignUp() => _repository.initiateSignUp();
+  Future<void> initiateLogin() => _repository.initiateLogin();
 }

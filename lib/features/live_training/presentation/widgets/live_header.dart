@@ -68,9 +68,7 @@ class _LiveBadge extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isLive
-            ? const Color(0xFFDCFCE7)
-            : const Color(0xFFFEF9C3),
+        color: isLive ? const Color(0xFFDCFCE7) : const Color(0xFFFEF9C3),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -80,9 +78,7 @@ class _LiveBadge extends StatelessWidget {
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: isLive
-                  ? const Color(0xFF16A34A)
-                  : const Color(0xFFCA8A04),
+              color: isLive ? const Color(0xFF16A34A) : const Color(0xFFCA8A04),
               shape: BoxShape.circle,
             ),
           ),
@@ -92,9 +88,7 @@ class _LiveBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: isLive
-                  ? const Color(0xFF15803D)
-                  : const Color(0xFF92400E),
+              color: isLive ? const Color(0xFF15803D) : const Color(0xFF92400E),
             ),
           ),
         ],

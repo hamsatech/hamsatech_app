@@ -165,8 +165,16 @@ class HrMetricsEntity extends Equatable {
   final int spikeThreshold;
 
   @override
-  List<Object?> get props =>
-      [avgHr, peakHr, minHr, hrZoneLabel, hrZoneColor, avgPreShotHr, spikeCount, spikeThreshold];
+  List<Object?> get props => [
+        avgHr,
+        peakHr,
+        minHr,
+        hrZoneLabel,
+        hrZoneColor,
+        avgPreShotHr,
+        spikeCount,
+        spikeThreshold
+      ];
 }
 
 // ── HR chart point ────────────────────────────────────────────────────────────

@@ -36,13 +36,17 @@ class _BaselineCaptureViewState extends State<_BaselineCaptureView> {
   Timer? _timer;
   int _remainingSeconds = _measurementDuration.inSeconds;
   bool _completed = false;
+  // Captured once, not re-read via context.read in dispose(): by the time
+  // dispose() runs the element may already be unmounted, so provider
+  // lookups there aren't reliable.
+  late final PolarBloc _polarBloc;
 
   @override
   void initState() {
     super.initState();
-    final bloc = context.read<PolarBloc>();
-    if (bloc.state.isConnected && !bloc.state.isStreaming) {
-      bloc.add(const PolarStartHrStreamRequested());
+    _polarBloc = context.read<PolarBloc>();
+    if (_polarBloc.state.isConnected && !_polarBloc.state.isStreaming) {
+      _polarBloc.add(const PolarStartHrStreamRequested());
     }
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
@@ -50,6 +54,15 @@ class _BaselineCaptureViewState extends State<_BaselineCaptureView> {
   @override
   void dispose() {
     _timer?.cancel();
+    // Covers every exit path uniformly — normal completion (context.go to
+    // the result screen), back navigation, and any other disposal all run
+    // this. Safe to call unconditionally even if streaming never started
+    // or already stopped (native stopHrStream on a no-op job is a no-op).
+    // Baseline capture is reachable only from the onboarding route set
+    // (/baseline is onboarding-only — see AppRouter._onboardingRoutes),
+    // which is always before any live training session can exist, so this
+    // can never stop a stream a live session is relying on.
+    _polarBloc.add(const PolarStopHrStreamRequested());
     super.dispose();
   }
 
@@ -85,7 +98,12 @@ class _BaselineCaptureViewState extends State<_BaselineCaptureView> {
   Widget build(BuildContext context) {
     return BlocBuilder<PolarBloc, PolarState>(
       builder: (context, state) {
-        final bpm = state.latestReading?.bpm ?? 76;
+        // No fallback value here: a Polar reading either exists or it
+        // doesn't. Showing a made-up number (this used to default to 76)
+        // would present a synthetic value as if it were a real
+        // measurement — see BaselineResultScreen, which is the one that
+        // actually persists this value, for the corresponding fix.
+        final bpm = state.latestReading?.bpm;
 
         return Scaffold(
           backgroundColor: DSColors.white,
@@ -117,7 +135,7 @@ class _BaselineCaptureViewState extends State<_BaselineCaptureView> {
                           const _CaptureHeartMark(),
                           const SizedBox(height: 32),
                           Text(
-                            '$bpm',
+                            bpm?.toString() ?? '—',
                             style: DSTypography.scoreDisplay.copyWith(
                               color: DSColors.terracotta,
                               fontSize: 54,
@@ -128,7 +146,7 @@ class _BaselineCaptureViewState extends State<_BaselineCaptureView> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'BPM',
+                            bpm == null ? 'Waiting for signal…' : 'BPM',
                             style: DSTypography.bodyLarge.copyWith(
                               color: DSColors.textSecondary,
                               fontSize: 16,

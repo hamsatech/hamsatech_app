@@ -15,9 +15,9 @@ class ScorePaceChart extends StatelessWidget {
       return _EmptyChart();
     }
 
-    final maxY = (points.map((p) => p.value).reduce((a, b) => a > b ? a : b) *
-            1.15)
-        .ceilToDouble();
+    final maxY =
+        (points.map((p) => p.value).reduce((a, b) => a > b ? a : b) * 1.15)
+            .ceilToDouble();
     final roundedMax = (maxY / 20).ceil() * 20.0;
 
     return Column(

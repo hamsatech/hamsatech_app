@@ -23,8 +23,7 @@ class MoodCorrelationCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(mood.moodEmoji,
-                    style: const TextStyle(fontSize: 28)),
+                Text(mood.moodEmoji, style: const TextStyle(fontSize: 28)),
                 const SizedBox(width: DSSpacing.md),
                 Expanded(
                   child: Column(
@@ -54,8 +53,7 @@ class MoodCorrelationCard extends StatelessWidget {
                 horizontal: DSSpacing.md, vertical: DSSpacing.sm),
             child: Row(
               children: [
-                Icon(Icons.sync_rounded,
-                    size: 18, color: DSColors.success),
+                Icon(Icons.sync_rounded, size: 18, color: DSColors.success),
                 const SizedBox(width: DSSpacing.sm),
                 Text(
                   'Auto-synced to coach',

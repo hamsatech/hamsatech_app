@@ -6,8 +6,9 @@ class SignUpViewModel {
   final ISignUpRepository _repository;
 
   static const String screenTitle = 'Sign Up';
-  static const String welcomeTitle =
-      'Welcome! Let\'s customize\nASTRA to fit your goals.';
+  static const String welcomeTitle = 'Meet Astra';
+  static const String welcomeSubtitle =
+      'Understanding what drives outcomes—from performance to relationships to daily life.';
   static const String continueLabel = 'Continue';
   static const String googleLabel = 'Continue with Google';
   static const String appleLabel = 'Continue with Apple';

@@ -4,4 +4,11 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Debug builds only: allow plain-HTTP traffic so a physical device on
+         the same LAN can reach a local dev backend (e.g. a dart-define of
+         MOBILE_API_BASE_URL set to http://LAN-IP:8000/). Android blocks
+         cleartext traffic by default; this override does not affect
+         release/profile builds. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

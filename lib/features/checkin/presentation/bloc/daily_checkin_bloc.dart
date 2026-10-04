@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/daily_checkin_entity.dart';
 import '../../domain/repositories/daily_checkin_repository.dart';
@@ -98,7 +99,28 @@ class DailyCheckinBloc extends Bloc<DailyCheckinEvent, DailyCheckinState> {
       await _repository.saveCheckin(checkin);
       emit(const DailyCheckinSuccess());
     } catch (e) {
-      emit(DailyCheckinError(e.toString()));
+      // Stay in DailyCheckinEditing (not a separate error state) so every
+      // field the athlete already filled in survives a failed submit —
+      // only isSubmitting and errorMessage change.
+      emit(editing.copyWith(
+        isSubmitting: false,
+        errorMessage: _friendlyErrorMessage(e),
+      ));
     }
+  }
+
+  /// Maps a save failure to short, non-technical copy. Never surfaces a
+  /// raw exception/DioException string to the athlete.
+  String _friendlyErrorMessage(Object error) {
+    if (error is DioException) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout) {
+        return 'No internet connection. Please check your network and try again.';
+      }
+      return 'Something went wrong saving your check-in. Please try again.';
+    }
+    return 'Something went wrong saving your check-in. Please try again.';
   }
 }

@@ -94,8 +94,7 @@ class RitualBodyScanState extends RitualState {
       RitualBodyScanState(
         areaIndex: areaIndex ?? this.areaIndex,
         areas: areas,
-        areaSecondsRemaining:
-            areaSecondsRemaining ?? this.areaSecondsRemaining,
+        areaSecondsRemaining: areaSecondsRemaining ?? this.areaSecondsRemaining,
         areaDurationSeconds: areaDurationSeconds,
       );
 

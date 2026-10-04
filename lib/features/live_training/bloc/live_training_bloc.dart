@@ -88,14 +88,16 @@ class LiveTrainingBloc extends Bloc<LiveTrainingEvent, LiveTrainingState> {
 
   // ── Series completion ─────────────────────────────────────────────────────
 
-  void _onSeriesCompleted(
+  Future<void> _onSeriesCompleted(
     LiveTrainingSeriesCompleted event,
     Emitter<LiveTrainingState> emit,
-  ) {
+  ) async {
     if (state is! LiveSessionActiveState) return;
     final s = state as LiveSessionActiveState;
     final nextIndex = s.currentSeriesIndex + 1;
     if (nextIndex >= s.totalSeries) {
+      _repository.stopHrTelemetry();
+      await _repository.flushHrTelemetry();
       _cancelTimer();
       emit(ReflectingState(
         sessionId: s.sessionId,
@@ -108,12 +110,14 @@ class LiveTrainingBloc extends Bloc<LiveTrainingEvent, LiveTrainingState> {
 
   // ── End session ───────────────────────────────────────────────────────────
 
-  void _onEndRequested(
+  Future<void> _onEndRequested(
     LiveTrainingEndRequested event,
     Emitter<LiveTrainingState> emit,
-  ) {
+  ) async {
     if (state is! LiveSessionActiveState) return;
     final s = state as LiveSessionActiveState;
+    _repository.stopHrTelemetry();
+    await _repository.flushHrTelemetry();
     _cancelTimer();
     emit(ReflectingState(
       sessionId: s.sessionId,
@@ -165,6 +169,15 @@ class LiveTrainingBloc extends Bloc<LiveTrainingEvent, LiveTrainingState> {
     final s = state as ReflectingState;
     emit(s.copyWith(isSubmitting: true));
     try {
+      // Must succeed before proceeding — unlike completeSession's own
+      // backend call, this one is not best-effort, so a failure here
+      // must not be silently treated as a successful save.
+      await _repository.saveReflection(
+        sessionId: s.sessionId,
+        mood: s.mood,
+        whatWorked: s.whatWorked,
+        whatDidnt: s.whatDidnt,
+      );
       await _repository.completeSession(
         sessionId: s.sessionId,
         durationMinutes: (s.elapsedSeconds / 60).ceil(),

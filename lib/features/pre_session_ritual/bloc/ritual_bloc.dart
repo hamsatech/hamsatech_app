@@ -26,7 +26,8 @@ class RitualBloc extends Bloc<RitualEvent, RitualState> {
 
   // ── Breathing ───────────────────────────────────────────────────────────────
 
-  void _onStartBreathing(RitualStartBreathing event, Emitter<RitualState> emit) {
+  void _onStartBreathing(
+      RitualStartBreathing event, Emitter<RitualState> emit) {
     _cancelAllTimers();
     final config = _repository.getConfig();
     final p = config.breathPhaseSeconds;
@@ -131,10 +132,9 @@ class RitualBloc extends Bloc<RitualEvent, RitualState> {
     RitualProceedToVisualization event,
     Emitter<RitualState> emit,
   ) {
-    final intention =
-        state is RitualIntentionState
-            ? (state as RitualIntentionState).intention
-            : '';
+    final intention = state is RitualIntentionState
+        ? (state as RitualIntentionState).intention
+        : '';
     emit(RitualVisualizationState(intention: intention));
   }
 
@@ -146,8 +146,7 @@ class RitualBloc extends Bloc<RitualEvent, RitualState> {
   ) {
     if (state is RitualVisualizationState) {
       emit(
-        (state as RitualVisualizationState)
-            .copyWith(visualization: event.text),
+        (state as RitualVisualizationState).copyWith(visualization: event.text),
       );
     }
   }

@@ -28,7 +28,9 @@ class AuthNumpad extends StatelessWidget {
           children: [
             ..._rows.map((row) => Row(
                   children: row
-                      .map((d) => _NumKey(digit: d, onTap: () {
+                      .map((d) => _NumKey(
+                          digit: d,
+                          onTap: () {
                             HapticFeedback.selectionClick();
                             onDigit(d);
                           }))

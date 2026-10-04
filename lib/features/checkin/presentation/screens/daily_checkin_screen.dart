@@ -34,11 +34,11 @@ class _DailyCheckinView extends StatelessWidget {
     return BlocConsumer<DailyCheckinBloc, DailyCheckinState>(
       listener: (context, state) {
         if (state is DailyCheckinSuccess) {
-          context.pop();
-        } else if (state is DailyCheckinError) {
+          context.pushReplacement('/session/setup');
+        } else if (state is DailyCheckinEditing && state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(state.errorMessage!),
               backgroundColor: DSColors.error,
             ),
           );

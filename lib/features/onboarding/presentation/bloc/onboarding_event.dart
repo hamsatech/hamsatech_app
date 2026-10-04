@@ -44,7 +44,10 @@ class OnboardingAnswerSelected extends OnboardingEvent {
 }
 
 class OnboardingNextQuestion extends OnboardingEvent {
-  const OnboardingNextQuestion();
+  const OnboardingNextQuestion({this.answerText});
+  final String? answerText;
+  @override
+  List<Object?> get props => [answerText];
 }
 
 class OnboardingPreviousQuestion extends OnboardingEvent {
@@ -56,5 +59,8 @@ class OnboardingAssessmentStarted extends OnboardingEvent {
 }
 
 class OnboardingAssessmentCompleted extends OnboardingEvent {
-  const OnboardingAssessmentCompleted();
+  const OnboardingAssessmentCompleted({this.answerText});
+  final String? answerText;
+  @override
+  List<Object?> get props => [answerText];
 }

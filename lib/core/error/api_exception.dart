@@ -22,13 +22,19 @@ class ApiException implements Exception {
   static ApiException fromStatusCode(int statusCode, String body) {
     switch (statusCode) {
       case 401:
-        return const ApiException('Unauthorized – check your API key.', statusCode: 401);
+        return const ApiException('Unauthorized – check your API key.',
+            statusCode: 401);
       case 403:
-        return const ApiException('Forbidden – RLS policy denied this operation.', statusCode: 403);
+        return const ApiException(
+            'Forbidden – RLS policy denied this operation.',
+            statusCode: 403);
       case 409:
-        return const ApiException('Conflict – a record with this ID already exists.', statusCode: 409);
+        return const ApiException(
+            'Conflict – a record with this ID already exists.',
+            statusCode: 409);
       default:
-        return ApiException('Request failed ($statusCode): $body', statusCode: statusCode);
+        return ApiException('Request failed ($statusCode): $body',
+            statusCode: statusCode);
     }
   }
 }

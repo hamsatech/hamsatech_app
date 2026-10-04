@@ -42,14 +42,21 @@ class OnboardingStep4Bloc
       emit(validated.copyWith(errorMessage: validated.errorMessage));
       return;
     }
+    // Goal data itself is persisted by the sibling OnboardingStep3Bloc's
+    // submit (PUT /api/v2/onboarding/step-3, which already includes
+    // goal30Day/goal6Month — see onboarding_step3_screen.dart, which fires
+    // both blocs' submits together). This bloc only owns the local
+    // "profile setup" completion flag; it used to also call the backend
+    // itself (POST /api/v1/onboarding/goals), but that route was never
+    // mounted server-side (always 404'd) and was redundant with Step 3's
+    // save regardless — removed rather than implemented.
     await StorageService.setProfileSetupComplete(true);
     emit(validated.copyWith(submissionSuccess: false, errorMessage: null));
     emit(validated.copyWith(submissionSuccess: true));
   }
 
   OnboardingStep4State _validate(OnboardingStep4State s) {
-    final hasAnyGoal =
-        s.goal30Value.isNotEmpty || s.goal6MonthValue.isNotEmpty;
+    final hasAnyGoal = s.goal30Value.isNotEmpty || s.goal6MonthValue.isNotEmpty;
     if (!hasAnyGoal) {
       return s.copyWith(
         isValid: false,

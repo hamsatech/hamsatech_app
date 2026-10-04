@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
+import '../../../../core/services/storage_service.dart';
 import '../../domain/entities/session_report_entity.dart';
 
 class ReportSeriesBreakdownRow extends StatelessWidget {
@@ -10,6 +11,8 @@ class ReportSeriesBreakdownRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showHeartRate = StorageService.isPolarEnabled();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: DSSpacing.sm),
       child: Row(
@@ -18,7 +21,8 @@ class ReportSeriesBreakdownRow extends StatelessWidget {
             width: 28,
             child: Text(
               'S${series.seriesNumber}',
-              style: DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
+              style:
+                  DSTypography.bodySm.copyWith(color: DSColors.textSecondary),
             ),
           ),
           const SizedBox(width: DSSpacing.sm),
@@ -44,14 +48,17 @@ class ReportSeriesBreakdownRow extends StatelessWidget {
               style: DSTypography.bodyMd.copyWith(color: DSColors.black),
             ),
           ),
-          const SizedBox(width: DSSpacing.sm),
-          SizedBox(
-            width: 52,
-            child: Text(
-              '${series.avgHr} bpm',
-              style: DSTypography.labelXs.copyWith(color: DSColors.textSecondary),
+          if (showHeartRate) ...[
+            const SizedBox(width: DSSpacing.sm),
+            SizedBox(
+              width: 52,
+              child: Text(
+                '${series.avgHr} bpm',
+                style: DSTypography.labelXs
+                    .copyWith(color: DSColors.textSecondary),
+              ),
             ),
-          ),
+          ],
           if (series.isBest)
             const Icon(Icons.check_circle_rounded,
                 size: 16, color: DSColors.success)

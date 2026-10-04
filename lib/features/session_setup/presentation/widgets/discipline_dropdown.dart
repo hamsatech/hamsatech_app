@@ -50,9 +50,7 @@ class DisciplineDropdown extends StatelessWidget {
               child: Text(
                 hasValue ? selected : 'Select discipline',
                 style: DSTypography.bodyMd.copyWith(
-                  color: hasValue
-                      ? DSColors.textPrimary
-                      : DSColors.textMuted,
+                  color: hasValue ? DSColors.textPrimary : DSColors.textMuted,
                 ),
               ),
             ),
@@ -127,8 +125,7 @@ class _DisciplinePickerSheet extends StatelessWidget {
                   d,
                   style: DSTypography.bodyMd.copyWith(
                     color: isSelected ? _teal : DSColors.textPrimary,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
                 trailing: isSelected

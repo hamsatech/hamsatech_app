@@ -25,7 +25,10 @@ class AthleteProfileEntity extends Equatable {
     final emotional = baselineScores['emotionalStability'] ?? 0;
     final decision = baselineScores['decisionStyle'] ?? 0;
     final motivation = baselineScores['motivation'] ?? 0;
-    return focus * 0.30 + emotional * 0.25 + decision * 0.25 + motivation * 0.20;
+    return focus * 0.30 +
+        emotional * 0.25 +
+        decision * 0.25 +
+        motivation * 0.20;
   }
 
   @override

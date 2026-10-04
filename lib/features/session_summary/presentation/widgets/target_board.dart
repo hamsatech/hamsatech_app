@@ -101,8 +101,7 @@ class _SeriesDropdown extends StatelessWidget {
                   value: i,
                   child: Text(
                     'Series - ${i + 1}',
-                    style:
-                        DSTypography.labelMd.copyWith(color: DSColors.black),
+                    style: DSTypography.labelMd.copyWith(color: DSColors.black),
                   ),
                 );
               }),

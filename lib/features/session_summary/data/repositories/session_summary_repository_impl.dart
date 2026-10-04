@@ -1,6 +1,12 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
+import '../../../../core/services/session_memory.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../session_report/data/models/session_report_model.dart';
 import '../../domain/entities/session_summary_entity.dart';
 import '../../domain/repositories/session_summary_repository.dart';
 
@@ -15,10 +21,8 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
     // ── Parse series ────────────────────────────────────────────────────────
 
     final seriesList = rawSummary.map((s) {
-      final shots = (s['shots'] as List)
-          .cast<String>()
-          .map(_parseScore)
-          .toList();
+      final shots =
+          (s['shots'] as List).cast<String>().map(_parseScore).toList();
       final total = (s['total'] as num).toDouble();
       final number = (s['seriesNumber'] as num).toInt();
       return _SeriesData(number: number, shots: shots, total: total);
@@ -38,33 +42,34 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
     final bestShot = validShots.isEmpty ? 0.0 : validShots.reduce(max);
     final worstShot = validShots.isEmpty ? 0.0 : validShots.reduce(min);
 
-    final bestSeries =
-        seriesList.reduce((a, b) => a.total > b.total ? a : b);
-    final worstSeries =
-        seriesList.reduce((a, b) => a.total < b.total ? a : b);
+    final bestSeries = seriesList.reduce((a, b) => a.total > b.total ? a : b);
+    final worstSeries = seriesList.reduce((a, b) => a.total < b.total ? a : b);
 
     final avgSeriesTotal = grandTotal / seriesList.length;
     final shotsPerSeries = seriesList.first.shots.length;
     final maxSeriesTotal = shotsPerSeries * 10.0;
 
-    final breakdown = seriesList.map((s) => SeriesBreakdownEntity(
-          seriesNumber: s.number,
-          total: s.total,
-          maxTotal: maxSeriesTotal,
-          isBest: s.number == bestSeries.number,
-        )).toList();
+    final breakdown = seriesList
+        .map((s) => SeriesBreakdownEntity(
+              seriesNumber: s.number,
+              total: s.total,
+              maxTotal: maxSeriesTotal,
+              isBest: s.number == bestSeries.number,
+            ))
+        .toList();
 
-    final scorePoints = seriesList.map((s) => ScorePointEntity(
-          index: s.number - 1,
-          value: s.total,
-          isSpike: s.total > avgSeriesTotal * 1.12,
-        )).toList();
+    final scorePoints = seriesList
+        .map((s) => ScorePointEntity(
+              index: s.number - 1,
+              value: s.total,
+              isSpike: s.total > avgSeriesTotal * 1.12,
+            ))
+        .toList();
 
     // ── Session metadata ─────────────────────────────────────────────────────
 
     final setup = StorageService.getSessionSetup();
-    final sessionTitle =
-        setup != null ? _buildTitle(setup) : 'Session';
+    final sessionTitle = setup != null ? _buildTitle(setup) : 'Session';
 
     final sessions = StorageService.getSessions();
     final completed =
@@ -84,22 +89,135 @@ class SessionSummaryRepositoryImpl implements SessionSummaryRepository {
       }
     }
 
+    // ── Augment with real, persisted backend data (non-blocking) ─────────────
+    // `bestShot`/`worstShot` are deliberately never touched here — the
+    // backend only ever stores per-series totals, never individual shot
+    // values, so there is no real data to replace them with.
+    var finalTotal = grandTotal;
+    var finalDurationMins = durationMins;
+    var finalTitle = sessionTitle;
+    var finalTotalShots = totalShots;
+    var finalBestSeriesLabel =
+        'S${bestSeries.number}: ${_fmt(bestSeries.total)}';
+    var finalWorstSeriesLabel =
+        'S${worstSeries.number}: ${_fmt(worstSeries.total)}';
+    var finalBreakdown = breakdown;
+    var finalScorePoints = scorePoints;
+    var finalMood = mood;
+    double? backendAvgScore;
+
+    final report = await _fetchSessionReport();
+    if (report != null) {
+      final scores = report.scores;
+      if (scores != null) {
+        if (scores.totalScore != null) finalTotal = scores.totalScore!;
+        if (scores.totalShots != null) finalTotalShots = scores.totalShots!;
+        backendAvgScore = scores.averageScore ?? scores.avgScore;
+      }
+
+      final durationSeconds = report.summary.durationSeconds;
+      if (durationSeconds != null) {
+        finalDurationMins = (durationSeconds / 60).round();
+      }
+
+      // Only backend `session_type` is real here — `rangeType` (Electronic
+      // vs Paper) is a local-only setup choice never sent to the backend,
+      // so the locally-built title is kept whenever local setup exists.
+      if (setup == null && report.summary.sessionType != null) {
+        finalTitle = _buildTitle({'sessionType': report.summary.sessionType});
+      }
+
+      if (report.series.isNotEmpty) {
+        final backendSeries = [...report.series]
+          ..sort((a, b) => a.seriesNumber.compareTo(b.seriesNumber));
+        final bestBackend = backendSeries.reduce(
+            (a, b) => (a.totalScore ?? 0) > (b.totalScore ?? 0) ? a : b);
+        final worstBackend = backendSeries.reduce(
+            (a, b) => (a.totalScore ?? 0) < (b.totalScore ?? 0) ? a : b);
+        finalBestSeriesLabel =
+            'S${bestBackend.seriesNumber}: ${_fmt(bestBackend.totalScore ?? 0)}';
+        finalWorstSeriesLabel =
+            'S${worstBackend.seriesNumber}: ${_fmt(worstBackend.totalScore ?? 0)}';
+
+        final avgBackendSeriesTotal =
+            backendSeries.fold(0.0, (sum, s) => sum + (s.totalScore ?? 0)) /
+                backendSeries.length;
+        finalBreakdown = backendSeries
+            .map((s) => SeriesBreakdownEntity(
+                  seriesNumber: s.seriesNumber,
+                  total: s.totalScore ?? 0,
+                  maxTotal: (s.shotsFired ?? shotsPerSeries) * 10.0,
+                  isBest: s.seriesNumber == bestBackend.seriesNumber,
+                ))
+            .toList();
+        finalScorePoints = backendSeries
+            .map((s) => ScorePointEntity(
+                  index: s.seriesNumber - 1,
+                  value: s.totalScore ?? 0,
+                  isSpike: (s.totalScore ?? 0) > avgBackendSeriesTotal * 1.12,
+                ))
+            .toList();
+      }
+
+      final reflectionMood = report.reflection?.mood;
+      if (reflectionMood != null) {
+        finalMood = _buildMood(reflectionMood, backendAvgScore ?? avg);
+      }
+
+      debugPrint('[SESSION SUMMARY] augmented from /report');
+    }
+
+    final finalAveragePerShot = backendAvgScore ??
+        (finalTotalShots > 0 ? finalTotal / finalTotalShots : avg);
+    final finalMaxPossible = finalTotalShots > 0
+        ? finalTotalShots * 10.0
+        : (maxPossible > 0 ? maxPossible : finalTotal);
+    final finalEfficiency = finalMaxPossible > 0
+        ? (finalTotal / finalMaxPossible) * 100
+        : efficiency;
+
     return SessionSummaryEntity(
-      sessionTitle: sessionTitle,
-      totalShots: totalShots,
-      duration: _formatDuration(durationMins),
-      total: grandTotal,
-      maxPossible: maxPossible,
-      averagePerShot: avg,
-      efficiency: efficiency,
+      sessionTitle: finalTitle,
+      totalShots: finalTotalShots,
+      duration: _formatDuration(finalDurationMins),
+      total: finalTotal,
+      maxPossible: finalMaxPossible,
+      averagePerShot: finalAveragePerShot,
+      efficiency: finalEfficiency,
       bestShot: bestShot,
       worstShot: worstShot,
-      bestSeriesLabel: 'S${bestSeries.number}: ${_fmt(bestSeries.total)}',
-      worstSeriesLabel: 'S${worstSeries.number}: ${_fmt(worstSeries.total)}',
-      seriesBreakdown: breakdown,
-      scorePoints: scorePoints,
-      moodCorrelation: mood,
+      bestSeriesLabel: finalBestSeriesLabel,
+      worstSeriesLabel: finalWorstSeriesLabel,
+      seriesBreakdown: finalBreakdown,
+      scorePoints: finalScorePoints,
+      moodCorrelation: finalMood,
     );
+  }
+
+  // ── Real session report fetch ───────────────────────────────────────────
+
+  /// Fetches the real, persisted session report from the backend
+  /// (`GET .../sessions/{sessionId}/report`). Returns `null` on any
+  /// failure or when no session/athlete id is available — callers must
+  /// treat `null` as "no backend data available" and keep their
+  /// locally-computed values.
+  static Future<SessionReportModel?> _fetchSessionReport() async {
+    final sessionId = SessionMemory.sessionId ?? StorageService.getSessionId();
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (sessionId == null || athleteId == null) return null;
+
+    try {
+      final res = await ApiService.instance.getSessionReport(
+        athleteId: athleteId,
+        sessionId: sessionId,
+      );
+      final data = res.data;
+      if (data is! Map<String, dynamic>) return null;
+      return SessionReportModel.fromJson(data);
+    } catch (e) {
+      debugPrint('[SESSION SUMMARY] /report fetch failed (non-fatal): $e');
+      return null;
+    }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

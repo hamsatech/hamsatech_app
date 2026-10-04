@@ -1,8 +1,12 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/entities/athlete_profile_entity.dart';
 import '../../domain/entities/baseline_question_entity.dart';
 import '../../domain/repositories/onboarding_repository.dart';
 import '../datasources/questions_data.dart';
 import '../models/athlete_profile_model.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_helper.dart';
 import '../../../../core/services/storage_service.dart';
 
 class OnboardingRepositoryImpl implements OnboardingRepository {
@@ -11,10 +15,44 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
   @override
   Future<void> saveAthleteProfile(AthleteProfileEntity profile) async {
+    // Persist locally — onboarding must succeed even if offline.
     final model = AthleteProfileModel.fromEntity(profile);
     await StorageService.saveAthleteProfile(model.toJson());
     await StorageService.saveBaselineScores(profile.baselineScores);
     await StorageService.setOnboardingComplete(true);
+
+    // Fire-and-forget: sync full profile to mobile backend (non-blocking).
+    _syncProfileUpdate(profile);
+  }
+
+  void _syncProfileUpdate(AthleteProfileEntity profile) {
+    final athleteId = AuthHelper.getCurrentAthleteId();
+    if (athleteId == null) {
+      debugPrint('[PROFILE UPDATE] skipped — no athlete_id');
+      return;
+    }
+    Future(() async {
+      try {
+        final res = await ApiService.instance.updateMobileAthleteProfile(
+          athleteId: athleteId,
+          name: profile.name,
+          age: profile.age,
+          sportDomain: profile.sportDomain,
+          experienceLevel: profile.experienceLevel,
+          familySupport: profile.familySupport,
+          pressureSources: profile.pressureSources,
+        );
+        debugPrint('[PROFILE UPDATE] status=${res.statusCode}');
+      } catch (e) {
+        debugPrint('[PROFILE UPDATE] failed (non-fatal): $e');
+      }
+    });
+  }
+
+  @override
+  Future<void> retryAthleteSync() async {
+    // Athlete creation is handled by the backend at OTP verify-registration time.
+    // The returned athleteId is already persisted in StorageService — no retry needed.
   }
 
   @override
@@ -40,15 +78,15 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
     // Max score per question is 5; normalize to 0–100
     return {
-      'focus': _normalize(categoryTotals['focus'] ?? 0,
-          categoryCounts['focus'] ?? 1),
+      'focus': _normalize(
+          categoryTotals['focus'] ?? 0, categoryCounts['focus'] ?? 1),
       'emotionalStability': _normalize(
           categoryTotals['emotional_stability'] ?? 0,
           categoryCounts['emotional_stability'] ?? 1),
       'decisionStyle': _normalize(categoryTotals['decision_style'] ?? 0,
           categoryCounts['decision_style'] ?? 1),
-      'motivation': _normalize(categoryTotals['motivation'] ?? 0,
-          categoryCounts['motivation'] ?? 1),
+      'motivation': _normalize(
+          categoryTotals['motivation'] ?? 0, categoryCounts['motivation'] ?? 1),
     };
   }
 

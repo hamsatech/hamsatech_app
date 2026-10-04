@@ -11,21 +11,26 @@ class MockLoginRepository implements ILoginRepository {
   List<OnboardingSlideEntity> getSlides() => const [
         OnboardingSlideEntity(
           id: 'slide_1',
-          caption: 'Ready to achieve success?\nStart tracking — it\'s simple!',
-          imageNetworkUrl:
-              'https://i.postimg.cc/52239rPR/Mask-group.png',
+          title: 'Performance',
+          description:
+              'Track mental performance, recovery and readiness to unlock your full potential in competition.',
+          imageAssetPath: 'assets/onboarding/performance.jpg',
         ),
         OnboardingSlideEntity(
           id: 'slide_2',
-          caption: 'Track your mental performance\nwith AI-powered insights.',
-          imageNetworkUrl:
-              'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=600&h=680&fit=crop&q=80',
+          title: 'Relationships & Compatibility',
+          description:
+              'Understand how stress and emotional patterns shape your most important connections.',
+          comingSoon: true,
+          imageAssetPath: 'assets/onboarding/wellness.jpg',
         ),
         OnboardingSlideEntity(
           id: 'slide_3',
-          caption: 'Join elite athletes building\nconsistency under pressure.',
-          imageNetworkUrl:
-              'https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=600&h=680&fit=crop&q=80',
+          title: 'Work / Parenting / Wellbeing',
+          description:
+              'Balance performance demands across every dimension of your life.',
+          comingSoon: true,
+          imageAssetPath: 'assets/onboarding/balance.jpg',
         ),
       ];
 

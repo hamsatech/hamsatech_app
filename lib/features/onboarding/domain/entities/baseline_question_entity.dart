@@ -10,7 +10,8 @@ class BaselineQuestionEntity extends Equatable {
 
   final int id;
   final String question;
-  final String category; // focus | emotional_stability | decision_style | motivation
+  final String
+      category; // focus | emotional_stability | decision_style | motivation
   final List<AnswerOptionEntity> options;
 
   @override
@@ -18,11 +19,12 @@ class BaselineQuestionEntity extends Equatable {
 }
 
 class AnswerOptionEntity extends Equatable {
-  const AnswerOptionEntity({required this.text, required this.score});
+  const AnswerOptionEntity({required this.text, required this.score, this.optionCode});
 
   final String text;
   final int score; // 1–5
+  final String? optionCode; // set when sourced from GET /api/v2/psychology-assessment
 
   @override
-  List<Object?> get props => [text, score];
+  List<Object?> get props => [text, score, optionCode];
 }

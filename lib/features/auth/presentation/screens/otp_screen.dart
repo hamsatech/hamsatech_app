@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
 import '../../../../core/di/injection.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../domain/entities/user_entity.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -79,11 +79,30 @@ class _OtpViewState extends State<_OtpView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          if (StorageService.isOnboardingComplete()) {
-            context.go('/home');
-          } else {
-            final step = StorageService.getOnboardingStep();
-            context.go(step.isNotEmpty ? step : '/onboarding/step1');
+          // Trust the backend's next_step verbatim — it is the single
+          // source of truth for existing-user-vs-new-user routing.
+          switch (state.user.nextStep) {
+            case AuthNextStep.home:
+              context.go('/home');
+              break;
+            case AuthNextStep.onboardingStep1:
+              context.go('/onboarding/step1');
+              break;
+            case AuthNextStep.onboardingStep2:
+              context.go('/onboarding/step2');
+              break;
+            case AuthNextStep.onboardingStep3:
+              context.go('/onboarding/step3');
+              break;
+            case AuthNextStep.onboardingStep4:
+              context.go('/onboarding/step4');
+              break;
+            case AuthNextStep.onboardingStep5:
+              context.go('/onboarding/step5');
+              break;
+            case AuthNextStep.onboardingStep6:
+              context.go('/onboarding/step6');
+              break;
           }
         } else if (state is AuthFailure) {
           setState(() {
@@ -144,8 +163,8 @@ class _OtpViewState extends State<_OtpView> {
                   disabledBorderColor: DSColors.gray200,
                   filled: true,
                   fillColor: Colors.white,
-                  textStyle:
-                      DSTypography.headingMd.copyWith(color: DSColors.textPrimary),
+                  textStyle: DSTypography.headingMd
+                      .copyWith(color: DSColors.textPrimary),
                   cursorColor: DSColors.brand,
                   // phone keyboard commits each char immediately — avoids
                   // Android IME composing-text artefacts that appear as symbols

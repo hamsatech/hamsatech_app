@@ -10,7 +10,8 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'focus',
     options: [
       AnswerOptionEntity(
-          text: 'Take a deep rhythmic breath and reset my trigger finger focus.',
+          text:
+              'Take a deep rhythmic breath and reset my trigger finger focus.',
           score: 4),
       AnswerOptionEntity(
           text: 'Tell myself to stay calm and try to ignore the heartbeat.',
@@ -33,16 +34,20 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Acknowledge the success, exhale, and return to my technical process.',
+          text:
+              'Acknowledge the success, exhale, and return to my technical process.',
           score: 4),
       AnswerOptionEntity(
-          text: 'Enjoy the feeling but try to keep my physical movements steady.',
+          text:
+              'Enjoy the feeling but try to keep my physical movements steady.',
           score: 3),
       AnswerOptionEntity(
-          text: 'Start thinking about the perfect score and feel my heart race.',
+          text:
+              'Start thinking about the perfect score and feel my heart race.',
           score: 2),
       AnswerOptionEntity(
-          text: 'Get overexcited and rush the next shot to keep the streak going.',
+          text:
+              'Get overexcited and rush the next shot to keep the streak going.',
           score: 1),
     ],
   ),
@@ -62,8 +67,7 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Speed up slightly while trying to maintain control.',
           score: 3),
       AnswerOptionEntity(
-          text: 'Feel tense and shoot faster than normal.',
-          score: 2),
+          text: 'Feel tense and shoot faster than normal.', score: 2),
       AnswerOptionEntity(
           text: 'Panic about the time and fire without a proper sight picture.',
           score: 1),
@@ -86,8 +90,7 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Try to "fight" the movement with extra muscle tension.',
           score: 2),
       AnswerOptionEntity(
-          text: 'Feel discouraged and lose confidence in the shot.',
-          score: 1),
+          text: 'Feel discouraged and lose confidence in the shot.', score: 1),
     ],
   ),
 
@@ -101,14 +104,11 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Stay in the present and focus only on the next shot.',
           score: 4),
       AnswerOptionEntity(
-          text: 'Tell myself not to think about the result.',
-          score: 3),
+          text: 'Tell myself not to think about the result.', score: 3),
       AnswerOptionEntity(
-          text: 'Keep checking the scoreboard mentally.',
-          score: 2),
+          text: 'Keep checking the scoreboard mentally.', score: 2),
       AnswerOptionEntity(
-          text: 'Start imagining winning or breaking records.',
-          score: 1),
+          text: 'Start imagining winning or breaking records.', score: 1),
     ],
   ),
 
@@ -125,11 +125,9 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Follow the coach while adjusting slightly to my comfort.',
           score: 3),
       AnswerOptionEntity(
-          text: 'Reject the instruction and rely fully on instinct.',
-          score: 2),
+          text: 'Reject the instruction and rely fully on instinct.', score: 2),
       AnswerOptionEntity(
-          text: 'Get confused and lose clarity in execution.',
-          score: 1),
+          text: 'Get confused and lose clarity in execution.', score: 1),
     ],
   ),
 
@@ -143,14 +141,10 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Calculate the probability and trust my technical judgment.',
           score: 4),
       AnswerOptionEntity(
-          text: 'Take the safer option under pressure.',
-          score: 3),
+          text: 'Take the safer option under pressure.', score: 3),
+      AnswerOptionEntity(text: 'Take the risk impulsively.', score: 2),
       AnswerOptionEntity(
-          text: 'Take the risk impulsively.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Hesitate for too long and lose timing.',
-          score: 1),
+          text: 'Hesitate for too long and lose timing.', score: 1),
     ],
   ),
 
@@ -166,14 +160,11 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Use visualization and structured repetition in training.',
           score: 4),
       AnswerOptionEntity(
-          text: 'Repeat the new stance consistently in practice.',
-          score: 3),
+          text: 'Repeat the new stance consistently in practice.', score: 3),
       AnswerOptionEntity(
-          text: 'Try the change inconsistently and forget details.',
-          score: 2),
+          text: 'Try the change inconsistently and forget details.', score: 2),
       AnswerOptionEntity(
-          text: 'Feel frustrated and resist changing technique.',
-          score: 1),
+          text: 'Feel frustrated and resist changing technique.', score: 1),
     ],
   ),
 
@@ -184,17 +175,13 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Focus entirely on my own shot execution.',
-          score: 4),
+          text: 'Focus entirely on my own shot execution.', score: 4),
       AnswerOptionEntity(
-          text: 'Remind myself to stay calm and competitive.',
-          score: 3),
+          text: 'Remind myself to stay calm and competitive.', score: 3),
       AnswerOptionEntity(
-          text: 'Keep glancing at the opponent\'s score.',
-          score: 2),
+          text: 'Keep glancing at the opponent\'s score.', score: 2),
       AnswerOptionEntity(
-          text: 'Feel intimidated and pressured immediately.',
-          score: 1),
+          text: 'Feel intimidated and pressured immediately.', score: 1),
     ],
   ),
 
@@ -205,17 +192,13 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'motivation',
     options: [
       AnswerOptionEntity(
-          text: 'Activate my competition routine and mental cues.',
-          score: 4),
+          text: 'Activate my competition routine and mental cues.', score: 4),
       AnswerOptionEntity(
-          text: 'Push myself mentally to become match ready.',
-          score: 3),
+          text: 'Push myself mentally to become match ready.', score: 3),
       AnswerOptionEntity(
-          text: 'Feel uncertain whether performance will suffer.',
-          score: 2),
+          text: 'Feel uncertain whether performance will suffer.', score: 2),
       AnswerOptionEntity(
-          text: 'Struggle to motivate myself for the match.',
-          score: 1),
+          text: 'Struggle to motivate myself for the match.', score: 1),
     ],
   ),
 
@@ -229,14 +212,9 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Refocus almost immediately using my breathing routine.',
           score: 4),
       AnswerOptionEntity(
-          text: 'Pause briefly and continue steadily.',
-          score: 3),
-      AnswerOptionEntity(
-          text: 'Stay distracted for several shots.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Lose concentration completely.',
-          score: 1),
+          text: 'Pause briefly and continue steadily.', score: 3),
+      AnswerOptionEntity(text: 'Stay distracted for several shots.', score: 2),
+      AnswerOptionEntity(text: 'Lose concentration completely.', score: 1),
     ],
   ),
 
@@ -247,17 +225,13 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'motivation',
     options: [
       AnswerOptionEntity(
-          text: 'Treat every repetition like a competition shot.',
-          score: 4),
+          text: 'Treat every repetition like a competition shot.', score: 4),
       AnswerOptionEntity(
           text: 'Stay disciplined and complete the routine carefully.',
           score: 3),
       AnswerOptionEntity(
-          text: 'Rush repetitions without full attention.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Mentally disengage from practice.',
-          score: 1),
+          text: 'Rush repetitions without full attention.', score: 2),
+      AnswerOptionEntity(text: 'Mentally disengage from practice.', score: 1),
     ],
   ),
 
@@ -268,17 +242,13 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'focus',
     options: [
       AnswerOptionEntity(
-          text: 'Return attention to breathing and sight alignment.',
-          score: 4),
+          text: 'Return attention to breathing and sight alignment.', score: 4),
       AnswerOptionEntity(
-          text: 'Use a simple mental cue like "focus now."',
-          score: 3),
+          text: 'Use a simple mental cue like "focus now."', score: 3),
       AnswerOptionEntity(
-          text: 'Struggle to stop unrelated thoughts.',
-          score: 2),
+          text: 'Struggle to stop unrelated thoughts.', score: 2),
       AnswerOptionEntity(
-          text: 'Become fully distracted from shooting.',
-          score: 1),
+          text: 'Become fully distracted from shooting.', score: 1),
     ],
   ),
 
@@ -289,17 +259,13 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'decision_style',
     options: [
       AnswerOptionEntity(
-          text: 'Adapt calmly and adjust technique accordingly.',
-          score: 4),
+          text: 'Adapt calmly and adjust technique accordingly.', score: 4),
       AnswerOptionEntity(
-          text: 'Make cautious corrections and continue.',
-          score: 3),
+          text: 'Make cautious corrections and continue.', score: 3),
       AnswerOptionEntity(
-          text: 'Feel unsettled and lose rhythm temporarily.',
-          score: 2),
+          text: 'Feel unsettled and lose rhythm temporarily.', score: 2),
       AnswerOptionEntity(
-          text: 'Lose confidence in my ability to adapt.',
-          score: 1),
+          text: 'Lose confidence in my ability to adapt.', score: 1),
     ],
   ),
 
@@ -310,17 +276,12 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'focus',
     options: [
       AnswerOptionEntity(
-          text: 'Mentally reset between shots and trust my routine.',
-          score: 4),
+          text: 'Mentally reset between shots and trust my routine.', score: 4),
       AnswerOptionEntity(
-          text: 'Push through fatigue with discipline.',
-          score: 3),
+          text: 'Push through fatigue with discipline.', score: 3),
       AnswerOptionEntity(
-          text: 'Notice increasing distractions and errors.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Mentally give up consistency.',
-          score: 1),
+          text: 'Notice increasing distractions and errors.', score: 2),
+      AnswerOptionEntity(text: 'Mentally give up consistency.', score: 1),
     ],
   ),
 
@@ -331,17 +292,12 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Toward calmly correcting the next shot.',
-          score: 4),
+          text: 'Toward calmly correcting the next shot.', score: 4),
       AnswerOptionEntity(
-          text: 'Brief disappointment before refocusing.',
-          score: 3),
+          text: 'Brief disappointment before refocusing.', score: 3),
       AnswerOptionEntity(
-          text: 'Self-doubt about repeating mistakes.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Harsh negative self-criticism.',
-          score: 1),
+          text: 'Self-doubt about repeating mistakes.', score: 2),
+      AnswerOptionEntity(text: 'Harsh negative self-criticism.', score: 1),
     ],
   ),
 
@@ -352,17 +308,12 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Reset my breathing and return to fundamentals.',
-          score: 4),
+          text: 'Reset my breathing and return to fundamentals.', score: 4),
       AnswerOptionEntity(
-          text: 'Slow down and carefully rebuild rhythm.',
-          score: 3),
+          text: 'Slow down and carefully rebuild rhythm.', score: 3),
       AnswerOptionEntity(
-          text: 'Feel anxious about continuing mistakes.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Panic and lose emotional control.',
-          score: 1),
+          text: 'Feel anxious about continuing mistakes.', score: 2),
+      AnswerOptionEntity(text: 'Panic and lose emotional control.', score: 1),
     ],
   ),
 
@@ -373,17 +324,12 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Stay patient and trust gradual improvement.',
-          score: 4),
+          text: 'Stay patient and trust gradual improvement.', score: 4),
       AnswerOptionEntity(
-          text: 'Accept that rebuilding form takes time.',
-          score: 3),
+          text: 'Accept that rebuilding form takes time.', score: 3),
       AnswerOptionEntity(
-          text: 'Feel frustrated with reduced performance.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Lose confidence quickly.',
-          score: 1),
+          text: 'Feel frustrated with reduced performance.', score: 2),
+      AnswerOptionEntity(text: 'Lose confidence quickly.', score: 1),
     ],
   ),
 
@@ -394,17 +340,11 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Learn from the experience and prepare stronger.',
-          score: 4),
+          text: 'Learn from the experience and prepare stronger.', score: 4),
       AnswerOptionEntity(
-          text: 'Feel disappointed but motivated to improve.',
-          score: 3),
-      AnswerOptionEntity(
-          text: 'Doubt my ability after the result.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Feel emotionally defeated.',
-          score: 1),
+          text: 'Feel disappointed but motivated to improve.', score: 3),
+      AnswerOptionEntity(text: 'Doubt my ability after the result.', score: 2),
+      AnswerOptionEntity(text: 'Feel emotionally defeated.', score: 1),
     ],
   ),
 
@@ -418,14 +358,9 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
           text: 'Analyze the mistake calmly and adjust deliberately.',
           score: 4),
       AnswerOptionEntity(
-          text: 'Try gradual corrections during practice.',
-          score: 3),
-      AnswerOptionEntity(
-          text: 'Become frustrated by repetition.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Feel helpless about improving it.',
-          score: 1),
+          text: 'Try gradual corrections during practice.', score: 3),
+      AnswerOptionEntity(text: 'Become frustrated by repetition.', score: 2),
+      AnswerOptionEntity(text: 'Feel helpless about improving it.', score: 1),
     ],
   ),
 
@@ -436,17 +371,12 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Stay focused on my process and routine.',
-          score: 4),
+          text: 'Stay focused on my process and routine.', score: 4),
+      AnswerOptionEntity(text: 'Feel pressure but remain composed.', score: 3),
       AnswerOptionEntity(
-          text: 'Feel pressure but remain composed.',
-          score: 3),
+          text: 'Become self-conscious about performance.', score: 2),
       AnswerOptionEntity(
-          text: 'Become self-conscious about performance.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Perform significantly worse under observation.',
-          score: 1),
+          text: 'Perform significantly worse under observation.', score: 1),
     ],
   ),
 
@@ -457,17 +387,13 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Use the criticism constructively to improve.',
-          score: 4),
+          text: 'Use the criticism constructively to improve.', score: 4),
       AnswerOptionEntity(
-          text: 'Feel uncomfortable but still listen carefully.',
-          score: 3),
+          text: 'Feel uncomfortable but still listen carefully.', score: 3),
       AnswerOptionEntity(
-          text: 'Take the criticism personally for some time.',
-          score: 2),
+          text: 'Take the criticism personally for some time.', score: 2),
       AnswerOptionEntity(
-          text: 'Become emotionally upset and discouraged.',
-          score: 1),
+          text: 'Become emotionally upset and discouraged.', score: 1),
     ],
   ),
 
@@ -478,17 +404,12 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'emotional_stability',
     options: [
       AnswerOptionEntity(
-          text: 'Stay professional and focus on learning.',
-          score: 4),
+          text: 'Stay professional and focus on learning.', score: 4),
       AnswerOptionEntity(
-          text: 'Feel embarrassed but remain controlled.',
-          score: 3),
+          text: 'Feel embarrassed but remain controlled.', score: 3),
+      AnswerOptionEntity(text: 'Become defensive internally.', score: 2),
       AnswerOptionEntity(
-          text: 'Become defensive internally.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Feel humiliated and lose concentration.',
-          score: 1),
+          text: 'Feel humiliated and lose concentration.', score: 1),
     ],
   ),
 
@@ -499,17 +420,11 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'focus',
     options: [
       AnswerOptionEntity(
-          text: 'Concentrate fully on my own process.',
-          score: 4),
+          text: 'Concentrate fully on my own process.', score: 4),
       AnswerOptionEntity(
-          text: 'Acknowledge their performance but stay composed.',
-          score: 3),
-      AnswerOptionEntity(
-          text: 'Compare myself negatively to them.',
-          score: 2),
-      AnswerOptionEntity(
-          text: 'Feel discouraged and distracted.',
-          score: 1),
+          text: 'Acknowledge their performance but stay composed.', score: 3),
+      AnswerOptionEntity(text: 'Compare myself negatively to them.', score: 2),
+      AnswerOptionEntity(text: 'Feel discouraged and distracted.', score: 1),
     ],
   ),
 
@@ -520,17 +435,13 @@ const List<BaselineQuestionEntity> kBaselineQuestions = [
     category: 'motivation',
     options: [
       AnswerOptionEntity(
-          text: 'Stay humble and continue disciplined training.',
-          score: 4),
+          text: 'Stay humble and continue disciplined training.', score: 4),
       AnswerOptionEntity(
-          text: 'Enjoy success while remaining balanced.',
-          score: 3),
+          text: 'Enjoy success while remaining balanced.', score: 3),
       AnswerOptionEntity(
-          text: 'Become overly focused on reputation.',
-          score: 2),
+          text: 'Become overly focused on reputation.', score: 2),
       AnswerOptionEntity(
-          text: 'Underestimate future challenges after success.',
-          score: 1),
+          text: 'Underestimate future challenges after success.', score: 1),
     ],
   ),
 ];

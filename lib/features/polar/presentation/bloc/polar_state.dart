@@ -1,7 +1,14 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/models/hr_reading.dart';
 
-enum PolarConnectionStatus { initial, scanning, connecting, connected, disconnected, error }
+enum PolarConnectionStatus {
+  initial,
+  scanning,
+  connecting,
+  connected,
+  disconnected,
+  error
+}
 
 class PolarDiscoveredDevice extends Equatable {
   final String deviceId;

@@ -2,16 +2,24 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hamsatech_design_system/hamsatech_design_system.dart';
 
-
 import '../../domain/entities/dashboard_data_entity.dart';
 
+/// Plots real `avg_score` per completed session
+/// (`GET /api/mobile/athletes/{id}/sessions`) — a single line of genuinely
+/// scored sessions only. A session with no saved score summary contributes
+/// no point (never plotted as 0), so the line simply skips it rather than
+/// implying a real-but-zero score.
 class PerformanceChartCard extends StatelessWidget {
   const PerformanceChartCard({super.key, required this.history});
 
   final List<PerformanceDataPoint> history;
 
+  List<PerformanceDataPoint> get _scored =>
+      history.where((p) => p.avgScore != null).toList();
+
   @override
   Widget build(BuildContext context) {
+    final scored = _scored;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -36,17 +44,20 @@ class PerformanceChartCard extends StatelessWidget {
               const SizedBox(width: 10),
               Text('Performance Trend', style: DSTypography.headingSmall),
               const Spacer(),
-              Text('Last 5 sessions',
-                  style: DSTypography.caption),
+              Text('Recent sessions', style: DSTypography.caption),
             ],
           ),
           const SizedBox(height: 20),
-          if (history.isEmpty)
+          if (scored.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  'Complete sessions to see your trend',
+                  history.isEmpty
+                      ? 'Complete sessions to see your trend'
+                      : 'No scored sessions yet — save a score after your '
+                          'next session to start your trend',
+                  textAlign: TextAlign.center,
                   style: DSTypography.bodySmall,
                 ),
               ),
@@ -54,37 +65,31 @@ class PerformanceChartCard extends StatelessWidget {
           else
             SizedBox(
               height: 160,
-              child: LineChart(_buildChartData()),
+              child: LineChart(_buildChartData(scored)),
             ),
-          if (history.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _Legend(color: DSColors.brand, label: 'Session Quality'),
-                const SizedBox(width: 20),
-                _Legend(color: DSColors.info, label: 'Focus'),
-              ],
-            ),
-          ],
         ],
       ),
     );
   }
 
-  LineChartData _buildChartData() {
-    final qualitySpots = history.asMap().entries.map((e) =>
-        FlSpot(e.key.toDouble(), e.value.overallRating)).toList();
-    final focusSpots = history.asMap().entries.map((e) =>
-        FlSpot(e.key.toDouble(), e.value.focusScore)).toList();
+  LineChartData _buildChartData(List<PerformanceDataPoint> scored) {
+    final spots = scored
+        .asMap()
+        .entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value.avgScore!))
+        .toList();
+    final maxScore = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    // Real scores aren't bounded to 0-100 like the previous fabricated
+    // 0-100 ratings were — scale the axis to the data instead of assuming
+    // a fixed range.
+    final axisMax = (maxScore * 1.2).ceilToDouble().clamp(10.0, double.infinity);
 
     return LineChartData(
       minY: 0,
-      maxY: 100,
+      maxY: axisMax,
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        horizontalInterval: 25,
         getDrawingHorizontalLine: (_) => const FlLine(
           color: DSColors.appDivider,
           strokeWidth: 1,
@@ -95,8 +100,7 @@ class PerformanceChartCard extends StatelessWidget {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 32,
-            interval: 25,
+            reservedSize: 36,
             getTitlesWidget: (v, _) => Text(
               v.toInt().toString(),
               style: DSTypography.caption,
@@ -106,65 +110,36 @@ class PerformanceChartCard extends StatelessWidget {
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            getTitlesWidget: (v, _) => Text(
-              'S${v.toInt() + 1}',
-              style: DSTypography.caption,
-            ),
+            getTitlesWidget: (v, _) {
+              final i = v.toInt();
+              if (i < 0 || i >= scored.length) return const SizedBox.shrink();
+              return Text('S${scored[i].sessionNumber}',
+                  style: DSTypography.caption);
+            },
           ),
         ),
-        topTitles:
-            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles:
             const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
       lineBarsData: [
-        _lineBar(qualitySpots, DSColors.brand),
-        _lineBar(focusSpots, DSColors.info),
-      ],
-    );
-  }
-
-  LineChartBarData _lineBar(List<FlSpot> spots, Color color) {
-    return LineChartBarData(
-      spots: spots,
-      isCurved: true,
-      color: color,
-      barWidth: 2.5,
-      dotData: FlDotData(
-        getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
-          radius: 4,
-          color: color,
-          strokeWidth: 0,
-        ),
-      ),
-      belowBarData: BarAreaData(
-        show: true,
-        color: color.withValues(alpha: 0.08),
-      ),
-    );
-  }
-}
-
-class _Legend extends StatelessWidget {
-  const _Legend({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
+        LineChartBarData(
+          spots: spots,
+          isCurved: true,
+          color: DSColors.brand,
+          barWidth: 2.5,
+          dotData: FlDotData(
+            getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+              radius: 4,
+              color: DSColors.brand,
+              strokeWidth: 0,
+            ),
+          ),
+          belowBarData: BarAreaData(
+            show: true,
+            color: DSColors.brand.withValues(alpha: 0.08),
           ),
         ),
-        const SizedBox(width: 6),
-        Text(label, style: DSTypography.caption),
       ],
     );
   }

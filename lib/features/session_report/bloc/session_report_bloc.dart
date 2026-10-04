@@ -4,8 +4,7 @@ import '../domain/repositories/session_report_repository.dart';
 import 'session_report_event.dart';
 import 'session_report_state.dart';
 
-class SessionReportBloc
-    extends Bloc<SessionReportEvent, SessionReportState> {
+class SessionReportBloc extends Bloc<SessionReportEvent, SessionReportState> {
   SessionReportBloc({required SessionReportRepository repository})
       : _repository = repository,
         super(const SessionReportInitial()) {

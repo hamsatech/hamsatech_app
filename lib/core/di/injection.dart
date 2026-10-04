@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../network/api_client.dart';
+
 import '../../features/athlete/data/datasources/athlete_remote_datasource.dart';
 import '../../features/athlete/data/repositories/athlete_repository_impl.dart';
 import '../../features/athlete/domain/repositories/athlete_repository.dart';
@@ -38,6 +40,7 @@ import '../../features/pre_session_ritual/domain/repositories/ritual_repository.
 import '../../features/pre_session_ritual/bloc/ritual_bloc.dart';
 
 import '../../features/live_training/data/repositories/live_training_repository_impl.dart';
+import '../../features/live_training/data/services/hr_telemetry_service.dart';
 import '../../features/live_training/domain/repositories/live_training_repository.dart';
 import '../../features/live_training/bloc/live_training_bloc.dart';
 
@@ -59,6 +62,9 @@ import '../../features/polar/presentation/bloc/polar_bloc.dart';
 final getIt = GetIt.instance;
 
 void setupDI() {
+  // ── Network ───────────────────────────────────────────────────────────────
+  getIt.registerLazySingleton<ApiClient>(() => ApiClient());
+
   // ── Athlete ──────────────────────────────────────────────────────────────
   getIt.registerLazySingleton<AthleteRemoteDatasource>(
       () => AthleteRemoteDatasource());
@@ -96,9 +102,9 @@ void setupDI() {
   getIt.registerLazySingleton<RitualBloc>(() => RitualBloc(getIt()));
 
   getIt.registerLazySingleton<LiveTrainingRepository>(
-      () => LiveTrainingRepositoryImpl());
-  getIt.registerLazySingleton<LiveTrainingBloc>(
-      () => LiveTrainingBloc(getIt()));
+      () => LiveTrainingRepositoryImpl(getIt()));
+  getIt
+      .registerLazySingleton<LiveTrainingBloc>(() => LiveTrainingBloc(getIt()));
 
   getIt.registerLazySingleton<ScoreEntryRepository>(
       () => ScoreEntryRepositoryImpl());
@@ -115,6 +121,18 @@ void setupDI() {
   getIt.registerFactory<SessionReportBloc>(
       () => SessionReportBloc(repository: getIt()));
 
-  getIt.registerLazySingleton<PolarBleService>(() => PolarBleService());
+  getIt.registerLazySingleton<PolarBleService>(() {
+    // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+    // ignore: avoid_print
+    print('[PolarDebug] GetIt factory constructing PolarBleService at ${DateTime.now()}');
+    return PolarBleService();
+  });
   getIt.registerLazySingleton<PolarBloc>(() => PolarBloc(getIt()));
+
+  // Eagerly instantiated (not lazy) so it starts buffering HR samples from
+  // app launch, independent of whether the Live Training screen has been
+  // opened yet.
+  getIt.registerLazySingleton<HrTelemetryService>(
+      () => HrTelemetryService(getIt()));
+  getIt<HrTelemetryService>();
 }

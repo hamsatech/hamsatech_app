@@ -55,8 +55,8 @@ class _VisualizationViewState extends State<_VisualizationView> {
         }
       },
       builder: (context, state) {
-        final isLoading = state is! RitualVisualizationState &&
-            state is! RitualCompleteState;
+        final isLoading =
+            state is! RitualVisualizationState && state is! RitualCompleteState;
         return Scaffold(
           backgroundColor: const Color(0xFFF5FDFF),
           body: SafeArea(
@@ -70,9 +70,7 @@ class _VisualizationViewState extends State<_VisualizationView> {
                   RitualHeader(
                     title: 'Visualization',
                     onSkip: () {
-                      context
-                          .read<RitualBloc>()
-                          .add(const RitualComplete());
+                      context.read<RitualBloc>().add(const RitualComplete());
                     },
                   ),
                   Expanded(
@@ -119,9 +117,7 @@ class _VisualizationViewState extends State<_VisualizationView> {
                               _controller.text.trim(),
                             ),
                           );
-                      context
-                          .read<RitualBloc>()
-                          .add(const RitualComplete());
+                      context.read<RitualBloc>().add(const RitualComplete());
                     },
                   ),
                 ],
@@ -160,7 +156,8 @@ class _VisualizationTextField extends StatelessWidget {
           height: 1.6,
         ),
         decoration: const InputDecoration(
-          hintText: 'e.g. I see a clean 10, breath is steady, finger pressure is smooth…',
+          hintText:
+              'e.g. I see a clean 10, breath is steady, finger pressure is smooth…',
           hintStyle: TextStyle(
             fontSize: 15,
             color: Color(0xFFB0D8E0),
@@ -169,9 +166,8 @@ class _VisualizationTextField extends StatelessWidget {
           contentPadding: EdgeInsets.all(16),
           border: InputBorder.none,
         ),
-        onChanged: (v) => context
-            .read<RitualBloc>()
-            .add(RitualVisualizationChanged(v)),
+        onChanged: (v) =>
+            context.read<RitualBloc>().add(RitualVisualizationChanged(v)),
       ),
     );
   }

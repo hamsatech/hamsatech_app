@@ -77,9 +77,8 @@ class _SegmentedBar extends StatelessWidget {
             height: 6,
             margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
             decoration: BoxDecoration(
-              color: isFilled
-                  ? const Color(0xFF2F7E8F)
-                  : const Color(0xFFCAE8EE),
+              color:
+                  isFilled ? const Color(0xFF2F7E8F) : const Color(0xFFCAE8EE),
               borderRadius: BorderRadius.circular(3),
             ),
           ),

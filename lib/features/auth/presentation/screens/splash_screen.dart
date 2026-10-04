@@ -53,12 +53,13 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _ctrl.forward();
-    _navigate();
+    _navigate(_ctrl.forward());
   }
 
-  Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 2400));
+  /// Waits for the entrance animation to finish (not an arbitrary delay)
+  /// before routing, so the splash still plays out as designed.
+  Future<void> _navigate(TickerFuture animation) async {
+    await animation;
     if (!mounted) return;
 
     // Restore app-default status bar style before leaving.
@@ -73,7 +74,8 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
     if (StorageService.isOnboardingComplete()) {
-      context.go('/home');
+      // Restore the last active shell tab; defaults to /home if none saved.
+      context.go(StorageService.getLastRoute());
       return;
     }
     final step = StorageService.getOnboardingStep();
@@ -133,7 +135,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: const Column(
                     children: [
                       Text(
-                        'MENTAL PERFORMANCE AI',
+                        'YOUR PERSONAL INTELLIGENCE PLATFORM',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 10,

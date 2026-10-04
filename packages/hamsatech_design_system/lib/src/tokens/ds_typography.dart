@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'ds_colors.dart';
 
 class DSTypography {
@@ -9,112 +8,128 @@ class DSTypography {
   // Use these when you need a specific size/weight but want to control color
   // at call site (e.g., white text on dark card).
 
-  static TextStyle get displayLg => GoogleFonts.inter(
+  static TextStyle get displayLg => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 48,
         fontWeight: FontWeight.w700,
         height: 1.1,
         letterSpacing: -0.5,
       );
 
-  static TextStyle get displayMd => GoogleFonts.inter(
+  static TextStyle get displayMd => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 36,
         fontWeight: FontWeight.w700,
         height: 1.15,
         letterSpacing: -0.3,
       );
 
-  static TextStyle get displaySm => GoogleFonts.inter(
+  static TextStyle get displaySm => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 30,
         fontWeight: FontWeight.w600,
         height: 1.2,
         letterSpacing: -0.2,
       );
 
-  static TextStyle get headingXl => GoogleFonts.inter(
+  static TextStyle get headingXl => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 24,
         fontWeight: FontWeight.w700,
         height: 1.3,
         letterSpacing: -0.3,
       );
 
-  static TextStyle get headingLg => GoogleFonts.inter(
+  static TextStyle get headingLg => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w700,
         height: 1.35,
         letterSpacing: -0.2,
       );
 
-  static TextStyle get headingMd => GoogleFonts.inter(
+  static TextStyle get headingMd => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 17,
         fontWeight: FontWeight.w600,
         height: 1.4,
         letterSpacing: -0.1,
       );
 
-  static TextStyle get headingSm => GoogleFonts.inter(
+  static TextStyle get headingSm => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w600,
         height: 1.4,
         letterSpacing: 0,
       );
 
-  static TextStyle get headingXs => GoogleFonts.inter(
+  static TextStyle get headingXs => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w600,
         height: 1.4,
         letterSpacing: 0,
       );
 
-  static TextStyle get bodyLg => GoogleFonts.inter(
+  static TextStyle get bodyLg => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w400,
         height: 1.6,
         letterSpacing: 0,
       );
 
-  static TextStyle get bodyMd => GoogleFonts.inter(
+  static TextStyle get bodyMd => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 1.55,
         letterSpacing: 0,
       );
 
-  static TextStyle get bodySm => GoogleFonts.inter(
+  static TextStyle get bodySm => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w400,
         height: 1.5,
         letterSpacing: 0,
       );
 
-  static TextStyle get bodyXs => GoogleFonts.inter(
+  static TextStyle get bodyXs => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 11,
         fontWeight: FontWeight.w400,
         height: 1.45,
         letterSpacing: 0,
       );
 
-  static TextStyle get labelLg => GoogleFonts.inter(
+  static TextStyle get labelLg => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w500,
         height: 1.35,
         letterSpacing: 0,
       );
 
-  static TextStyle get labelMd => GoogleFonts.inter(
+  static TextStyle get labelMd => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w500,
         height: 1.4,
         letterSpacing: 0,
       );
 
-  static TextStyle get labelSm => GoogleFonts.inter(
+  static TextStyle get labelSm => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w500,
         height: 1.35,
         letterSpacing: 0,
       );
 
-  static TextStyle get labelXs => GoogleFonts.inter(
+  static TextStyle get labelXs => const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 11,
         fontWeight: FontWeight.w500,
         height: 1.3,
@@ -131,7 +146,8 @@ class DSTypography {
   // ── App text styles — Inter (with baked-in colours) ───────────────────────
   // Use these for most UI text. Override via .copyWith() only when needed.
 
-  static TextStyle get displayLarge => GoogleFonts.inter(
+  static TextStyle get displayLarge => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: DSColors.textPrimary,
@@ -139,7 +155,8 @@ class DSTypography {
         letterSpacing: -0.5,
       );
 
-  static TextStyle get displayMedium => GoogleFonts.inter(
+  static TextStyle get displayMedium => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 26,
         fontWeight: FontWeight.w700,
         color: DSColors.textPrimary,
@@ -147,7 +164,8 @@ class DSTypography {
         letterSpacing: -0.3,
       );
 
-  static TextStyle get headingLarge => GoogleFonts.inter(
+  static TextStyle get headingLarge => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 22,
         fontWeight: FontWeight.w700,
         color: DSColors.textPrimary,
@@ -155,7 +173,8 @@ class DSTypography {
         letterSpacing: -0.3,
       );
 
-  static TextStyle get headingMedium => GoogleFonts.inter(
+  static TextStyle get headingMedium => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: DSColors.textPrimary,
@@ -163,7 +182,8 @@ class DSTypography {
         letterSpacing: -0.2,
       );
 
-  static TextStyle get headingSmall => GoogleFonts.inter(
+  static TextStyle get headingSmall => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: DSColors.textPrimary,
@@ -171,7 +191,8 @@ class DSTypography {
         letterSpacing: -0.1,
       );
 
-  static TextStyle get bodyLarge => GoogleFonts.inter(
+  static TextStyle get bodyLarge => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: DSColors.textPrimary,
@@ -179,7 +200,8 @@ class DSTypography {
         letterSpacing: 0,
       );
 
-  static TextStyle get bodyMedium => GoogleFonts.inter(
+  static TextStyle get bodyMedium => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: DSColors.textPrimary,
@@ -188,7 +210,8 @@ class DSTypography {
       );
 
   // Secondary-weight body — subtitles, descriptions
-  static TextStyle get bodySmall => GoogleFonts.inter(
+  static TextStyle get bodySmall => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: DSColors.textSecondary,
@@ -197,7 +220,8 @@ class DSTypography {
       );
 
   // Button / prominent action label
-  static TextStyle get labelLarge => GoogleFonts.inter(
+  static TextStyle get labelLarge => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 15,
         fontWeight: FontWeight.w600,
         color: DSColors.textPrimary,
@@ -206,7 +230,8 @@ class DSTypography {
       );
 
   // Form labels, tag text
-  static TextStyle get labelMedium => GoogleFonts.inter(
+  static TextStyle get labelMedium => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w500,
         color: DSColors.textSecondary,
@@ -215,7 +240,8 @@ class DSTypography {
       );
 
   // Metadata, timestamps, step indicators
-  static TextStyle get caption => GoogleFonts.inter(
+  static TextStyle get caption => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 11,
         fontWeight: FontWeight.w400,
         color: DSColors.textMuted,
@@ -224,7 +250,8 @@ class DSTypography {
       );
 
   // Score / metric display number
-  static TextStyle get scoreDisplay => GoogleFonts.inter(
+  static TextStyle get scoreDisplay => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 48,
         fontWeight: FontWeight.w800,
         color: DSColors.textPrimary,
@@ -232,7 +259,8 @@ class DSTypography {
         letterSpacing: -1.5,
       );
 
-  static TextStyle get metricValue => GoogleFonts.inter(
+  static TextStyle get metricValue => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: DSColors.textPrimary,
@@ -241,7 +269,8 @@ class DSTypography {
       );
 
   // Input hint / placeholder
-  static TextStyle get inputHint => GoogleFonts.inter(
+  static TextStyle get inputHint => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: DSColors.textPlaceholder,
@@ -250,7 +279,8 @@ class DSTypography {
       );
 
   // Form field label (above input)
-  static TextStyle get inputLabel => GoogleFonts.inter(
+  static TextStyle get inputLabel => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w500,
         color: DSColors.textSecondary,
@@ -260,7 +290,8 @@ class DSTypography {
 
   // ── Onboarding / Welcome screen ───────────────────────────────────────────
 
-  static TextStyle get onboardingHeader => GoogleFonts.inter(
+  static TextStyle get onboardingHeader => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: DSColors.textPrimary,
@@ -268,7 +299,8 @@ class DSTypography {
         height: 1.15,
       );
 
-  static TextStyle get onboardingSubheader => GoogleFonts.inter(
+  static TextStyle get onboardingSubheader => TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w500,
         color: DSColors.textSecondary,
@@ -277,10 +309,10 @@ class DSTypography {
       );
 
   // PT Serif — editorial slide captions
-  static TextStyle get onboardingCaption => GoogleFonts.ptSerif(
+  static const TextStyle onboardingCaption = TextStyle(
+        fontFamily: 'PT Serif',
         fontSize: 28,
         fontWeight: FontWeight.w400,
-        color: DSColors.textPrimary,
         height: 1.25,
         letterSpacing: 0,
       );

@@ -23,7 +23,7 @@ class AthleteRemoteDatasource {
   Future<AthleteModel> getAthleteProfile(String athleteId) async {
     try {
       final response = await _dio.get(
-        '/athletes',
+        'athletes',
         queryParameters: {
           'athlete_id': 'eq.$athleteId',
           'select': '*,athlete_details(*),athlete_family(*)',
@@ -48,7 +48,7 @@ class AthleteRemoteDatasource {
   Future<AthleteModel> createAthlete(Map<String, dynamic> body) async {
     try {
       final response = await _dio.post(
-        '/athletes',
+        'athletes',
         data: body,
         options: Options(
           // Tell Supabase to return the created row in the response body

@@ -21,7 +21,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final data = await _repository.getDashboardData();
       emit(DashboardLoaded(data));
     } catch (e) {
-      emit(DashboardError(e.toString()));
+      // Never surface a raw exception string — DashboardRepositoryImpl
+      // already treats every individual backend call as non-fatal
+      // (fetch failures fall back to empty/null fields), so reaching this
+      // catch means something more fundamental broke (e.g. local storage).
+      emit(const DashboardError(
+        'Unable to load your dashboard right now. Please try again.',
+      ));
     }
   }
 
@@ -33,7 +39,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final data = await _repository.getDashboardData();
       emit(DashboardLoaded(data));
     } catch (e) {
-      emit(DashboardError(e.toString()));
+      emit(const DashboardError(
+        'Unable to refresh your dashboard right now. Please try again.',
+      ));
     }
   }
 

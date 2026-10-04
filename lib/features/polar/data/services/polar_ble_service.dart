@@ -1,20 +1,34 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../../domain/models/hr_reading.dart';
 
-enum PolarDeviceStatus { found, connecting, connected, disconnected }
+enum PolarDeviceStatus {
+  found,
+  connecting,
+  connected,
+  disconnected,
+  bluetoothOff,
+  scanError,
+}
 
 class PolarDeviceEvent {
   final PolarDeviceStatus status;
-  final String deviceId;
+  // Null for events not tied to a specific device (e.g. bluetoothOff, scanError).
+  final String? deviceId;
   final String? name;
   final String? deviceType;
+  // Only set for scanError — the native-side exception message, e.g. a
+  // missing-permission or Bluetooth-adapter failure surfaced by
+  // PolarPlugin.kt instead of being silently swallowed.
+  final String? message;
 
   const PolarDeviceEvent(
     this.status,
     this.deviceId, {
     this.name,
     this.deviceType,
+    this.message,
   });
 }
 
@@ -25,41 +39,86 @@ class PolarBleService {
   final _deviceEventController = StreamController<PolarDeviceEvent>.broadcast();
 
   PolarBleService() {
+    // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+    debugPrint(
+        '[PolarDebug] PolarBleService() constructor running, instance=${identityHashCode(this)}, channel=${_methodChannel.name}, at ${DateTime.now()}');
     _methodChannel.setMethodCallHandler((call) async {
+      // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+      debugPrint(
+          '[PolarDebug] handler(instance=${identityHashCode(this)}) received native call: method=${call.method} args=${call.arguments} at ${DateTime.now()}');
       switch (call.method) {
         case 'deviceFound':
           final args = call.arguments as Map<dynamic, dynamic>;
+          debugPrint(
+              '[PolarScan] real device discovered: deviceId=${args['deviceId']} name=${args['name']} type=${args['type']}');
           _deviceEventController.add(PolarDeviceEvent(
             PolarDeviceStatus.found,
             args['deviceId'] as String,
             name: args['name'] as String?,
             deviceType: args['type'] as String?,
           ));
+        case 'scanError':
+          final message = call.arguments as String?;
+          debugPrint('[PolarScan] scan error from native side: $message');
+          _deviceEventController.add(
+            PolarDeviceEvent(PolarDeviceStatus.scanError, null, message: message),
+          );
         case 'deviceConnected':
           _deviceEventController.add(
-            PolarDeviceEvent(PolarDeviceStatus.connected, call.arguments as String),
+            PolarDeviceEvent(
+                PolarDeviceStatus.connected, call.arguments as String),
           );
         case 'deviceConnecting':
           _deviceEventController.add(
-            PolarDeviceEvent(PolarDeviceStatus.connecting, call.arguments as String),
+            PolarDeviceEvent(
+                PolarDeviceStatus.connecting, call.arguments as String),
           );
         case 'deviceDisconnected':
           _deviceEventController.add(
-            PolarDeviceEvent(PolarDeviceStatus.disconnected, call.arguments as String),
+            PolarDeviceEvent(
+                PolarDeviceStatus.disconnected, call.arguments as String),
           );
+        case 'blePowerStateChanged':
+          final powered = call.arguments as bool;
+          // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+          debugPrint('[PolarDebug] blePowerStateChanged case reached, powered=$powered');
+          if (!powered) {
+            _deviceEventController.add(
+              const PolarDeviceEvent(PolarDeviceStatus.bluetoothOff, null),
+            );
+            debugPrint('[PolarDebug] bluetoothOff PolarDeviceEvent added to controller');
+          }
       }
     });
+    // TEMPORARY DEBUG (Phase 0.2 bug trace) — remove after diagnosis.
+    debugPrint(
+        '[PolarDebug] setMethodCallHandler registration call completed, instance=${identityHashCode(this)}');
   }
 
   Stream<PolarDeviceEvent> get deviceEvents => _deviceEventController.stream;
 
-  Stream<HrReading> get hrStream => _hrEventChannel
+  // Computed once and cached: EventChannel.receiveBroadcastStream() performs
+  // a fresh native 'listen' registration on every call, and the native side
+  // (PolarPlugin.kt) holds only a single EventSink reference — a second
+  // registration silently replaces the first, starving whichever listener
+  // subscribed earlier. Caching this Stream lets multiple independent
+  // .listen() calls (PolarBloc, HrTelemetryService) share one underlying
+  // broadcast controller and one native registration instead.
+  late final Stream<HrReading> _hrStream = _hrEventChannel
       .receiveBroadcastStream()
       .map((event) => HrReading.fromMap(event as Map<dynamic, dynamic>));
 
-  Future<void> scanForDevices() => _methodChannel.invokeMethod('scan');
+  Stream<HrReading> get hrStream => _hrStream;
 
-  Future<void> stopScan() => _methodChannel.invokeMethod('stopScan');
+  Future<void> scanForDevices() {
+    debugPrint('[PolarScan] scanForDevices() invoked at ${DateTime.now()}');
+    return _methodChannel.invokeMethod('scan');
+  }
+
+  Future<void> stopScan() {
+    debugPrint('[PolarScan] stopScan() invoked at ${DateTime.now()}');
+    return _methodChannel.invokeMethod('stopScan');
+  }
 
   Future<void> connectToDevice(String deviceId) =>
       _methodChannel.invokeMethod('connect', {'deviceId': deviceId});

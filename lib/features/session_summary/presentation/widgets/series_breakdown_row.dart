@@ -19,7 +19,8 @@ class SeriesBreakdownRow extends StatelessWidget {
             width: 24,
             child: Text(
               'S${series.seriesNumber}',
-              style: DSTypography.labelMd.copyWith(color: DSColors.textSecondary),
+              style:
+                  DSTypography.labelMd.copyWith(color: DSColors.textSecondary),
             ),
           ),
           const SizedBox(width: DSSpacing.md),

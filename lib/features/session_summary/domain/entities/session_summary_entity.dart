@@ -53,7 +53,9 @@ class SessionSummaryEntity extends Equatable {
 
   String get formattedTotal {
     final t = total;
-    return t == t.truncateToDouble() ? t.toInt().toString() : t.toStringAsFixed(1);
+    return t == t.truncateToDouble()
+        ? t.toInt().toString()
+        : t.toStringAsFixed(1);
   }
 
   String get formattedAverage => averagePerShot.toStringAsFixed(1);
